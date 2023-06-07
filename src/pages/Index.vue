@@ -1,5 +1,17 @@
 <template>
   <q-page class="flex flex-center">
+    <div class="row" style="width: 100%">
+      <q-banner
+        :class="$q.dark.isActive ? 'bg-grey-9' : 'bg-grey-3'"
+        style="text-align: center"
+      >
+        <template v-slot:avatar>
+          <q-icon name="person" color="primary" />
+        </template>
+
+        Bienvenido al software Parroquial
+      </q-banner>
+    </div>
     <q-card
       class="my-card"
       flat

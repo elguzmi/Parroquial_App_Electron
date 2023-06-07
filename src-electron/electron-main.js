@@ -427,17 +427,6 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
 
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
-    // cssb.push("<style>");
-    // cssb.push("*{font-family: Arial, Helvetica, sans-serif;font-size: 12x;}");
-    // // cssb.push(
-    // //   ".header { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center;}"
-    // // );
-    // cssb.push(
-    //   ".footer { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center}"
-    // );
-    // cssb.push("</style>");
-    // const css = cssb.join("");
-
     var options = {
       format: "Legal",
       orientation: "portrait",
@@ -474,6 +463,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
       .create(document, options)
       .then((res) => {
         console.log("Se ha creado exitosamente");
+        openPdf(route);
       })
       .catch((error) => {
         console.error(error);

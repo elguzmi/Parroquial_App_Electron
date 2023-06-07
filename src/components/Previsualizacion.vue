@@ -10,35 +10,19 @@
       <q-card class="bg-white text-dark">
         <q-bar>
           <div class="cursor-pointer non-selectable">
-            Accion
-            <q-menu>
-              <q-list dense style="min-width: 100px">
-                <q-item clickable>
-                  <q-item-section>Exportar</q-item-section>
-                  <q-item-section side>
-                    <q-icon name="keyboard_arrow_right" />
-                  </q-item-section>
-                  <q-menu anchor="top end" self="top start">
-                    <q-list>
-                      <q-item dense clickable @click="goToPdf()">
-                        <q-item-section>
-                          <q-item-section>PDF</q-item-section>
-                        </q-item-section>
-                      </q-item>
-                      <q-item dense clickable @click="goToWord()">
-                        <q-item-section>
-                          <q-item-section>Word</q-item-section>
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-item>
-                <q-separator />
-                <q-item clickable v-close-popup="2">
-                  <q-item-section>Salir</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
+            <q-item clickable @click="goToWord()">
+              <q-item-section>Word</q-item-section>
+            </q-item>
+          </div>
+          <div class="cursor-pointer non-selectable">
+            <q-item clickable @click="goToPdf()">
+              <q-item-section>Pdf</q-item-section>
+            </q-item>
+          </div>
+          <div>
+            <q-item clickable v-close-popup="2">
+              <q-item-section>Salir</q-item-section>
+            </q-item>
           </div>
           <q-space />
           <q-btn

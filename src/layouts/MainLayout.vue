@@ -78,7 +78,14 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container
+      style="
+        background: repeating-radial-gradient(
+          rgb(233, 231, 231),
+          transparent 100px
+        );
+      "
+    >
       <router-view />
     </q-page-container>
   </q-layout>

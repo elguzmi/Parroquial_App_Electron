@@ -1,16 +1,10 @@
 <template>
-  <q-page class="flex flex-center">
-    <div class="row" style="width: 100%">
-      <q-banner
-        :class="$q.dark.isActive ? 'bg-grey-9' : 'bg-grey-3'"
-        style="text-align: center"
-      >
-        <template v-slot:avatar>
-          <q-icon name="person" color="primary" />
-        </template>
-
-        Bienvenido al software Parroquial
-      </q-banner>
+  <q-page
+    class="flex flex-center"
+    style="background: repeating-radial-gradient(#e9e7e7, transparent 100px)"
+  >
+    <div style="width: 100%; text-align: center">
+      <h4><b>Bienvenido al software Parroquial</b></h4>
     </div>
     <q-card
       class="my-card"
@@ -19,8 +13,10 @@
       v-for="(item, index) in modulesCards"
       :key="index"
     >
-      <q-img :srcset="require('../assets/img/' + item.Nombre_Imagen)" />
-
+      <q-img
+        :srcset="require('../assets/img/' + item.Nombre_Imagen)"
+        :ratio="16 / 9"
+      />
       <q-card-section>
         <q-btn
           fab

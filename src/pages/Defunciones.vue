@@ -227,6 +227,7 @@ export default defineComponent({
     Previsualizacion,
   },
   mounted() {
+    this.showLoading("Cargando Datos...");
     this.getId_MinistroDoyFe();
     this.getDefunciones();
   },
@@ -312,6 +313,7 @@ export default defineComponent({
           });
         });
         this.rows = e[0];
+        this.hideLoading();
       });
     },
     saveDefuncion() {

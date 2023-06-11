@@ -210,6 +210,7 @@ export default defineComponent({
     Previsualizacion,
   },
   mounted() {
+    this.showLoading("Cargando Datos...");
     this.getMatrimonios();
     this.getDoyFe();
   },
@@ -304,6 +305,7 @@ export default defineComponent({
           });
         });
         this.rows = e[0];
+        this.hideLoading();
       });
     },
     getDoyFe() {

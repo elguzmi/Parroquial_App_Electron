@@ -36,7 +36,7 @@
     <q-card-section class="full-width row no-wrap justify-around items-start">
       <div class="col-3">
         <q-input
-          v-model="dataCard.Libro_"
+          v-model="dataCard.Lib_"
           type="text"
           label="Libro"
           :dense="isDense"
@@ -44,7 +44,7 @@
       </div>
       <div class="col-3">
         <q-input
-          v-model="dataCard.Folio_"
+          v-model="dataCard.Fol_"
           type="text"
           label="Folio"
           :dense="isDense"
@@ -102,8 +102,8 @@ export default defineComponent({
       this.dataCard.Parroquia_ = this.dataForm["Parroquia_Novi" + this.prefijo];
       this.dataCard.Fecha_Bautismo_ =
         this.dataForm["Fecha_Bautismo_Novi" + this.prefijo];
-      this.dataCard.Libro_ = this.dataForm["Libro_Novi" + this.prefijo];
-      this.dataCard.Folio_ = this.dataForm["Folio_Novi" + this.prefijo];
+      this.dataCard.Lib_ = this.dataForm["Libro_Novi" + this.prefijo];
+      this.dataCard.Fol_ = this.dataForm["Folio_Novi" + this.prefijo];
       this.dataCard.Numero_ = this.dataForm["Acta_Novi" + this.prefijo];
     },
     cleanData() {

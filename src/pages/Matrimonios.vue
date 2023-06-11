@@ -256,8 +256,8 @@ export default defineComponent({
         Padres_Novio: ref(null),
         Parroquia_Novio: ref(null),
         Fecha_Bautismo_Novio: ref(null),
-        Libro_Novio: ref(null),
-        Folio_Novio: ref(null),
+        Lib_Novio: ref(null),
+        Fol_Novio: ref(null),
         Acta_Novio: ref(null),
 
         // data Novia
@@ -265,8 +265,8 @@ export default defineComponent({
         Padres_Novia: ref(null),
         Parroquia_Novia: ref(null),
         Fecha_Bautismo_Novia: ref(null),
-        Libro_Novia: ref(null),
-        Folio_Novia: ref(null),
+        Lib_Novia: ref(null),
+        Fol_Novia: ref(null),
         Acta_Novia: ref(null),
 
         Testigos: ref(null),
@@ -396,8 +396,8 @@ export default defineComponent({
       this.dataMatrimonio["Parroquia_Novi" + prefijo] = data.Parroquia_;
       this.dataMatrimonio["Fecha_Bautismo_Novi" + prefijo] =
         data.Fecha_Bautismo_;
-      this.dataMatrimonio["Libro_Novi" + prefijo] = data.Libro_;
-      this.dataMatrimonio["Folio_Novi" + prefijo] = data.Folio_;
+      this.dataMatrimonio["Lib_Novi" + prefijo] = data.Lib_;
+      this.dataMatrimonio["Fol_Novi" + prefijo] = data.Fol_;
       this.dataMatrimonio["Acta_Novi" + prefijo] = data.Numero_;
     },
 
@@ -437,15 +437,15 @@ export default defineComponent({
       this.dataMatrimonio.Padres_Novio = null;
       this.dataMatrimonio.Parroquia_Novio = null;
       this.dataMatrimonio.Fecha_Bautismo_Novio = null;
-      this.dataMatrimonio.Libro_Novio = null;
-      this.dataMatrimonio.Folio_Novio = null;
+      this.dataMatrimonio.Lib_Novio = null;
+      this.dataMatrimonio.Fol_Novio = null;
       this.dataMatrimonio.Acta_Novio = null;
       this.dataMatrimonio.Novia = null;
       this.dataMatrimonio.Padres_Novia = null;
       this.dataMatrimonio.Parroquia_Novia = null;
       this.dataMatrimonio.Fecha_Bautismo_Novia = null;
-      this.dataMatrimonio.Libro_Novia = null;
-      this.dataMatrimonio.Folio_Novia = null;
+      this.dataMatrimonio.Lib_Novia = null;
+      this.dataMatrimonio.Fol_Novia = null;
       this.dataMatrimonio.Acta_Novia = null;
       this.dataMatrimonio.Testigos = null;
       this.dataMatrimonio.Id_MinistroDoyFe = 0;

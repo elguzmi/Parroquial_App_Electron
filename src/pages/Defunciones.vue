@@ -195,11 +195,14 @@
       <Table_Component
         v-if="rows.length > 0"
         title="Defunciones"
+        tablaDirectTo="fact_Defunciones"
         :columns="columns"
         :rows="rows"
         :visibleColumns="visibleColumns"
         @eventedited="setrecord"
         @eventinvt="invtrecord"
+        @loadingShow="showLoading"
+        @loadingHide="hideLoading"
       ></Table_Component>
     </section>
 

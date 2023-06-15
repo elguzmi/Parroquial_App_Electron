@@ -62,6 +62,16 @@
                   />
                 </div>
               </q-card-actions>
+              <q-separator />
+              <q-card-section>
+                <q-img
+                  :srcset="require('../assets/img/logo_kapri.jpg')"
+                  width="200px"
+                  spinner-size="82px"
+                  spinner-color="primary"
+                  style="float: right"
+                />
+              </q-card-section>
             </q-form>
           </q-card>
         </div>
@@ -84,8 +94,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
-//import { ipcRenderer } from "electron";
-//const { ipcRenderer } = require("electron");
+
 export default defineComponent({
   name: "PageIndex",
   mounted() {},
@@ -130,7 +139,7 @@ export default defineComponent({
     tryLogin() {
       let data = { user: this.userName, clave: this.clave };
       this.showLoading("Cargando.. Por favor espera");
-      window.myAPI.loadLogin(data).then((e) => {
+      window.ApiLogin.loadLogin(data).then((e) => {
         //console.log(e);
         if (e.isError)
           this.showMessage("Error -" + e.errorMessage, "negative", "error");
@@ -148,7 +157,6 @@ export default defineComponent({
             });
           } else {
             this.tries += 1;
-            console.log("No existe el usuario");
             this.showMessage(
               "Usuario o contraseña incorrecta.",
               "negative",

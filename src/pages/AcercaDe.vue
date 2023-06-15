@@ -1,69 +1,16 @@
 <template>
-  <q-page class="flex flex-center">
+  <q-page class="flex flex-center" style="background-color: black">
     <div class="q-pa-md">
-      <h1>Acerca de</h1>
-      <div>
-        <q-table
-          flat
-          bordered
-          title="Treats"
-          :rows="rows"
-          :columns="columns"
-          row-key="name"
-          :visible-columns="visibleColumns"
-        >
-          <template v-slot:top="props">
-            <div class="col-2 q-table__title">Treats</div>
-
-            <q-space />
-
-            <div v-if="$q.screen.gt.xs" class="col">
-              <q-toggle
-                v-model="visibleColumns"
-                val="calories"
-                label="Calories"
-              />
-              <q-toggle v-model="visibleColumns" val="fat" label="Fat" />
-              <q-toggle v-model="visibleColumns" val="carbs" label="Carbs" />
-              <q-toggle
-                v-model="visibleColumns"
-                val="protein"
-                label="Protein"
-              />
-              <q-toggle v-model="visibleColumns" val="sodium" label="Sodium" />
-              <q-toggle
-                v-model="visibleColumns"
-                val="calcium"
-                label="Calcium"
-              />
-              <q-toggle v-model="visibleColumns" val="iron" label="Iron" />
-            </div>
-            <q-select
-              v-else
-              v-model="visibleColumns"
-              multiple
-              borderless
-              dense
-              options-dense
-              :display-value="$q.lang.table.columns"
-              emit-value
-              map-options
-              :options="columns"
-              option-value="name"
-              style="min-width: 150px"
-            />
-
-            <q-btn
-              flat
-              round
-              dense
-              :icon="props.inFullscreen ? 'fullscreen_exit' : 'fullscreen'"
-              @click="props.toggleFullscreen"
-              class="q-ml-md"
-            />
-          </template>
-        </q-table>
-      </div>
+      <q-card class="my-card">
+        <img src="../assets/img/logo_kapri.jpg" />
+        <q-card-section>
+          <div class="text-h6">Kapri Technology</div>
+          <div class="text-subtitle2">Kamilo Prieto && Santiago Guzman</div>
+        </q-card-section>
+        <q-card-section>
+          Trabajamos en sus necesidades para tu tipo de software
+        </q-card-section>
+      </q-card>
     </div>
   </q-page>
 </template>

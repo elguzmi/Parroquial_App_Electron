@@ -293,10 +293,9 @@ export default defineComponent({
   },
   methods: {
     getBautismos() {
-      window.myAPI.loadDataTables("Bautismos").then((e) => {
+      window.ApiList.loadDataTables("Bautismos").then((e) => {
         this.columns = [];
         let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-        console.log(e[0]);
         Columnas = Columnas.split("|");
         Columnas_Label = Columnas_Label.split("|");
         Columnas_Visibles = Columnas_Visibles.split("|");
@@ -316,10 +315,8 @@ export default defineComponent({
     },
     getDoyFe() {
       window.myAPI.loadMinistros().then((e) => {
-        console.log("Ministros juntos ", e);
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
-        //this.hideLoading();
       });
     },
     setrecord(data) {
@@ -337,7 +334,6 @@ export default defineComponent({
 
     invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
-      console.log("Id de inactivacion", Id);
       let data = { Id: Id, Sp: "BD_Invt_Bautismo" };
       window.myAPI.InvtRecord(data).then((e) => {
         console.log(e);
@@ -364,7 +360,7 @@ export default defineComponent({
             window.myAPI
               .updRecord(JSON.stringify(DatosIns), "Bautismo")
               .then((e) => {
-                console.log(e);
+                // console.log(e);
                 if (e.indexOf("Error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {

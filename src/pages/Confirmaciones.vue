@@ -362,7 +362,7 @@ export default defineComponent({
       });
     },
     getConfirmaciones() {
-      window.myAPI.loadDataTables("Confirmaciones").then((e) => {
+      window.ApiList.loadDataTables("Confirmaciones").then((e) => {
         this.columns = [];
         let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
         console.log(e[0]);

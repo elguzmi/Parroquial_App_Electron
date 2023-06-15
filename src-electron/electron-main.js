@@ -8,13 +8,10 @@ import {
 const PDFWindow = require("electron-pdf-window");
 import path from "path";
 import os from "os";
-import { saveAs } from "file-saver";
 const sql = require("mssql");
-var fs = require("fs");
-var html_to_pdf = require("html-pdf-node");
-const xl = require("excel4node");
-var pdf = require("pdf-creator-node");
-var fs = require("fs");
+// const html_to_pdf = require("html-pdf-node");
+// const pdf = require("pdf-creator-node");
+// const xl = require("excel4node");
 
 let sqlConfig = {
   user: "sa",
@@ -117,8 +114,10 @@ function openPdf(fileRoute) {
     ventana.webContents.print();
   });
 }
+//#region Api login
 
-ipcMain.handle("myAPI:login", async (ev, arg) => {
+// ********** API DE LOGIN
+ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   console.log("Los datos son", arg.user);
   try {
     let { user, clave } = arg;
@@ -136,6 +135,8 @@ ipcMain.handle("myAPI:login", async (ev, arg) => {
   }
 });
 
+//#endregion
+
 ipcMain.handle("myAPI:Load_Modules", async (ev, IdPerfil) => {
   console.log("Load Modules", IdPerfil);
   try {
@@ -149,21 +150,6 @@ ipcMain.handle("myAPI:Load_Modules", async (ev, IdPerfil) => {
     }
   } catch (err) {
     return { isError: true, errorMessage: "Apilogin " + err };
-  }
-});
-
-ipcMain.handle("myAPI:load_DataTables", async (ev, arg) => {
-  try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      let sp = "BD_Get_Lists_" + arg;
-      let exec = await request.execute(sp);
-      data.close();
-      return exec.recordsets;
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Lists_" + arg + " - " + err };
   }
 });
 
@@ -412,7 +398,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
       },
     };
     let file = { content: Html_Header + Html_Body };
-
+    const html_to_pdf = require("html-pdf-node");
     html_to_pdf.generatePdf(file, opciones).then((pdfBuffer) => {
       console.log("PDF Buffer:-", pdfBuffer);
       openPdf(route);
@@ -424,7 +410,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
   console.log("Los datos son", arg);
-
+  const pdf = require("pdf-creator-node");
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
     var options = {
@@ -473,8 +459,25 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
   }
 });
 
+// APILIST
+ipcMain.handle("ApiList:load_DataTables", async (ev, arg) => {
+  try {
+    let data = await sql.connect(sqlConfig);
+    if (data.connected == true) {
+      let request = new sql.Request();
+      let sp = "BD_Get_Lists_" + arg;
+      let exec = await request.execute(sp);
+      data.close();
+      return exec.recordsets;
+    }
+  } catch (err) {
+    return { isError: true, errorMessage: "BD_Get_Lists_" + arg + " - " + err };
+  }
+});
+
 function exportData(headers, datos, tabla) {
   return new Promise((res, rej) => {
+    const xl = require("excel4node");
     const wb = new xl.Workbook();
     const ws = wb.addWorksheet("Worksheet Name");
     const data = datos;

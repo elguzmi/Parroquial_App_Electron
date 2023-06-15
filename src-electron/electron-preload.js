@@ -21,11 +21,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("myAPI", {
-  loadLogin: (datosUser) => ipcRenderer.invoke("myAPI:login", datosUser),
   loadModules: (perfil) => ipcRenderer.invoke("myAPI:Load_Modules", perfil),
-
-  // cargar listas
-  loadDataTables: (tabla) => ipcRenderer.invoke("myAPI:load_DataTables", tabla),
 
   // cargar ministros
   loadMinistros: () => ipcRenderer.invoke("myAPI:load_Ministros"),
@@ -63,4 +59,14 @@ contextBridge.exposeInMainWorld("myAPI", {
 
   // metodo para exportar la data de la tabla en un excel
   ExportData: (dataDoc) => ipcRenderer.invoke("myAPI:Export_Data", dataDoc),
+});
+
+contextBridge.exposeInMainWorld("ApiList", {
+  // cargar listas
+  loadDataTables: (tabla) =>
+    ipcRenderer.invoke("ApiList:load_DataTables", tabla),
+});
+
+contextBridge.exposeInMainWorld("ApiLogin", {
+  loadLogin: (datosUser) => ipcRenderer.invoke("ApiLogin:login", datosUser),
 });

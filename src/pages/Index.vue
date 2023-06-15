@@ -1,8 +1,5 @@
 <template>
-  <q-page
-    class="flex flex-center"
-    style="background: repeating-radial-gradient(#e9e7e7, transparent 100px)"
-  >
+  <q-page class="flex flex-center">
     <div style="width: 100%; text-align: center">
       <h4><b>Bienvenido al software Parroquial</b></h4>
     </div>
@@ -16,16 +13,10 @@
       <q-img
         :srcset="require('../assets/img/' + item.Nombre_Imagen)"
         :ratio="16 / 9"
+        spinner-size="82px"
+        spinner-color="primary"
       />
       <q-card-section>
-        <q-btn
-          fab
-          color="primary"
-          :icon="item.Icono"
-          class="absolute"
-          style="top: 0; right: 12px; transform: translateY(-50%)"
-        />
-
         <div class="row no-wrap items-center">
           <div class="col text-h6 ellipsis">{{ item.Nombre_Modulo }}</div>
           <div
@@ -34,8 +25,6 @@
             <q-icon :name="item.Icono" />
           </div>
         </div>
-
-        <!-- <q-rating v-model="stars" :max="5" size="32px" /> -->
       </q-card-section>
 
       <q-card-section class="q-pt-none">
@@ -56,16 +45,12 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-// import * as echarts from "echarts";
 import { useQuasar } from "quasar";
 
-//import { ipcRenderer } from "electron";
-//const { ipcRenderer } = require("electron");
 export default defineComponent({
   name: "PageIndex",
   setup() {
     const $q = useQuasar();
-
     const getKeyModules = () => {
       return $q.localStorage.getItem("KeyMod");
     };
@@ -75,12 +60,11 @@ export default defineComponent({
     };
   },
   mounted() {
-    console.log("Holi");
     this.loadModuleCards();
   },
   methods: {
     loadModuleCards() {
-      let dataModule = JSON.parse(this.getKeyModules());
+      const dataModule = JSON.parse(this.getKeyModules());
       this.modulesCards = dataModule.filter((e) => e.Mostrar_Inicio == true);
     },
 

@@ -27,13 +27,6 @@
             <q-badge color="red" text-color="white" floating> 2 </q-badge>
             <q-tooltip>Notifications</q-tooltip>
           </q-btn> -->
-
-          <q-btn round flat>
-            <q-avatar size="26px">
-              <img src="https://cdn.quasar.dev/img/boy-avatar.png" />
-            </q-avatar>
-            <q-tooltip>Cuenta</q-tooltip>
-          </q-btn>
         </div>
       </q-toolbar>
     </q-header>
@@ -78,14 +71,7 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container
-      style="
-        background: repeating-radial-gradient(
-          rgb(233, 231, 231),
-          transparent 100px
-        );
-      "
-    >
+    <q-page-container>
       <router-view />
     </q-page-container>
   </q-layout>
@@ -150,7 +136,7 @@ export default {
         if (!val) this.$router.push("/");
         else {
           window.myAPI.loadModules(data.Id_Perfil).then((e) => {
-            console.log("loadModules ", e);
+            // console.log("loadModules ", e);
             this.modules = e;
             this.saveModules(e);
             this.$router.push("/Inicio");

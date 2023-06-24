@@ -3,7 +3,7 @@
     <section style="width: 100%">
       <div class="form">
         <q-form
-          @submit="saveMatrimonio()"
+          @submit="insMatrimonio()"
           @reset="resetValues()"
           class="q-gutter-md"
         >
@@ -172,7 +172,8 @@
     <hr />
     <section style="width: 100%">
       <Table_Component
-        v-if="rows.length > 0"
+        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
+        ref="tableComponent"
         title="Matrimonios"
         tablaDirectTo="fact_Matrimonios"
         :columns="columns"
@@ -184,12 +185,6 @@
         @loadingHide="hideLoading"
       ></Table_Component>
     </section>
-    <Previsualizacion
-      title="Matrimonio"
-      :Doc="Documento"
-      v-if="showDialog"
-      :openDialog="showDialog"
-    ></Previsualizacion>
   </q-page>
 </template>
 
@@ -197,25 +192,32 @@
 import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import CardNovios from "components/CardNovios.vue";
-import Previsualizacion from "components/Previsualizacion.vue";
 import { useQuasar } from "quasar";
 
-//import { ipcRenderer } from "electron";
-//const { ipcRenderer } = require("electron");
 export default defineComponent({
   name: "Matrimonios",
   components: {
     Table_Component,
     CardNovios,
-    Previsualizacion,
   },
   mounted() {
     this.showLoading("Cargando Datos...");
-    this.getMatrimonios();
-    this.getDoyFe();
+    this.getDataLogin((e, data) => {
+      console.log(e, data);
+      this.perfil = data.Id_Perfil;
+      this.getDoyFe();
+      if (this.perfil == 1 || this.perfil == 2) this.getMatrimonios();
+      else this.hideLoading();
+    });
   },
   setup() {
     const $q = useQuasar();
+
+    const getDataLogin = (cll) => {
+      if ($q.localStorage.has("SK"))
+        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      else cll(false, {});
+    };
 
     function showLoading(msj) {
       $q.loading.show({
@@ -234,6 +236,9 @@ export default defineComponent({
     };
     const hideLoading = () => $q.loading.hide();
     return {
+      perfil: ref(null),
+      getDataLogin,
+
       Documento: ref(null),
       showDialog: ref(false),
 
@@ -316,7 +321,7 @@ export default defineComponent({
       });
     },
 
-    saveMatrimonio() {
+    insMatrimonio() {
       this.$refs.cards1.getData();
       this.$refs.cards.getData();
       //console.log(this.dataMatrimonio);
@@ -332,11 +337,12 @@ export default defineComponent({
               .updRecord(JSON.stringify(DatosIns), "Matrimonio")
               .then((e) => {
                 console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
                   this.resetValues();
+                  this.$refs.tableComponent.cleanSelectedRow();
                   this.getMatrimonios();
                 }
               });
@@ -345,7 +351,7 @@ export default defineComponent({
               .insRecord(JSON.stringify(DatosIns), "Matrimonio")
               .then((e) => {
                 console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
@@ -354,7 +360,7 @@ export default defineComponent({
                 }
               });
           }
-        } else console.log(result);
+        } else this.showMessage(result, "red", "danger");
       });
     },
     makeValidation(res) {
@@ -381,12 +387,12 @@ export default defineComponent({
       this.Folio = data.Folio;
       this.Numero = data.Numero;
 
-      for (const key in data) {
+      for (const key in this.dataMatrimonio) {
         this.dataMatrimonio[key] = data[key];
       }
-      this.setCargoFirm();
       this.$refs.cards.updateData();
       this.$refs.cards1.updateData();
+      this.setCargoFirm();
     },
 
     SetearInfoCards(data, prefijo) {
@@ -421,7 +427,7 @@ export default defineComponent({
     setCargoFirm() {
       this.dataMatrimonio.Cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataMatrimonio.Id_Ministro
-      ).Cargo;
+      )?.Cargo;
     },
 
     resetValues() {
@@ -454,6 +460,7 @@ export default defineComponent({
       this.dataMatrimonio.Cargo = null;
       this.$refs.cards.cleanData();
       this.$refs.cards1.cleanData();
+      this.$refs.tableComponent.cleanSelectedRow();
     },
   },
   watch: {

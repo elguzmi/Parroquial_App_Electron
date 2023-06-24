@@ -1,7 +1,7 @@
 <template>
   <q-page class="flex flex-center">
     <div style="width: 100%; text-align: center">
-      <h4><b>Bienvenido al software Parroquial</b></h4>
+      <h4><b>Bienvenido al Software Parroquial</b></h4>
     </div>
     <q-card
       class="my-card"

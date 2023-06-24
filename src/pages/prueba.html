@@ -7,6 +7,125 @@
     <title>Document</title>
   </head>
   <body>
-    <h1>hola mundo</h1>
+    <div
+      class="body"
+      style="
+        text-align: center;
+        margin-top: 70px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 18px;
+      "
+    >
+      <br /><span style="font-size: 25px; font-weight: 700"
+        >ACTA DE DEFUNCIÓN</span
+      ><br /><span style="font-size: 25px; font-weight: 700"
+        >@Nombre_Difunto</span
+      ><br />
+      <div>
+        <span style="text-align: left; display: inline-block; width: 150px"
+          >Libro : @Libro
+        </span>
+        <span style="text-align: left; display: inline-block; width: 150px"
+          >Folio : @Folio
+        </span>
+        <span style="text-align: left; display: inline-block; width: 150px"
+          >Número : @Numero
+        </span>
+      </div>
+      <div style="width: 70%; margin: 0 auto">
+        <table
+          border="1"
+          style="
+            border-collapse: collapse;
+            width: 90%;
+            text-align: left;
+            line-height: 26px;
+            margin-left: 40px;
+          "
+        >
+          <tr>
+            <td style="text-align: left; width: 230px">
+              Parroquia de exequias
+            </td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">JESÚS EUCARISTÍA</td>
+          </tr>
+          <tr>
+            <td style="text-align: left; width: 230px">Fecha de exequias</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Fecha_Sepelio</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Nombre del fallecido(a)</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Nombre_Difunto</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Natural de</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Ciudad_Origen</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Edad</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Edad</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Fecha de nacimiento</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Fecha_Nacimiento</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Hijo(a) de</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Padres</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Estado civil</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Estado_Civil</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Causa</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@Ocacion_Muerte</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Doy fe</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@DoyFe</td>
+          </tr>
+          <tr>
+            <td style="text-align: left">Notas Marginales</td>
+            <td style="text-align: left">:</td>
+            <td style="text-align: left" colspan="2">@NotaMarginal</td>
+          </tr>
+          <tr>
+            <td colspan="4">
+              <br /><br /><br /><br /><br />
+              @ExpedidoEn
+            </td>
+          </tr>
+        </table>
+        <div style="width: 90%; margin-top: 80px; text-align: right">
+          <div style="width: 50%; float: right">
+            <div
+              style="
+                display: block;
+                border-bottom: 1px solid black;
+                width: 100%;
+                margin: 0 auto;
+                height: 10px;
+              "
+            ></div>
+            <br />
+            <div style="width: 100%; text-align: center">
+              @Firmante <br />
+              @Cargo
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

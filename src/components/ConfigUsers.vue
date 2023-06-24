@@ -3,6 +3,14 @@
     <div class="Doy_Fe" style="width: 40%">
       <q-card-section>
         <div class="text-h6">Ministros Doy Fe</div>
+        <div>
+          <q-btn
+            color="primary"
+            icon="check"
+            label="Agregar Doy Fe"
+            @click="addNew(1)"
+          />
+        </div>
       </q-card-section>
 
       <q-table
@@ -44,6 +52,14 @@
       <!-- Tabla De ministros firmantes -->
       <q-card-section>
         <div class="text-h6">Ministros Firmantes</div>
+        <div>
+          <q-btn
+            color="primary"
+            icon="check"
+            label="Agregar Ministro"
+            @click="addNew(2)"
+          />
+        </div>
       </q-card-section>
       <q-table
         flat
@@ -179,6 +195,9 @@ export default defineComponent({
 
         //this.hideLoading();
       });
+    },
+    addNew(ev) {
+      this.$emit("openModal", ev);
     },
   },
 });

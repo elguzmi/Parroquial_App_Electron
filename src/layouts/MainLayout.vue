@@ -13,7 +13,7 @@
           class="q-mr-sm"
         />
         <div class="q-pr-lg text-h6" v-if="$q.screen.gt.xs">
-          Parroquia Jesus Eucaristia
+          Parroquia Jesús Eucaristía
         </div>
 
         <q-space />
@@ -135,7 +135,7 @@ export default {
       this.getDataLogin((val, data) => {
         if (!val) this.$router.push("/");
         else {
-          window.myAPI.loadModules(data.Id_Perfil).then((e) => {
+          window.ApiLogin.loadModules(data.Id_Perfil).then((e) => {
             // console.log("loadModules ", e);
             this.modules = e;
             this.saveModules(e);

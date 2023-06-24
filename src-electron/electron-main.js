@@ -135,9 +135,7 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   }
 });
 
-//#endregion
-
-ipcMain.handle("myAPI:Load_Modules", async (ev, IdPerfil) => {
+ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
   console.log("Load Modules", IdPerfil);
   try {
     let data = await sql.connect(sqlConfig);
@@ -149,9 +147,11 @@ ipcMain.handle("myAPI:Load_Modules", async (ev, IdPerfil) => {
       return exec.recordsets[0];
     }
   } catch (err) {
-    return { isError: true, errorMessage: "Apilogin " + err };
+    return "Load_Modules " + err;
   }
 });
+
+//#endregion
 
 ipcMain.handle("myAPI:load_Ministros", async () => {
   try {
@@ -204,10 +204,10 @@ ipcMain.handle("myAPI:ins_Record", async (ev, arg, tabla) => {
       let exec = await request.execute("BD_Ins_" + tabla);
       console.log(exec);
       conn.close();
-      return exec.recordset[0]["MSJ"];
+      return exec.recordset[0][""];
     }
   } catch (err) {
-    return { isError: true, errorMessage: "Apilogin " + err };
+    return "Error - ins_Record " + err;
   }
 });
 
@@ -237,7 +237,7 @@ ipcMain.handle("myAPI:upd_Record", async (ev, arg, tabla) => {
       return exec.recordset[0][""];
     }
   } catch (err) {
-    return { isError: true, errorMessage: "Apilogin " + err };
+    return "Error - upd_Record " + err;
   }
 });
 
@@ -305,7 +305,35 @@ ipcMain.handle("myAPI:upd_VariablesGlobales", async (ev, values) => {
       return exec.recordset;
     }
   } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Lists_Configs " + err };
+    return "Error - BD_Get_Lists_Configs " + err;
+  }
+});
+
+ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
+  try {
+    let parametersIn = null;
+    parametersIn = await getParametersSp(sp);
+    let arg = JSON.parse(data);
+    let conn = await sql.connect(sqlConfig);
+    if (conn.connected == true) {
+      let request = new sql.Request();
+      parametersIn.map((e) => {
+        console.log(e["ParameterN"]);
+        console.log(getTypeData(e["Type"], e["max_length"]));
+        console.log(arg[e["ParameterN"]]);
+        request.input(
+          e["ParameterN"],
+          getTypeData(e["Type"], e["max_length"]),
+          arg[e["ParameterN"]]
+        );
+      });
+      let exec = await request.execute(sp);
+      console.log(exec);
+      conn.close();
+      return exec.recordset[0][""];
+    }
+  } catch (err) {
+    return "Error - ins_Config " + err;
   }
 });
 
@@ -322,7 +350,7 @@ ipcMain.handle("myAPI:upd_ShortCuts", async (ev, values) => {
       return exec.recordset;
     }
   } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Lists_Configs " + err };
+    return "Error - upd_ShortCuts " + err;
   }
 });
 

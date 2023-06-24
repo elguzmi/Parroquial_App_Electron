@@ -193,7 +193,8 @@
     </section>
     <section style="width: 100%">
       <Table_Component
-        v-if="rows.length > 0"
+        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
+        ref="tableComponent"
         title="Defunciones"
         tablaDirectTo="fact_Defunciones"
         :columns="columns"
@@ -205,37 +206,37 @@
         @loadingHide="hideLoading"
       ></Table_Component>
     </section>
-
-    <Previsualizacion
-      title="Bautismo"
-      :Doc="Documento"
-      v-if="showDialog"
-      :openDialog="showDialog"
-    ></Previsualizacion>
   </q-page>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
-import Previsualizacion from "components/Previsualizacion.vue";
 import { useQuasar } from "quasar";
 
-//import { ipcRenderer } from "electron";
-//const { ipcRenderer } = require("electron");
 export default defineComponent({
   name: "Defunciones",
   components: {
     Table_Component,
-    Previsualizacion,
   },
   mounted() {
     this.showLoading("Cargando Datos...");
-    this.getId_MinistroDoyFe();
-    this.getDefunciones();
+    this.getDataLogin((e, data) => {
+      console.log(e, data);
+      this.perfil = data.Id_Perfil;
+      this.getId_MinistroDoyFe();
+      if (this.perfil == 1 || this.perfil == 2) this.getDefunciones();
+      else this.hideLoading();
+    });
   },
   setup() {
     const $q = useQuasar();
+
+    const getDataLogin = (cll) => {
+      if ($q.localStorage.has("SK"))
+        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      else cll(false, {});
+    };
 
     function showLoading(msj) {
       $q.loading.show({
@@ -254,6 +255,9 @@ export default defineComponent({
     };
     const hideLoading = () => $q.loading.hide();
     return {
+      perfil: ref(null),
+      getDataLogin,
+
       Documento: ref(null),
       showDialog: ref(false),
 
@@ -331,8 +335,7 @@ export default defineComponent({
             window.myAPI
               .updRecord(JSON.stringify(DatosIns), "Defuncion")
               .then((e) => {
-                console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
@@ -344,12 +347,12 @@ export default defineComponent({
             window.myAPI
               .insRecord(JSON.stringify(DatosIns), "Defuncion")
               .then((e) => {
-                console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
                   this.resetValues();
+                  this.$refs.tableComponent.cleanSelectedRow();
                   this.getDefunciones();
                 }
               });
@@ -379,7 +382,7 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-      for (const key in data) {
+      for (const key in this.dataDefunciones) {
         this.dataDefunciones[key] = data[key];
       }
       this.setCargoFirm();
@@ -388,7 +391,7 @@ export default defineComponent({
     setCargoFirm() {
       this.dataDefunciones.Cargo_Firmante = this.ListMinistros.find(
         (e) => e.Id == this.dataDefunciones.Id_Firmante
-      ).Cargo;
+      )?.Cargo;
     },
     invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
@@ -423,6 +426,7 @@ export default defineComponent({
       this.dataDefunciones.NotaMarginal = null;
       this.dataDefunciones.Id_Firmante = 0;
       this.dataDefunciones.Cargo_Firmante = null;
+      this.$refs.tableComponent.cleanSelectedRow();
     },
   },
   watch: {

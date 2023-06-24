@@ -96,14 +96,15 @@ export default defineComponent({
   },
   methods: {
     updateData() {
-      //console.log("Actualizando..");
+      console.log(this.dataForm);
+      console.log(this.dataCard);
       this.dataCard.Nombre_ = this.dataForm["Novi" + this.prefijo];
       this.dataCard.Padres_ = this.dataForm["Padres_Novi" + this.prefijo];
       this.dataCard.Parroquia_ = this.dataForm["Parroquia_Novi" + this.prefijo];
       this.dataCard.Fecha_Bautismo_ =
         this.dataForm["Fecha_Bautismo_Novi" + this.prefijo];
-      this.dataCard.Lib_ = this.dataForm["Libro_Novi" + this.prefijo];
-      this.dataCard.Fol_ = this.dataForm["Folio_Novi" + this.prefijo];
+      this.dataCard.Lib_ = this.dataForm["Lib_Novi" + this.prefijo];
+      this.dataCard.Fol_ = this.dataForm["Fol_Novi" + this.prefijo];
       this.dataCard.Numero_ = this.dataForm["Acta_Novi" + this.prefijo];
     },
     cleanData() {

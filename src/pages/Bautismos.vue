@@ -205,7 +205,8 @@
     <hr />
     <section style="width: 100%">
       <Table_Component
-        v-if="rows.length > 0"
+        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
+        ref="tableComponent"
         title="Bautizos"
         tablaDirectTo="fact_bautismos"
         :columns="columns"
@@ -232,12 +233,23 @@ export default defineComponent({
   },
   mounted() {
     this.showLoading("Cargando Datos...");
-    this.getDoyFe();
-    this.getBautismos();
+    this.getDataLogin((e, data) => {
+      console.log(e, data);
+      this.perfil = data.Id_Perfil;
+      this.getDoyFe();
+      if (this.perfil == 1 || this.perfil == 2) this.getBautismos();
+      else this.hideLoading();
+    });
   },
   computed: {},
   setup() {
     const $q = useQuasar();
+
+    const getDataLogin = (cll) => {
+      if ($q.localStorage.has("SK"))
+        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      else cll(false, {});
+    };
 
     function showLoading(msj) {
       $q.loading.show({
@@ -289,6 +301,8 @@ export default defineComponent({
       rows: ref([]),
       columns: ref([]),
       visibleColumns: ref([]),
+      getDataLogin,
+      perfil: ref(null),
     };
   },
   methods: {
@@ -326,7 +340,7 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-      for (const key in data) {
+      for (const key in this.dataBautizos) {
         this.dataBautizos[key] = data[key];
       }
       this.setCargoFirm();
@@ -342,6 +356,7 @@ export default defineComponent({
             this.showMessage(e[0][""], "red", "error");
           else {
             this.showMessage(e[0][""], "positive", "check");
+            this.$refs.tableComponent.cleanSelectedRow();
             this.getBautismos();
           }
         }
@@ -366,6 +381,7 @@ export default defineComponent({
                 else {
                   this.showMessage(e, "positive", "check");
                   this.resetValues();
+                  this.$refs.tableComponent.cleanSelectedRow();
                   this.getBautismos();
                 }
               });
@@ -409,6 +425,7 @@ export default defineComponent({
       this.dataBautizos.Nota_Marginal = null;
       this.dataBautizos.Id_Ministro = 0;
       this.dataBautizos.Cargo = null;
+      this.$refs.tableComponent.cleanSelectedRow();
     },
     makeValidation(res) {
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
@@ -416,8 +433,10 @@ export default defineComponent({
 
       let msj = "";
       Object.keys(this.dataBautizos).map((elem) => {
-        if (this.dataBautizos[elem] == null || this.dataBautizos[elem] == "")
-          msj += " Completa el campo " + elem;
+        if (elem != "Nota_Marginal") {
+          if (this.dataBautizos[elem] == null || this.dataBautizos[elem] == "")
+            msj += " Completa el campo " + elem;
+        }
       });
       if (msj == "") res("OK");
       else res(msj);
@@ -426,7 +445,7 @@ export default defineComponent({
     setCargoFirm() {
       this.dataBautizos.Cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataBautizos.Id_Ministro
-      ).Cargo;
+      )?.Cargo;
     },
   },
   watch: {

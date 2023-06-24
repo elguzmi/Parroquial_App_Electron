@@ -112,6 +112,10 @@ export default defineComponent({
       else this.$emit("eventedited", this.selected[0]);
     },
 
+    cleanSelectedRow() {
+      this.selected = [];
+    },
+
     invtRecord() {
       if (this.selected.length == 0) return;
       else this.$emit("eventinvt", this.selected[0].Id);

@@ -1,6 +1,14 @@
 <template>
   <q-card-section>
     <div class="text-h6">ShortCuts</div>
+    <div>
+      <q-btn
+        color="primary"
+        icon="check"
+        label="Agregar Shortcut"
+        @click="addNew(3)"
+      />
+    </div>
   </q-card-section>
 
   <q-table
@@ -117,6 +125,9 @@ export default defineComponent({
         console.log("Data Config ShortCuts", e[2]);
         this.rows = e[2];
       });
+    },
+    addNew(ev) {
+      this.$emit("openModal", ev);
     },
   },
 });

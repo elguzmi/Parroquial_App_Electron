@@ -259,7 +259,8 @@
     <hr />
     <section style="width: 100%">
       <Table_Component
-        v-if="rows.length > 0"
+        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
+        ref="tableComponent"
         title="Confirmaciones"
         tablaDirectTo="fact_Confirmaciones"
         :columns="columns"
@@ -278,7 +279,6 @@
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import Table_Component from "components/Table_Component.vue";
-import Previsualizacion from "components/Previsualizacion.vue";
 
 //import { ipcRenderer } from "electron";
 //const { ipcRenderer } = require("electron");
@@ -289,8 +289,14 @@ export default defineComponent({
   },
   mounted() {
     this.showLoading("Cargando Datos...");
-    this.getId_MinistroDoyFe();
-    this.getConfirmaciones();
+
+    this.getDataLogin((e, data) => {
+      console.log(e, data);
+      this.perfil = data.Id_Perfil;
+      this.getId_MinistroDoyFe();
+      if (this.perfil == 1 || this.perfil == 2) this.getConfirmaciones();
+      else this.hideLoading();
+    });
   },
   setup() {
     const $q = useQuasar();
@@ -300,6 +306,12 @@ export default defineComponent({
         message: msj,
       });
     }
+    const getDataLogin = (cll) => {
+      if ($q.localStorage.has("SK"))
+        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      else cll(false, {});
+    };
+
     const showMessage = (msj, color, icon) => {
       $q.loading.hide();
       $q.notify({
@@ -312,6 +324,9 @@ export default defineComponent({
     };
     const hideLoading = () => $q.loading.hide();
     return {
+      getDataLogin,
+      perfil: ref(null),
+
       Documento: ref(null),
       showDialog: ref(false),
 
@@ -396,11 +411,12 @@ export default defineComponent({
               .updRecord(JSON.stringify(DatosIns), "Confirmacion")
               .then((e) => {
                 console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
                   this.resetValues();
+                  this.$refs.tableComponent.cleanSelectedRow();
                   this.getConfirmaciones();
                 }
               });
@@ -409,7 +425,7 @@ export default defineComponent({
               .insRecord(JSON.stringify(DatosIns), "Confirmacion")
               .then((e) => {
                 console.log(e);
-                if (e.indexOf("Error") >= 0)
+                if (e.toLowerCase().indexOf("error") >= 0)
                   this.showMessage(e, "red", "error");
                 else {
                   this.showMessage(e, "positive", "check");
@@ -418,7 +434,7 @@ export default defineComponent({
                 }
               });
           }
-        } else console.log(result);
+        } else this.showMessage(result, "red", "error");
       });
     },
     makeValidation(res) {
@@ -428,11 +444,13 @@ export default defineComponent({
 
       let msj = "";
       Object.keys(this.dataConfirmacion).map((elem) => {
-        if (
-          this.dataConfirmacion[elem] == null ||
-          this.dataConfirmacion[elem] == ""
-        )
-          msj += "Error - Completa el campo " + elem;
+        if (elem != "Nota_Marginal") {
+          if (
+            this.dataConfirmacion[elem] == null ||
+            this.dataConfirmacion[elem] == ""
+          )
+            msj += "Error - Completa el campo " + elem;
+        }
       });
       if (msj == "") res("OK");
       else res(msj);
@@ -440,7 +458,7 @@ export default defineComponent({
     setCargoFirm() {
       this.dataConfirmacion.Cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataConfirmacion.Id_Ministro
-      ).Cargo;
+      )?.Cargo;
     },
 
     setrecord(data) {
@@ -450,7 +468,7 @@ export default defineComponent({
       this.Folio = data.Folio;
       this.Numero = data.Numero;
 
-      for (const key in data) {
+      for (const key in this.dataConfirmacion) {
         this.dataConfirmacion[key] = data[key];
       }
       this.setCargoFirm();
@@ -496,6 +514,7 @@ export default defineComponent({
       this.dataConfirmacion.Notas_Correcciones = null;
       this.dataConfirmacion.Id_Ministro = 0;
       this.dataConfirmacion.Cargo = null;
+      this.$refs.tableComponent.cleanSelectedRow();
     },
   },
 

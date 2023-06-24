@@ -21,8 +21,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("myAPI", {
-  loadModules: (perfil) => ipcRenderer.invoke("myAPI:Load_Modules", perfil),
-
   // cargar ministros
   loadMinistros: () => ipcRenderer.invoke("myAPI:load_Ministros"),
   loadFirmantes: () => ipcRenderer.invoke("myAPI:load_Firmantes"),
@@ -44,6 +42,9 @@ contextBridge.exposeInMainWorld("myAPI", {
 
   // actualizar Variables Globales
   updShortCuts: (data) => ipcRenderer.invoke("myAPI:upd_upd_ShortCuts", data),
+
+  //actualizar Configuraciones
+  insConfig: (data, sp) => ipcRenderer.invoke("myAPI:ins_Config", data, sp),
 
   //Inactivar de datos
   InvtRecord: (data) => ipcRenderer.invoke("myAPI:Invt_Record", data),
@@ -69,4 +70,5 @@ contextBridge.exposeInMainWorld("ApiList", {
 
 contextBridge.exposeInMainWorld("ApiLogin", {
   loadLogin: (datosUser) => ipcRenderer.invoke("ApiLogin:login", datosUser),
+  loadModules: (perfil) => ipcRenderer.invoke("ApiLogin:Load_Modules", perfil),
 });

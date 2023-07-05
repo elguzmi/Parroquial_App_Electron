@@ -52,9 +52,9 @@ contextBridge.exposeInMainWorld("myAPI", {
   //Get Documento
   GetDocumentoHtml: (Tabla, Id) =>
     ipcRenderer.invoke("myAPI:Get_DocumentoHtml", Tabla, Id),
-  goToPdf: (dataDoc) => ipcRenderer.invoke("myAPI:GoTo_DocumentoPdf2", dataDoc),
-  // convertToDocx: (dataDoc) =>
-  //   ipcRenderer.invoke("myAPI:convertTo_Docx", dataDoc),
+  goToPdf: (dataDoc) => ipcRenderer.invoke("myAPI:GoTo_DocumentoPdf", dataDoc),
+  convertToDocx: (dataDoc) =>
+    ipcRenderer.invoke("myAPI:convertTo_Docx", dataDoc),
   getListOfConfigs: (dataDoc) =>
     ipcRenderer.invoke("myAPI:get_ListOfConfigs", dataDoc),
 

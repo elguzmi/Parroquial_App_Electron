@@ -5,7 +5,7 @@
         <img src="../assets/img/logo_kapri.jpg" />
         <q-card-section>
           <div class="text-h6">Kapri Technology</div>
-          <div class="text-subtitle2">Kamilo Prieto && Santiago Guzman</div>
+          <div class="text-subtitle2">Kamilo Prieto // Santiago Guzman</div>
         </q-card-section>
         <q-card-section>
           Trabajamos en sus necesidades para tu tipo de software

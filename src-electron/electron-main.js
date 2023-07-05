@@ -5,13 +5,16 @@ import {
   ipcMain,
   ipcRenderer,
 } from "electron";
-const PDFWindow = require("electron-pdf-window");
+//const PDFWindow = require("electron-pdf-window");
 import path from "path";
 import os from "os";
 const sql = require("mssql");
-// const html_to_pdf = require("html-pdf-node");
-// const pdf = require("pdf-creator-node");
-// const xl = require("excel4node");
+
+const html_to_pdf = require("html-pdf-node");
+const pdf = require("pdf-creator-node");
+var fs = require("fs");
+const xl = require("excel4node");
+const HTMLtoDOCX = require("html-to-docx");
 
 let sqlConfig = {
   user: "sa",
@@ -24,6 +27,7 @@ let sqlConfig = {
     min: 0,
     idleTimeoutMillis: 30000
   },*/
+
   options: {
     encrypt: true,
     trustServerCertificate: true,
@@ -50,12 +54,15 @@ function createWindow() {
     width: 1300,
     height: 659,
     useContentSize: true,
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
     webPreferences: {
       contextIsolation: true,
-      sandbox: true,
+      //sandbox: false,
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script
-      //preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
-      preload: path.resolve(__dirname, "electron-preload.js"),
+      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      //preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      //preload: path.resolve(__dirname, "electron-preload.js"),
       nodeIntegration: true,
     },
   });
@@ -100,6 +107,9 @@ function openPdf(fileRoute) {
     width: 1300,
     height: 659,
     useContentSize: true,
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    //args: ["--no-sandbox"],
   });
   ventana.loadURL("file:///" + fileRoute);
   //ventana.webContents.print();
@@ -347,7 +357,7 @@ ipcMain.handle("myAPI:upd_ShortCuts", async (ev, values) => {
       request.input("Valor", sql.VarChar(50), Valor);
       let exec = await request.execute("BD_Upd_ShortCuts");
       conn.close();
-      return exec.recordset;
+      return exec.recordset[0][""];
     }
   } catch (err) {
     return "Error - upd_ShortCuts " + err;
@@ -395,9 +405,10 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
   console.log("Los datos son", arg);
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
-    let nombre =
-      Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
-    let route = os.homedir() + "/Documents/" + nombre;
+    let nombre = "Pureba.pdf";
+    // Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
+
+    let route = __dirname + "/" + nombre;
     console.log("la ruta es :", route);
     var cssb = [];
     cssb.push("<style>");
@@ -426,22 +437,25 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
       },
     };
     let file = { content: Html_Header + Html_Body };
-    const html_to_pdf = require("html-pdf-node");
-    html_to_pdf.generatePdf(file, opciones).then((pdfBuffer) => {
-      console.log("PDF Buffer:-", pdfBuffer);
-      openPdf(route);
-    });
+
+    let result = await html_to_pdf.generatePdf(file, opciones);
+    return result;
+    // html_to_pdf.generatePdf(file, opciones).then((pdfBuffer) => {
+    //   console.log("PDF Buffer:-", pdfBuffer);
+    //   openPdf(route);
+    // });
   } catch (err) {
-    return { isError: true, errorMessage: "GoTo_DocumentoPdf " + err };
+    return "Error - GoTo_DocumentoPdf " + err;
   }
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
-  console.log("Los datos son", arg);
-  const pdf = require("pdf-creator-node");
+  //console.log("Los datos son", arg);
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
     var options = {
+      // phantomPath:
+      //   " C:/Users/santi/Downloads/phantomjs/phantomjs-2.1.1-windows/bin/phantomjs.exe",
       format: "Legal",
       orientation: "portrait",
       border: "0mm",
@@ -461,9 +475,11 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
         border: "15cm",
       },
     };
-    let nombre =
-      Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
-    let route = os.homedir() + "/Documents/" + nombre;
+    // let nombre =
+    //   Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
+    let nombre = "Prueba.pdf";
+    //let route = __dirname + "/" + nombre;
+    let route = "D:/Usuario_Santi/Pictures/prueba.pdf";
     console.log("la ruta es :", route);
     var document = {
       html: Html_Body,
@@ -473,6 +489,15 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
       type: "",
     };
 
+    //return resultPdf?.filename ? resultPdf.filename : "No route descrited";
+    //return "Ok";
+    //return resultPdf;
+    // pdf.create(Html_Body, options).toFile(route, function (err, res) {
+    //   if (err) return console.log(err);
+    //   console.log(res); // { filename: '/app/businesscard.pdf' }
+    //   openPdf(route);
+    // });
+
     pdf
       .create(document, options)
       .then((res) => {
@@ -481,9 +506,35 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
       })
       .catch((error) => {
         console.error(error);
+        throw error;
       });
   } catch (err) {
-    return { isError: true, errorMessage: "GoTo_DocumentoPdf " + err };
+    return "Error - GoTo_DocumentoPdf2 " + err;
+  }
+});
+
+ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
+  try {
+    let { Html_Body, Html_Header, Html_Footer } = JSON.parse(dataHtml);
+    console.log(Html_Body);
+    let data = await HTMLtoDOCX(
+      Html_Body,
+      "<p>Buenas Tardes</p>",
+      {
+        orientation: "portrait",
+        header: true,
+        footer: true,
+        pageSize: { width: "800px", height: "1400px" },
+        font: "Arial",
+      },
+      "<p>Footer</p>"
+    );
+    console.log("Holiu", data);
+    fs.writeFile("temp.docx", data, (e) => {
+      console.log(e);
+    });
+  } catch (err) {
+    return { isError: true, errorMessage: "convertTo_Docx " + err };
   }
 });
 

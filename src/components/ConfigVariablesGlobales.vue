@@ -26,15 +26,15 @@
           <q-popup-edit
             v-model="props.row.Valor"
             v-slot="scope"
-            :validate="validacionInput"
-            @hide="saveRecord(props.row)"
+            buttons
+            @cancel="validacionInput('cancel')"
+            @save="saveRecord(props.row, 'BD_Upd_VariablesGlobales')"
           >
             <q-input
               type="text"
               v-model="scope.value"
               dense
               autofocus
-              @keyup.enter="scope.set"
               hint="Ingresa el valor de la propiedad"
             />
           </q-popup-edit>
@@ -112,12 +112,22 @@ export default defineComponent({
       if (val.length > 5) return true;
       else return false;
     },
-    saveRecord(value) {
-      console.log(value);
-      window.myAPI.updVaribalesGlobales(JSON.stringify(value)).then((e) => {
-        console.log("Data result", e[0][""]);
-        this.$emit("mostrarMsj", e[0][""], "positive", "check");
-      });
+    saveRecord(row, Sp) {
+      try {
+        setTimeout(() => {
+          let ObjBuilt = {
+            Id: row.Id,
+            NombreLocal: row.NombreLocal,
+            Valor: row.Valor,
+          };
+          window.myAPI.executeSp_St(JSON.stringify(ObjBuilt), Sp).then((e) => {
+            this.$emit("mostrarMsj", e, "positive", "check");
+            //this.getListConfigs();
+          });
+        }, 500);
+      } catch (error) {
+        this.getListConfigs();
+      }
     },
     getListConfigs() {
       window.myAPI.getListOfConfigs().then((e) => {

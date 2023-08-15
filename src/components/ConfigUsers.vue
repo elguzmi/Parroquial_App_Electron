@@ -33,6 +33,7 @@
                 v-model="props.row.Nombre_DoyFe"
                 v-slot="scope"
                 :validate="validacionInput"
+                @hide="saveRecord(props.row, 'BD_Upd_MinistroDoyFe')"
               >
                 <q-input
                   type="text"
@@ -44,10 +45,18 @@
                 />
               </q-popup-edit>
             </q-td>
+            <q-td key="Accion" :props="props">
+              <q-btn
+                color="negative"
+                icon="delete"
+                @click="deleteRecord(props.key, 'BD_Invt_MinistrosDoyFe')"
+              />
+            </q-td>
           </q-tr>
         </template>
       </q-table>
     </div>
+
     <div class="MinistrosFirmante" style="width: 40%">
       <!-- Tabla De ministros firmantes -->
       <q-card-section>
@@ -80,14 +89,15 @@
               <q-popup-edit
                 v-model="props.row.Nombre_Firmante"
                 v-slot="scope"
-                :validate="validacionInput"
+                buttons
+                @cancel="validacionInput('cancel')"
+                @save="saveRecord(props.row, 'BD_Upd_MinistroFirmante')"
               >
                 <q-input
                   type="text"
                   v-model="scope.value"
                   dense
                   autofocus
-                  @keyup.enter="scope.set"
                   hint="Ingresa el Nombre del firmante"
                 />
               </q-popup-edit>
@@ -98,27 +108,37 @@
               <q-popup-edit
                 v-model="props.row.Cargo"
                 v-slot="scope"
-                :validate="validacionInput"
+                buttons
+                @cancel="validacionInput('cancel')"
+                @save="saveRecord(props.row, 'BD_Upd_MinistroFirmante')"
               >
                 <q-input
                   type="text"
                   v-model="scope.value"
                   dense
                   autofocus
-                  @keyup.enter="scope.set"
                   hint="Ingresa el Cargo del Ministro"
                 />
               </q-popup-edit>
+            </q-td>
+            <q-td key="Accion" :props="props">
+              <q-btn
+                color="negative"
+                icon="delete"
+                @click="deleteRecord(props.key, 'BD_Invt_MinistrosFirmantes')"
+              />
             </q-td>
           </q-tr>
         </template>
       </q-table>
     </div>
+    <ConfirmModal ref="confirmModal"></ConfirmModal>
   </div>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import ConfirmModal from "components/ConfirmModal.vue";
 const columns = [
   {
     name: "Id",
@@ -134,6 +154,12 @@ const columns = [
     label: "Nombre",
     field: "Nombre_DoyFe",
     sortable: true,
+  },
+  {
+    name: "Accion",
+    align: "center",
+    label: "Accion",
+    field: "Accion",
   },
 ];
 const columnsMinistros = [
@@ -159,10 +185,19 @@ const columnsMinistros = [
     field: "Cargo",
     sortable: true,
   },
+  {
+    name: "Accion",
+    align: "center",
+    label: "Accion",
+    field: "Accion",
+  },
 ];
 
 export default defineComponent({
   name: "ConfigUsers",
+  components: {
+    ConfirmModal,
+  },
   props: {
     title: { type: String },
   },
@@ -182,22 +217,48 @@ export default defineComponent({
   },
   methods: {
     validacionInput(val) {
-      console.log("valor" + val);
-      if (val.length > 5) return true;
-      else return false;
+      console.log(val);
+    },
+    saveRecord(row, Sp) {
+      try {
+        setTimeout(() => {
+          let ObjBuilt = {};
+          if (Sp.includes("MinistroFirmante"))
+            ObjBuilt = {
+              Id: row.Id,
+              Nombre_Firmante: row.Nombre_Firmante,
+              Cargo: row.Cargo,
+            };
+          else ObjBuilt = { Id: row.Id, Nombre_DoyFe: row.Nombre_DoyFe };
+          window.myAPI.executeSp_St(JSON.stringify(ObjBuilt), Sp).then((e) => {
+            console.log("Data Result", e);
+            this.$emit("mostrarMsj", e, "positive", "check");
+            //this.getListConfigs();
+          });
+        }, 500);
+      } catch (error) {
+        this.getListConfigs();
+      }
     },
     getListConfigs() {
       window.myAPI.getListOfConfigs().then((e) => {
-        console.log("Data Config ", e);
         this.rows = e[0];
-        console.log(e[1]);
         this.rows_Ministros = e[1];
-
-        //this.hideLoading();
       });
     },
     addNew(ev) {
       this.$emit("openModal", ev);
+    },
+    async deleteRecord(Id, Sp) {
+      try {
+        await this.$refs.confirmModal.confirm();
+        window.myAPI.executeSp_St(JSON.stringify({ Id: Id }), Sp).then((e) => {
+          //console.log("Data Result", e);
+          if (e.includes("Error")) this.$emit("mostrarMsj", e, "red", "danger");
+          else this.$emit("mostrarMsj", e, "positive", "check");
+          this.getListConfigs();
+        });
+      } catch (err) {}
     },
   },
 });

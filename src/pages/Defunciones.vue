@@ -176,13 +176,13 @@
             <q-btn-group spread>
               <q-btn
                 color="green"
-                :label="Id != null && Id != '' ? 'Editar' : 'Guardar'"
+                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
                 type="submit"
                 icon="save"
               />
               <q-btn
                 color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Reset'"
+                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
                 type="reset"
                 icon="restart_alt"
               />
@@ -222,7 +222,7 @@ export default defineComponent({
   mounted() {
     this.showLoading("Cargando Datos...");
     this.getDataLogin((e, data) => {
-      console.log(e, data);
+      //console.log(e, data);
       this.perfil = data.Id_Perfil;
       this.getId_MinistroDoyFe();
       if (this.perfil == 1 || this.perfil == 2) this.getDefunciones();
@@ -264,7 +264,6 @@ export default defineComponent({
       showLoading,
       hideLoading,
       showMessage,
-
       isDense: ref(true),
 
       Id: ref(null),
@@ -296,7 +295,7 @@ export default defineComponent({
   methods: {
     getId_MinistroDoyFe() {
       window.myAPI.loadMinistros().then((e) => {
-        console.log("Ministros juntos ", e);
+        //console.log("Ministros juntos ", e);
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
       });
@@ -305,7 +304,7 @@ export default defineComponent({
       window.ApiList.loadDataTables("Defunciones").then((e) => {
         this.columns = [];
         let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-        console.log(e[0]);
+        //console.log(e[0]);
         Columnas = Columnas.split("|");
         Columnas_Label = Columnas_Label.split("|");
         Columnas_Visibles = Columnas_Visibles.split("|");
@@ -357,21 +356,24 @@ export default defineComponent({
                 }
               });
           }
-        } else console.log(result);
+        } else this.showMessage(result, "red", "danger");
       });
     },
     makeValidation(res) {
-      console.log(this.dataDefunciones);
       if (this.No_Defuncion != this.Libro + this.Folio + this.Numero)
         return res("Error - El codigo de partida no coincide");
 
       let msj = "";
       Object.keys(this.dataDefunciones).map((elem) => {
-        if (
-          this.dataDefunciones[elem] == null ||
-          this.dataDefunciones[elem] == ""
-        )
-          msj += "Error - Completa el campo " + elem;
+        if (elem != "NotaMarginal") {
+          if (
+            this.dataDefunciones[elem] == null ||
+            this.dataDefunciones[elem] == ""
+          )
+            msj += !msj.includes("Error")
+              ? "Error - Completa los siguientes campos : " + elem
+              : " - " + elem;
+        }
       });
       if (msj == "") res("OK");
       else res(msj);
@@ -395,10 +397,9 @@ export default defineComponent({
     },
     invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
-      console.log("Id de inactivacion", Id);
       let data = { Id: Id, Sp: "BD_Invt_Defuncion" };
       window.myAPI.InvtRecord(data).then((e) => {
-        console.log(e);
+        //console.log(e);
         if (e[0][""]) {
           if (e[0][""].includes("Error"))
             this.showMessage(e[0][""], "red", "error");

@@ -48,7 +48,7 @@
             class="full-width row no-wrap justify-around items-start content-around"
           >
             <div class="col-6">
-              <q-select
+              <!-- <q-select
                 v-model="dataMatrimonio.Presencio"
                 :options="[
                   'YOEL GÓMEZ RAMÍREZ. Pbro.',
@@ -58,7 +58,25 @@
                 label="Presencio"
                 filled
                 dense
-              />
+              /> -->
+              <q-select
+                filled
+                v-model="dataMatrimonio.Presencio"
+                :model-value="dataMatrimonio.Presencio"
+                use-input
+                label="Presencio"
+                hide-selected
+                fill-input
+                input-debounce="0"
+                :options="[
+                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
+                  'LORENZO ALZATE ARBOLEDA. Pbro',
+                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
+                ]"
+                @input-value="setModel"
+                dense
+              >
+              </q-select>
             </div>
 
             <div class="col-5">
@@ -154,13 +172,13 @@
             <q-btn-group spread>
               <q-btn
                 color="green"
-                :label="Id != null && Id != '' ? 'Editar' : 'Guardar'"
+                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
                 type="submit"
                 icon="save"
               />
               <q-btn
                 color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Reset'"
+                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
                 type="reset"
                 icon="restart_alt"
               />
@@ -325,12 +343,15 @@ export default defineComponent({
       this.$refs.cards1.getData();
       this.$refs.cards.getData();
       //console.log(this.dataMatrimonio);
+
+      //console.log(this.dataMatrimonio);
       this.makeValidation((result) => {
         if (result === "OK") {
           let DatosIns = this.dataMatrimonio;
           DatosIns.Libro = this.Libro;
           DatosIns.Folio = this.Folio;
           DatosIns.Numero = this.Numero;
+          console.log(DatosIns);
           if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
           if (this.Id != null && this.Id != "") {
             window.myAPI
@@ -364,23 +385,26 @@ export default defineComponent({
       });
     },
     makeValidation(res) {
-      console.log(this.dataMatrimonio);
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
         return res("Error - El codigo de partida no coincide");
 
       let msj = "";
       Object.keys(this.dataMatrimonio).map((elem) => {
-        if (
-          this.dataMatrimonio[elem] == null ||
-          this.dataMatrimonio[elem] == ""
-        )
-          msj += "Error - Completa el campo " + elem;
+        if (elem != "Nota_Marginal") {
+          if (
+            this.dataMatrimonio[elem] == null ||
+            this.dataMatrimonio[elem] == ""
+          )
+            msj += !msj.includes("Error")
+              ? " Error - Completa los siguientes campos :  " + elem
+              : " - " + elem;
+        }
       });
       if (msj == "") res("OK");
       else res(msj);
     },
     setrecord(data) {
-      console.log("Recogido desde el compoentn padre", data);
+      //console.log("Recogido desde el compoentn padre", data);
       this.Id = data.Id;
       this.Codigo_Partida = data.Codigo_Partida;
       this.Libro = data.Libro;
@@ -428,6 +452,9 @@ export default defineComponent({
       this.dataMatrimonio.Cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataMatrimonio.Id_Ministro
       )?.Cargo;
+    },
+    setModel(val) {
+      this.dataMatrimonio.Presencio = val;
     },
 
     resetValues() {

@@ -18,7 +18,7 @@
     :columns="columns"
     row-key="Id"
     binary-state-sort
-    :visible-columns="['Shortcut', 'Template']"
+    :visible-columns="['Shortcut', 'Template', 'Accion']"
   >
     <template v-slot:body="props">
       <q-tr :props="props">
@@ -30,14 +30,14 @@
           <q-popup-edit
             v-model="props.row.Shortcut"
             v-slot="scope"
-            :validate="validacionInput"
+            buttons
+            @save="saveRecord(props.row, 'BD_Upd_ShortCuts')"
           >
             <q-input
               type="text"
               v-model="scope.value"
               dense
               autofocus
-              @keyup.enter="scope.set"
               hint="Ingresa el Nombre"
             />
           </q-popup-edit>
@@ -47,25 +47,34 @@
           <q-popup-edit
             v-model="props.row.Template"
             v-slot="scope"
-            :validate="validacionInput"
+            buttons
+            @save="saveRecord(props.row, 'BD_Upd_ShortCuts')"
           >
             <q-input
               type="text"
               v-model="scope.value"
               dense
               autofocus
-              @keyup.enter="scope.set"
               hint="Ingresa el Nombre"
             />
           </q-popup-edit>
         </q-td>
+        <q-td key="Accion" :props="props">
+          <q-btn
+            color="negative"
+            icon="delete"
+            @click="deleteRecord(props.key, 'BD_Invt_ShortCut')"
+          />
+        </q-td>
       </q-tr>
     </template>
   </q-table>
+  <ConfirmModal ref="confirmModal"></ConfirmModal>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
+import ConfirmModal from "components/ConfirmModal.vue";
 const columns = [
   {
     name: "Id",
@@ -88,10 +97,19 @@ const columns = [
     field: "Template",
     sortable: true,
   },
+  {
+    name: "Accion",
+    align: "center",
+    label: "Accion",
+    field: "Accion",
+  },
 ];
 
 export default defineComponent({
   name: "ConfigShortCuts",
+  components: {
+    ConfirmModal,
+  },
   props: {
     title: { type: String },
   },
@@ -106,19 +124,21 @@ export default defineComponent({
     this.getListConfigs();
   },
   methods: {
-    validacionInput(val) {
-      console.log("valor" + val);
-      if (val.length > 3) return true;
-      else return false;
-    },
-    saveRecord(value) {
-      console.log(value);
-      window.myAPI.updVaribalesGlobales(JSON.stringify(value)).then((e) => {
-        console.log("Data result", e[0][""]);
-        if (("Data result", e[0][""].includes("Error")))
-          this.$emit("mostrarMsj", e[0][""], "negative", "danger");
-        else this.$emit("mostrarMsj", e[0][""], "positive", "check");
-      });
+    saveRecord(row, Sp) {
+      try {
+        setTimeout(() => {
+          let ObjBuilt = {
+            Id: row.Id,
+            Shortcut: row.Shortcut,
+            Template: row.Template,
+          };
+          window.myAPI.executeSp_St(JSON.stringify(ObjBuilt), Sp).then((e) => {
+            this.$emit("mostrarMsj", e, "positive", "check");
+          });
+        }, 500);
+      } catch (error) {
+        this.getListConfigs();
+      }
     },
     getListConfigs() {
       window.myAPI.getListOfConfigs().then((e) => {
@@ -128,6 +148,18 @@ export default defineComponent({
     },
     addNew(ev) {
       this.$emit("openModal", ev);
+    },
+
+    async deleteRecord(Id, Sp) {
+      try {
+        await this.$refs.confirmModal.confirm();
+        window.myAPI.executeSp_St(JSON.stringify({ Id: Id }), Sp).then((e) => {
+          //console.log("Data Result", e);
+          if (e.includes("Error")) this.$emit("mostrarMsj", e, "red", "danger");
+          else this.$emit("mostrarMsj", e, "positive", "check");
+          this.getListConfigs();
+        });
+      } catch (err) {}
     },
   },
 });

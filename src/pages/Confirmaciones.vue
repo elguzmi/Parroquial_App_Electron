@@ -241,13 +241,13 @@
             <q-btn-group spread>
               <q-btn
                 color="green"
-                :label="Id != null && Id != '' ? 'Editar' : 'Guardar'"
+                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
                 type="submit"
                 icon="save"
               />
               <q-btn
                 color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Reset'"
+                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
                 type="reset"
                 icon="restart_alt"
               />
@@ -438,18 +438,19 @@ export default defineComponent({
       });
     },
     makeValidation(res) {
-      console.log(this.dataConfirmacion);
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
         return res("Error - El codigo de partida no coincide");
 
       let msj = "";
       Object.keys(this.dataConfirmacion).map((elem) => {
-        if (elem != "Nota_Marginal") {
+        if (elem != "Notas_Correcciones") {
           if (
             this.dataConfirmacion[elem] == null ||
             this.dataConfirmacion[elem] == ""
           )
-            msj += "Error - Completa el campo " + elem;
+            msj += !msj.includes("Error")
+              ? "Error - Completa los siguientes campos : " + elem
+              : " - " + elem;
         }
       });
       if (msj == "") res("OK");

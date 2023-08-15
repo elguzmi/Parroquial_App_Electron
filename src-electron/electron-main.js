@@ -4,6 +4,7 @@ import {
   nativeTheme,
   ipcMain,
   ipcRenderer,
+  shell,
 } from "electron";
 //const PDFWindow = require("electron-pdf-window");
 import path from "path";
@@ -16,11 +17,15 @@ var fs = require("fs");
 const xl = require("excel4node");
 const HTMLtoDOCX = require("html-to-docx");
 
+const dataBases = {
+  serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
+  serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
+};
 let sqlConfig = {
   user: "sa",
   password: "Minecraft123",
   database: "ParroquiaBackup",
-  server: "GAMINGUZMI\\SERVERSANTI",
+  server: dataBases.serverProd.name,
   //server: "DESKTOP-6BM9I17\\SQLEXPRESS",
   /* pool: {
     max: 10,
@@ -67,9 +72,10 @@ function createWindow() {
     },
   });
 
+  // mainWindow.loadURL(
+  //   "D:\\Usuario_Santi\\Documents\\SOFTWARES_independientes\\Software_Parroquial_Jesus_Eucaristia\\parroquia_app\\temp1.docx"
+  // );
   mainWindow.loadURL(process.env.APP_URL);
-
-  //mainWindow.loadFile("C:Users/santi/Desktop/Presta/prueba.pdf");
 
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
@@ -112,23 +118,26 @@ function openPdf(fileRoute) {
     //args: ["--no-sandbox"],
   });
   ventana.loadURL("file:///" + fileRoute);
-  //ventana.webContents.print();
 
-  // const win = new PDFWindow({
-  //   width: 800,
-  //   height: 600,
+  // ventana.webContents.on("did-finish-load", () => {
+  //   ventana.webContents.print();
   // });
-  // console.log("la ruta actual es" + os.homedir());
-  // win.loadURL("file:///C:/Users/santi/Desktop/prueba.pdf");
-  ventana.webContents.on("did-finish-load", () => {
-    ventana.webContents.print();
-  });
 }
 //#region Api login
 
 // ********** API DE LOGIN
+ipcMain.handle("ApiLogin:change_Database", async (ev, arg) => {
+  try {
+    sqlConfig.server = dataBases[arg].name;
+    return "OK";
+  } catch (err) {
+    return "Error -" + err;
+  }
+});
+
+// ********** API DE LOGIN
 ipcMain.handle("ApiLogin:login", async (ev, arg) => {
-  console.log("Los datos son", arg.user);
+  //console.log("Los datos son", arg.user);
   try {
     let { user, clave } = arg;
     let data = await sql.connect(sqlConfig);
@@ -146,7 +155,7 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
 });
 
 ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
-  console.log("Load Modules", IdPerfil);
+  //console.log("Load Modules", IdPerfil);
   try {
     let data = await sql.connect(sqlConfig);
     if (data.connected == true) {
@@ -197,14 +206,14 @@ ipcMain.handle("myAPI:ins_Record", async (ev, arg, tabla) => {
     let parametersIn = null;
     parametersIn = await getParametersSp("BD_Ins_" + tabla);
     arg = JSON.parse(arg);
-    console.log(arg, tabla);
+    //console.log(arg, tabla);
     let conn = await sql.connect(sqlConfig);
     if (conn.connected == true) {
       let request = new sql.Request();
       parametersIn.map((e) => {
-        console.log(e["ParameterN"]);
-        console.log(getTypeData(e["Type"], e["max_length"]));
-        console.log(arg[e["ParameterN"]]);
+        // console.log(e["ParameterN"]);
+        // console.log(getTypeData(e["Type"], e["max_length"]));
+        // console.log(arg[e["ParameterN"]]);
         request.input(
           e["ParameterN"],
           getTypeData(e["Type"], e["max_length"]),
@@ -212,7 +221,6 @@ ipcMain.handle("myAPI:ins_Record", async (ev, arg, tabla) => {
         );
       });
       let exec = await request.execute("BD_Ins_" + tabla);
-      console.log(exec);
       conn.close();
       return exec.recordset[0][""];
     }
@@ -227,14 +235,14 @@ ipcMain.handle("myAPI:upd_Record", async (ev, arg, tabla) => {
     let parametersIn = null;
     parametersIn = await getParametersSp("BD_Upd_" + tabla);
     arg = JSON.parse(arg);
-    console.log(arg, tabla);
+    //console.log(arg, tabla);
     let conn = await sql.connect(sqlConfig);
     if (conn.connected == true) {
       let request = new sql.Request();
       parametersIn.map((e) => {
-        console.log(e["ParameterN"]);
-        console.log(getTypeData(e["Type"], e["max_length"]));
-        console.log(arg[e["ParameterN"]]);
+        // console.log(e["ParameterN"]);
+        // console.log(getTypeData(e["Type"], e["max_length"]));
+        // console.log(arg[e["ParameterN"]]);
         request.input(
           e["ParameterN"],
           getTypeData(e["Type"], e["max_length"]),
@@ -242,7 +250,7 @@ ipcMain.handle("myAPI:upd_Record", async (ev, arg, tabla) => {
         );
       });
       let exec = await request.execute("BD_Upd_" + tabla);
-      console.log(exec);
+      //console.log(exec);
       conn.close();
       return exec.recordset[0][""];
     }
@@ -301,24 +309,6 @@ ipcMain.handle("myAPI:get_ListOfConfigs", async (ev) => {
   }
 });
 
-//************* actualizaer configuraciones ************/
-ipcMain.handle("myAPI:upd_VariablesGlobales", async (ev, values) => {
-  try {
-    let { Id, Nombre, Valor } = JSON.parse(values);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Id", sql.Int, Id);
-      request.input("Valor", sql.VarChar(50), Valor);
-      let exec = await request.execute("BD_Upd_VariablesGlobales");
-      conn.close();
-      return exec.recordset;
-    }
-  } catch (err) {
-    return "Error - BD_Get_Lists_Configs " + err;
-  }
-});
-
 ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
   try {
     let parametersIn = null;
@@ -328,9 +318,9 @@ ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
     if (conn.connected == true) {
       let request = new sql.Request();
       parametersIn.map((e) => {
-        console.log(e["ParameterN"]);
-        console.log(getTypeData(e["Type"], e["max_length"]));
-        console.log(arg[e["ParameterN"]]);
+        // console.log(e["ParameterN"]);
+        // console.log(getTypeData(e["Type"], e["max_length"]));
+        // console.log(arg[e["ParameterN"]]);
         request.input(
           e["ParameterN"],
           getTypeData(e["Type"], e["max_length"]),
@@ -338,7 +328,7 @@ ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
         );
       });
       let exec = await request.execute(sp);
-      console.log(exec);
+      // console.log(exec);
       conn.close();
       return exec.recordset[0][""];
     }
@@ -347,38 +337,79 @@ ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
   }
 });
 
-ipcMain.handle("myAPI:upd_ShortCuts", async (ev, values) => {
+//** procedimiento  que se ejecuta y devuelve un string  */
+ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
   try {
-    let { Id, Nombre, Valor } = JSON.parse(values);
+    let parametersIn = null;
+    parametersIn = await getParametersSp(sp);
+    let arg = JSON.parse(data);
+    //console.log(arg, sp);
     let conn = await sql.connect(sqlConfig);
     if (conn.connected == true) {
       let request = new sql.Request();
-      request.input("Id", sql.Int, Id);
-      request.input("Valor", sql.VarChar(50), Valor);
-      let exec = await request.execute("BD_Upd_ShortCuts");
+      parametersIn.map((e) => {
+        request.input(
+          e["ParameterN"],
+          getTypeData(e["Type"], e["max_length"]),
+          arg[e["ParameterN"]]
+        );
+      });
+      let exec = await request.execute(sp);
       conn.close();
       return exec.recordset[0][""];
     }
   } catch (err) {
-    return "Error - upd_ShortCuts " + err;
+    return "Error - executeSp_St " + err;
   }
 });
 
-// *** metodo para ABRIR VENTANA DE IMPERESION ***\\
-
-ipcMain.handle("myAPI:OpenWindow", async (ev, data) => {
+//** procedimiento  que se ejecuta y devuelve un array de json  */
+ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
   try {
-    let { Id, Sp } = data;
+    let parametersIn = null;
+    parametersIn = await getParametersSp(sp);
+    let arg = JSON.parse(data);
     let conn = await sql.connect(sqlConfig);
     if (conn.connected == true) {
       let request = new sql.Request();
-      request.input("Id", sql.Int, Id);
-      let exec = await request.execute(Sp);
+      parametersIn.map((e) => {
+        request.input(
+          e["ParameterN"],
+          getTypeData(e["Type"], e["max_length"]),
+          arg[e["ParameterN"]]
+        );
+      });
+      let exec = await request.execute(sp);
       conn.close();
-      return exec.recordsets[0];
+      return exec.recordset[0];
     }
-  } catch (err) {
-    return { isError: true, errorMessage: "Invt_record " + err };
+  } catch (ex) {
+    return "Error - executeSp_St " + err;
+  }
+});
+
+//** procedimiento  que se ejecuta y devuelve varios arrays de json  */
+ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
+  try {
+    let parametersIn = null;
+    parametersIn = await getParametersSp(sp);
+    let arg = JSON.parse(data);
+    let conn = await sql.connect(sqlConfig);
+    if (conn.connected == true) {
+      let request = new sql.Request();
+      parametersIn.map((e) => {
+        request.input(
+          e["ParameterN"],
+          getTypeData(e["Type"], e["max_length"]),
+          arg[e["ParameterN"]]
+        );
+      });
+      let exec = await request.execute(sp);
+      conn.close();
+      return exec.recordsets;
+    }
+  } catch (ex) {
+    return "Error - executeSp_St " + err;
   }
 });
 
@@ -402,14 +433,13 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
-  console.log("Los datos son", arg);
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
     let nombre = "Pureba.pdf";
     // Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
 
     let route = __dirname + "/" + nombre;
-    console.log("la ruta es :", route);
+    //console.log("la ruta es :", route);
     var cssb = [];
     cssb.push("<style>");
     cssb.push("*{font-family: Arial, Helvetica, sans-serif;font-size: 12x;}");
@@ -501,7 +531,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
     pdf
       .create(document, options)
       .then((res) => {
-        console.log("Se ha creado exitosamente");
+        //console.log("Se ha creado exitosamente");
         openPdf(route);
       })
       .catch((error) => {
@@ -515,24 +545,51 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
 
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
   try {
-    let { Html_Body, Html_Header, Html_Footer } = JSON.parse(dataHtml);
-    console.log(Html_Body);
-    let data = await HTMLtoDOCX(
+    let {
       Html_Body,
-      "<p>Buenas Tardes</p>",
+      Html_Header,
+      Html_Footer,
+      Html_Body_Docx,
+      Html_Footer_Docx,
+      Html_Header_Docx,
+      Html_Body_Docx_Node,
+      Html_Footer_Docx_Node,
+      Html_Header_Docx_Node,
+    } = JSON.parse(dataHtml);
+
+    let data = await HTMLtoDOCX(
+      Html_Body_Docx_Node,
+      Html_Header_Docx_Node,
       {
         orientation: "portrait",
         header: true,
         footer: true,
-        pageSize: { width: "800px", height: "1400px" },
+        table: { row: { cantSplit: false } },
+        pageSize: { width: "210mm", height: "329mm" },
         font: "Arial",
+        margins: {
+          top: "0mm",
+          right: "20mm",
+          bottom: "0mm",
+          left: "20mm",
+          header: "0mm",
+          footer: "5mm",
+          gutter: "0mm",
+        },
+        title: "ParroquiaBaut",
+        lang: "es-co",
       },
-      "<p>Footer</p>"
+      Html_Footer_Docx_Node
     );
-    console.log("Holiu", data);
-    fs.writeFile("temp.docx", data, (e) => {
-      console.log(e);
-    });
+    const currentDirectory = app.getAppPath();
+    let route = os.homedir() + "/desktop";
+    if (process.env.DEBUGGING) {
+    }
+    //let route = __dirname + "/" + nombre;
+    fs.writeFileSync(route + "/docWordExport.docx", data);
+    shell.openPath(route + "/docWordExport.docx");
+    //console.log(route + "/docWordExport.docx");
+    return route + "/docWordExport.docx";
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx " + err };
   }

@@ -155,7 +155,7 @@ export default {
       this.$router.push("/");
     },
     pruebaFn() {
-      console.log("Holi desde main");
+      //console.log("Holi desde main");
     },
   },
 };

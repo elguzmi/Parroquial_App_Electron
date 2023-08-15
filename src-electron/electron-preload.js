@@ -17,9 +17,7 @@
  */
 
 //window.Electron = require("electron");
-
 const { contextBridge, ipcRenderer } = require("electron");
-
 contextBridge.exposeInMainWorld("myAPI", {
   // cargar ministros
   loadMinistros: () => ipcRenderer.invoke("myAPI:load_Ministros"),
@@ -36,15 +34,12 @@ contextBridge.exposeInMainWorld("myAPI", {
   updRecord: (data, tabla) =>
     ipcRenderer.invoke("myAPI:upd_Record", data, tabla),
 
-  // actualizar Variables Globales
-  updVaribalesGlobales: (data) =>
-    ipcRenderer.invoke("myAPI:upd_VariablesGlobales", data),
-
-  // actualizar Variables Globales
-  updShortCuts: (data) => ipcRenderer.invoke("myAPI:upd_upd_ShortCuts", data),
-
   //actualizar Configuraciones
   insConfig: (data, sp) => ipcRenderer.invoke("myAPI:ins_Config", data, sp),
+
+  //Sp General ejecucion ST
+  executeSp_St: (data, sp) =>
+    ipcRenderer.invoke("myAPI:executeSp_St", data, sp),
 
   //Inactivar de datos
   InvtRecord: (data) => ipcRenderer.invoke("myAPI:Invt_Record", data),
@@ -71,4 +66,5 @@ contextBridge.exposeInMainWorld("ApiList", {
 contextBridge.exposeInMainWorld("ApiLogin", {
   loadLogin: (datosUser) => ipcRenderer.invoke("ApiLogin:login", datosUser),
   loadModules: (perfil) => ipcRenderer.invoke("ApiLogin:Load_Modules", perfil),
+  changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
 });

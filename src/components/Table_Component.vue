@@ -103,7 +103,7 @@ export default defineComponent({
   },
 
   mounted() {
-    console.log("Montado table");
+    //console.log("Montado table");
   },
   methods: {
     sendSelectedRow() {
@@ -122,9 +122,9 @@ export default defineComponent({
     },
     PrintSelected() {
       this.$emit("loadingShow", "Cargando archivo");
-      console.log(this.selected[0]);
+      //console.log(this.selected[0]);
       this.IdSelected = this.selected[0].Id;
-      console.log(this.selected[0].Id);
+      //console.log(this.selected[0].Id);
       //console.log(this.$refs.previsualizacion_comp);
       setTimeout(() => {
         this.$emit("loadingHide");

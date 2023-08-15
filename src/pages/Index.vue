@@ -10,12 +10,12 @@
       v-for="(item, index) in modulesCards"
       :key="index"
     >
-      <q-img
+      <!-- <q-img
         :srcset="require('../assets/img/' + item.Nombre_Imagen)"
         :ratio="16 / 9"
         spinner-size="82px"
         spinner-color="primary"
-      />
+      /> -->
       <q-card-section>
         <div class="row no-wrap items-center">
           <div class="col text-h6 ellipsis">{{ item.Nombre_Modulo }}</div>

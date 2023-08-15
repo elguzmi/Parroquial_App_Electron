@@ -43,6 +43,23 @@
 
             <div class="col-4">
               <q-select
+                filled
+                v-model="dataBautizos.Ministro"
+                :model-value="dataBautizos.Ministro"
+                use-input
+                label="Ministro"
+                hide-selected
+                fill-input
+                input-debounce="0"
+                :options="[
+                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
+                  'LORENZO ALZATE ARBOLEDA. Pbro',
+                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
+                ]"
+                @input-value="setModel"
+              >
+              </q-select>
+              <!-- <q-select
                 v-model="dataBautizos.Ministro"
                 :options="[
                   'YOEL GÓMEZ RAMÍREZ. Pbro.',
@@ -52,7 +69,7 @@
                 label="Ministro"
                 filled
                 dense
-              />
+              /> -->
             </div>
           </div>
           <div
@@ -187,13 +204,13 @@
             <q-btn-group spread>
               <q-btn
                 color="green"
-                :label="Id != null && Id != '' ? 'Editar' : 'Guardar'"
+                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
                 type="submit"
                 icon="save"
               />
               <q-btn
                 color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Reset'"
+                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
                 type="reset"
                 icon="restart_alt"
               />
@@ -234,7 +251,7 @@ export default defineComponent({
   mounted() {
     this.showLoading("Cargando Datos...");
     this.getDataLogin((e, data) => {
-      console.log(e, data);
+      //console.log(e, data);
       this.perfil = data.Id_Perfil;
       this.getDoyFe();
       if (this.perfil == 1 || this.perfil == 2) this.getBautismos();
@@ -334,7 +351,7 @@ export default defineComponent({
       });
     },
     setrecord(data) {
-      console.log("Recogido desde el compoentn padre", data);
+      //console.log("Recogido desde el compoentn padre", data);
       this.Id = data.Id;
       this.Codigo_Partida = data.Codigo_Partida;
       this.Libro = data.Libro;
@@ -350,7 +367,7 @@ export default defineComponent({
       this.showLoading("Realizando Eliminacion, Espera un momento...");
       let data = { Id: Id, Sp: "BD_Invt_Bautismo" };
       window.myAPI.InvtRecord(data).then((e) => {
-        console.log(e);
+        //console.log(e);
         if (e[0][""]) {
           if (e[0][""].includes("Error"))
             this.showMessage(e[0][""], "red", "error");
@@ -399,10 +416,7 @@ export default defineComponent({
                 }
               });
           }
-        } else {
-          console.log(result);
-          this.showMessage(result, "negative", "danger");
-        }
+        } else this.showMessage(result, "negative", "danger");
       });
     },
 
@@ -435,7 +449,9 @@ export default defineComponent({
       Object.keys(this.dataBautizos).map((elem) => {
         if (elem != "Nota_Marginal") {
           if (this.dataBautizos[elem] == null || this.dataBautizos[elem] == "")
-            msj += " Completa el campo " + elem;
+            msj += !msj.includes("Error")
+              ? "Error - Completa los siguientes campos : " + elem
+              : " - " + elem;
         }
       });
       if (msj == "") res("OK");
@@ -446,6 +462,9 @@ export default defineComponent({
       this.dataBautizos.Cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataBautizos.Id_Ministro
       )?.Cargo;
+    },
+    setModel(val) {
+      this.dataBautizos.Ministro = val;
     },
   },
   watch: {

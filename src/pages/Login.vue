@@ -2,6 +2,16 @@
   <q-layout>
     <q-page-container>
       <q-page>
+        <q-select
+          label="DB"
+          transition-show="flip-up"
+          transition-hide="flip-down"
+          filled
+          v-model="dbSelected"
+          :options="['serverProd', 'serverDev']"
+          class="hidden"
+          style="width: 100px; position: absolute; opacity: 0.1"
+        />
         <div class="background__">
           <q-card class="my-card" style="width: 50%; opacity: 0.9">
             <q-img
@@ -125,6 +135,8 @@ export default defineComponent({
     };
 
     return {
+      dbSelected: ref(null),
+
       userName: ref(null),
       clave: ref(null),
       tries: ref(0),
@@ -165,6 +177,17 @@ export default defineComponent({
             this.hideLoading();
           }
         }
+      });
+    },
+    changeDB() {
+      console.log(this.dbSelected);
+    },
+  },
+  watch: {
+    dbSelected(newV, oldV) {
+      console.log(newV, oldV);
+      window.ApiLogin.changeDatabase(newV).then((e) => {
+        console.log(e);
       });
     },
   },

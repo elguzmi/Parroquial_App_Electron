@@ -310,26 +310,31 @@ export default defineComponent({
   },
   methods: {
     getMatrimonios() {
-      window.ApiList.loadDataTables("Matrimonios").then((e) => {
-        this.columns = [];
-        let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-        //console.log(e[0]);
-        Columnas = Columnas.split("|");
-        Columnas_Label = Columnas_Label.split("|");
-        Columnas_Visibles = Columnas_Visibles.split("|");
-        this.visibleColumns = Columnas_Visibles;
-        Object.keys(Columnas).map((el, idx) => {
-          this.columns.push({
-            name: Columnas[el],
-            align: "center",
-            label: Columnas_Label[idx],
-            field: Columnas[el],
-            sortable: true,
+      try {
+        window.myAPI.loadDataTables("Matrimonios").then((e) => {
+          this.columns = [];
+          let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
+          //console.log(e[0]);
+          Columnas = Columnas.split("|");
+          Columnas_Label = Columnas_Label.split("|");
+          Columnas_Visibles = Columnas_Visibles.split("|");
+          this.visibleColumns = Columnas_Visibles;
+          Object.keys(Columnas).map((el, idx) => {
+            this.columns.push({
+              name: Columnas[el],
+              align: "center",
+              label: Columnas_Label[idx],
+              field: Columnas[el],
+              sortable: true,
+            });
           });
+          this.rows = e[0];
+          this.hideLoading();
         });
-        this.rows = e[0];
+      } catch (e) {
         this.hideLoading();
-      });
+        this.showMessage(e, "red", "error");
+      }
     },
     getDoyFe() {
       window.myAPI.loadMinistros().then((e) => {

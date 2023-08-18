@@ -1,21 +1,8 @@
-import {
-  app,
-  BrowserWindow,
-  nativeTheme,
-  ipcMain,
-  ipcRenderer,
-  shell,
-} from "electron";
-//const PDFWindow = require("electron-pdf-window");
+import { app, BrowserWindow, nativeTheme, ipcMain, shell } from "electron";
 import path from "path";
 import os from "os";
 const sql = require("mssql");
-
-const html_to_pdf = require("html-pdf-node");
-const pdf = require("pdf-creator-node");
 var fs = require("fs");
-const xl = require("excel4node");
-const HTMLtoDOCX = require("html-to-docx");
 
 const dataBases = {
   serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
@@ -26,16 +13,15 @@ let sqlConfig = {
   password: "Minecraft123",
   database: "ParroquiaBackup",
   server: dataBases.serverProd.name,
-  //server: "DESKTOP-6BM9I17\\SQLEXPRESS",
-  /* pool: {
+  pool: {
     max: 10,
     min: 0,
-    idleTimeoutMillis: 30000
-  },*/
-
+    idleTimeoutMillis: 30000,
+  },
   options: {
     encrypt: true,
     trustServerCertificate: true,
+    requestTimeout: 30000,
   },
 };
 
@@ -63,7 +49,7 @@ function createWindow() {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
     webPreferences: {
       contextIsolation: true,
-      //sandbox: false,
+      sandbox: false,
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
       //preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
@@ -72,9 +58,6 @@ function createWindow() {
     },
   });
 
-  // mainWindow.loadURL(
-  //   "D:\\Usuario_Santi\\Documents\\SOFTWARES_independientes\\Software_Parroquial_Jesus_Eucaristia\\parroquia_app\\temp1.docx"
-  // );
   mainWindow.loadURL(process.env.APP_URL);
 
   if (process.env.DEBUGGING) {
@@ -118,10 +101,6 @@ function openPdf(fileRoute) {
     //args: ["--no-sandbox"],
   });
   ventana.loadURL("file:///" + fileRoute);
-
-  // ventana.webContents.on("did-finish-load", () => {
-  //   ventana.webContents.print();
-  // });
 }
 //#region Api login
 
@@ -146,7 +125,7 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
       request.input("Usuario", sql.VARCHAR(50), user);
       request.input("Clave", sql.VARCHAR(50), clave);
       let exec = await request.execute("BD_Get_Login");
-      data.close();
+      await data.close();
       return exec.recordsets[0];
     }
   } catch (err) {
@@ -162,7 +141,7 @@ ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
       let request = new sql.Request();
       request.input("IdPerfil", sql.Int, IdPerfil);
       let exec = await request.execute("BD_Get_ModulosPerfil");
-      data.close();
+      await await data.close();
       return exec.recordsets[0];
     }
   } catch (err) {
@@ -178,7 +157,7 @@ ipcMain.handle("myAPI:load_Ministros", async () => {
     if (data.connected == true) {
       let request = new sql.Request();
       let exec = await request.execute("BD_Get_Lists_Ministros");
-      data.close();
+      await data.close();
       return exec.recordsets;
     }
   } catch (err) {
@@ -192,7 +171,7 @@ ipcMain.handle("myAPI:load_Firmantes", async () => {
     if (data.connected == true) {
       let request = new sql.Request();
       let exec = await request.execute("Wp_Get_ListaMinistros");
-      data.close();
+      await data.close();
       return exec.recordsets[0];
     }
   } catch (err) {
@@ -221,7 +200,7 @@ ipcMain.handle("myAPI:ins_Record", async (ev, arg, tabla) => {
         );
       });
       let exec = await request.execute("BD_Ins_" + tabla);
-      conn.close();
+      await conn.close();
       return exec.recordset[0][""];
     }
   } catch (err) {
@@ -251,7 +230,7 @@ ipcMain.handle("myAPI:upd_Record", async (ev, arg, tabla) => {
       });
       let exec = await request.execute("BD_Upd_" + tabla);
       //console.log(exec);
-      conn.close();
+      await conn.close();
       return exec.recordset[0][""];
     }
   } catch (err) {
@@ -268,7 +247,7 @@ ipcMain.handle("myAPI:Invt_Record", async (ev, data) => {
       let request = new sql.Request();
       request.input("Id", sql.Int, Id);
       let exec = await request.execute(Sp);
-      conn.close();
+      await conn.close();
       return exec.recordsets[0];
     }
   } catch (err) {
@@ -285,7 +264,7 @@ ipcMain.handle("myAPI:Get_DocumentoHtml", async (ev, Tabla, Id) => {
       request.input("Tabla", sql.VarChar(50), Tabla);
       request.input("Id", sql.Int, Id);
       let exec = await request.execute("BD_Get_Documento");
-      conn.close();
+      await conn.close();
       //console.log(exec);
       return exec.recordset[0];
     }
@@ -301,7 +280,7 @@ ipcMain.handle("myAPI:get_ListOfConfigs", async (ev) => {
     if (conn.connected == true) {
       let request = new sql.Request();
       let exec = await request.execute("BD_Get_Lists_Configs");
-      conn.close();
+      await conn.close();
       return exec.recordsets;
     }
   } catch (err) {
@@ -329,7 +308,7 @@ ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
       });
       let exec = await request.execute(sp);
       // console.log(exec);
-      conn.close();
+      await conn.close();
       return exec.recordset[0][""];
     }
   } catch (err) {
@@ -355,7 +334,7 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
         );
       });
       let exec = await request.execute(sp);
-      conn.close();
+      await conn.close();
       return exec.recordset[0][""];
     }
   } catch (err) {
@@ -380,7 +359,7 @@ ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
         );
       });
       let exec = await request.execute(sp);
-      conn.close();
+      await conn.close();
       return exec.recordset[0];
     }
   } catch (ex) {
@@ -405,7 +384,7 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
         );
       });
       let exec = await request.execute(sp);
-      conn.close();
+      await conn.close();
       return exec.recordsets;
     }
   } catch (ex) {
@@ -421,7 +400,7 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
       let request = new sql.Request();
       request.input("Tabla", sql.VarChar(20), tabla);
       let exec = await request.execute("BD_GetData_FromTable");
-      conn.close();
+      await conn.close();
       let datos = exec.recordsets[0];
       let headers = Object.keys(datos[0]);
       let msj = await exportData(headers, datos, tabla);
@@ -433,6 +412,7 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
+  const html_to_pdf = require("html-pdf-node");
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
     let nombre = "Pureba.pdf";
@@ -480,7 +460,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
-  //console.log("Los datos son", arg);
+  const pdf = require("pdf-creator-node");
   try {
     let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
     var options = {
@@ -544,6 +524,7 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
 });
 
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
+  const HTMLtoDOCX = require("html-to-docx");
   try {
     let {
       Html_Body,
@@ -596,14 +577,14 @@ ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
 });
 
 // APILIST
-ipcMain.handle("ApiList:load_DataTables", async (ev, arg) => {
+ipcMain.handle("myAPI:load_DataTables", async (ev, arg) => {
   try {
     let data = await sql.connect(sqlConfig);
     if (data.connected == true) {
       let request = new sql.Request();
       let sp = "BD_Get_Lists_" + arg;
       let exec = await request.execute(sp);
-      data.close();
+      await data.close();
       return exec.recordsets;
     }
   } catch (err) {
@@ -646,7 +627,7 @@ function getParametersSp(Sp) {
       let request = new sql.Request();
       request.input("Sp", sql.VarChar(50), Sp);
       let exec = await request.execute("BD_Get_Lists_Parameters");
-      conn.close();
+      await conn.close();
       resolve(exec.recordset);
     }
   });

@@ -290,12 +290,16 @@ export default defineComponent({
   mounted() {
     this.showLoading("Cargando Datos...");
 
-    this.getDataLogin((e, data) => {
-      console.log(e, data);
-      this.perfil = data.Id_Perfil;
-      this.getId_MinistroDoyFe();
-      if (this.perfil == 1 || this.perfil == 2) this.getConfirmaciones();
-      else this.hideLoading();
+    this.getDataLogin(async (e, data) => {
+      try {
+        console.log(e, data);
+        this.perfil = data.Id_Perfil;
+        await this.getId_MinistroDoyFe();
+        if (this.perfil == 1 || this.perfil == 2) this.getConfirmaciones();
+        else this.hideLoading();
+      } catch (e) {
+        this.showMessage(e, "red", "error");
+      }
     });
   },
   setup() {
@@ -370,33 +374,45 @@ export default defineComponent({
   },
   methods: {
     getId_MinistroDoyFe() {
-      window.myAPI.loadMinistros().then((e) => {
-        console.log("Ministros juntos ", e);
-        this.ListId_MinistroDoyFe = e[0];
-        this.ListMinistros = e[1];
+      return new Promise((res, rej) => {
+        try {
+          window.myAPI.loadMinistros().then((e) => {
+            //console.log("Ministros juntos ", e);
+            this.ListId_MinistroDoyFe = e[0];
+            this.ListMinistros = e[1];
+            res();
+          });
+        } catch (e) {
+          rej(e);
+        }
       });
     },
     getConfirmaciones() {
-      window.ApiList.loadDataTables("Confirmaciones").then((e) => {
-        this.columns = [];
-        let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-        console.log(e[0]);
-        Columnas = Columnas.split("|");
-        Columnas_Label = Columnas_Label.split("|");
-        Columnas_Visibles = Columnas_Visibles.split("|");
-        this.visibleColumns = Columnas_Visibles;
-        Object.keys(Columnas).map((el, idx) => {
-          this.columns.push({
-            name: Columnas[el],
-            align: "center",
-            label: Columnas_Label[idx],
-            field: Columnas[el],
-            sortable: true,
+      try {
+        window.myAPI.loadDataTables("Confirmaciones").then((e) => {
+          this.columns = [];
+          let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
+          //console.log(e[0]);
+          Columnas = Columnas.split("|");
+          Columnas_Label = Columnas_Label.split("|");
+          Columnas_Visibles = Columnas_Visibles.split("|");
+          this.visibleColumns = Columnas_Visibles;
+          Object.keys(Columnas).map((el, idx) => {
+            this.columns.push({
+              name: Columnas[el],
+              align: "center",
+              label: Columnas_Label[idx],
+              field: Columnas[el],
+              sortable: true,
+            });
           });
+          this.rows = e[0];
+          this.hideLoading();
         });
-        this.rows = e[0];
+      } catch (e) {
         this.hideLoading();
-      });
+        this.showMessage(e, "red", "error");
+      }
     },
     saveConfirmacion() {
       this.makeValidation((result) => {

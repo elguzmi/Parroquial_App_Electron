@@ -1,21 +1,3 @@
-/**
- * This file is used specifically for security reasons.
- * Here you can access Nodejs stuff and inject functionality into
- * the renderer thread (accessible there through the "window" object)
- *
- * WARNING!
- * If you import anything from node_modules, then make sure that the package is specified
- * in package.json > dependencies and NOT in devDependencies
- *
- * Example (injects window.myAPI.doAThing() into renderer thread):
- *
- *   import { contextBridge } from 'electron'
- *
- *   contextBridge.exposeInMainWorld('myAPI', {
- *     doAThing: () => {}
- *   })
- */
-
 //window.Electron = require("electron");
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("myAPI", {
@@ -55,12 +37,8 @@ contextBridge.exposeInMainWorld("myAPI", {
 
   // metodo para exportar la data de la tabla en un excel
   ExportData: (dataDoc) => ipcRenderer.invoke("myAPI:Export_Data", dataDoc),
-});
 
-contextBridge.exposeInMainWorld("ApiList", {
-  // cargar listas
-  loadDataTables: (tabla) =>
-    ipcRenderer.invoke("ApiList:load_DataTables", tabla),
+  loadDataTables: (tabla) => ipcRenderer.invoke("myAPI:load_DataTables", tabla),
 });
 
 contextBridge.exposeInMainWorld("ApiLogin", {

@@ -301,7 +301,7 @@ export default defineComponent({
       });
     },
     getDefunciones() {
-      window.ApiList.loadDataTables("Defunciones").then((e) => {
+      window.myAPI.loadDataTables("Defunciones").then((e) => {
         this.columns = [];
         let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
         //console.log(e[0]);

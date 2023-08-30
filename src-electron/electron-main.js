@@ -12,15 +12,10 @@ let sqlConfig = {
   user: "sa",
   password: "Minecraft123",
   database: "ParroquiaBackup",
-  server: dataBases.serverProd.name,
-  pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000,
-  },
+  server: dataBases.serverDev.name,
   options: {
-    encrypt: true,
-    trustServerCertificate: true,
+    encrypt: false,
+    trustServerCertificate: false,
     requestTimeout: 30000,
   },
 };
@@ -120,7 +115,7 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   try {
     let { user, clave } = arg;
     let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
+    if (data.connected) {
       let request = new sql.Request();
       request.input("Usuario", sql.VARCHAR(50), user);
       request.input("Clave", sql.VARCHAR(50), clave);

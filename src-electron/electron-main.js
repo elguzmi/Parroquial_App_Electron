@@ -119,6 +119,7 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
       let request = new sql.Request();
       request.input("Usuario", sql.VARCHAR(50), user);
       request.input("Clave", sql.VARCHAR(50), clave);
+
       let exec = await request.execute("BD_Get_Login");
       await data.close();
       return exec.recordsets[0];
@@ -407,115 +408,111 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf", async (ev, arg) => {
-  const html_to_pdf = require("html-pdf-node");
-  try {
-    let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
-    let nombre = "Pureba.pdf";
-    // Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
-
-    let route = __dirname + "/" + nombre;
-    //console.log("la ruta es :", route);
-    var cssb = [];
-    cssb.push("<style>");
-    cssb.push("*{font-family: Arial, Helvetica, sans-serif;font-size: 12x;}");
-    // cssb.push(
-    //   ".header { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center;}"
-    // );
-    cssb.push(
-      ".footer { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center}"
-    );
-    cssb.push("</style>");
-    const css = cssb.join("");
-    let opciones = {
-      //formato: "A4",
-      formato: "Folio",
-      //path: "C:Users/santi/Desktop/prueba.pdf",
-      path: route,
-      displayHeaderFooter: true,
-      headerTemplate: css + Html_Header,
-      footerTemplate: css + Html_Footer,
-      margin: {
-        bottom: 80, // minimum required for footer msg to display
-        left: 35,
-        right: 20,
-        top: 120,
-      },
-    };
-    let file = { content: Html_Header + Html_Body };
-
-    let result = await html_to_pdf.generatePdf(file, opciones);
-    return result;
-    // html_to_pdf.generatePdf(file, opciones).then((pdfBuffer) => {
-    //   console.log("PDF Buffer:-", pdfBuffer);
-    //   openPdf(route);
-    // });
-  } catch (err) {
-    return "Error - GoTo_DocumentoPdf " + err;
-  }
+  // const html_to_pdf = require("html-pdf-node");
+  // try {
+  //   let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
+  //   let nombre = "Pureba.pdf";
+  //   // Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
+  //   let route = __dirname + "/" + nombre;
+  //   //console.log("la ruta es :", route);
+  //   var cssb = [];
+  //   cssb.push("<style>");
+  //   cssb.push("*{font-family: Arial, Helvetica, sans-serif;font-size: 12x;}");
+  //   // cssb.push(
+  //   //   ".header { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center;}"
+  //   // );
+  //   cssb.push(
+  //     ".footer { font-size:10px;background-color:#f00; z-index:1000000;width:100%;text-align:center}"
+  //   );
+  //   cssb.push("</style>");
+  //   const css = cssb.join("");
+  //   let opciones = {
+  //     //formato: "A4",
+  //     formato: "Folio",
+  //     //path: "C:Users/santi/Desktop/prueba.pdf",
+  //     path: route,
+  //     displayHeaderFooter: true,
+  //     headerTemplate: css + Html_Header,
+  //     footerTemplate: css + Html_Footer,
+  //     margin: {
+  //       bottom: 80, // minimum required for footer msg to display
+  //       left: 35,
+  //       right: 20,
+  //       top: 120,
+  //     },
+  //   };
+  //   let file = { content: Html_Header + Html_Body };
+  //   let result = await html_to_pdf.generatePdf(file, opciones);
+  //   return result;
+  //   // html_to_pdf.generatePdf(file, opciones).then((pdfBuffer) => {
+  //   //   console.log("PDF Buffer:-", pdfBuffer);
+  //   //   openPdf(route);
+  //   // });
+  // } catch (err) {
+  //   return "Error - GoTo_DocumentoPdf " + err;
+  // }
 });
 
 ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
-  const pdf = require("pdf-creator-node");
-  try {
-    let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
-    var options = {
-      // phantomPath:
-      //   " C:/Users/santi/Downloads/phantomjs/phantomjs-2.1.1-windows/bin/phantomjs.exe",
-      format: "Legal",
-      orientation: "portrait",
-      border: "0mm",
-      header: {
-        border: "0cm",
-        height: "30mm",
-        contents: Html_Header,
-      },
-      footer: {
-        height: "15mm",
-        contents: {
-          default: Html_Footer, // fallback value
-        },
-      },
-      body: {
-        margin: "10cm",
-        border: "15cm",
-      },
-    };
-    // let nombre =
-    //   Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
-    let nombre = "Prueba.pdf";
-    //let route = __dirname + "/" + nombre;
-    let route = "D:/Usuario_Santi/Pictures/prueba.pdf";
-    console.log("la ruta es :", route);
-    var document = {
-      html: Html_Body,
-      data: {},
-      path: route,
-      border: "30mm",
-      type: "",
-    };
-
-    //return resultPdf?.filename ? resultPdf.filename : "No route descrited";
-    //return "Ok";
-    //return resultPdf;
-    // pdf.create(Html_Body, options).toFile(route, function (err, res) {
-    //   if (err) return console.log(err);
-    //   console.log(res); // { filename: '/app/businesscard.pdf' }
-    //   openPdf(route);
-    // });
-
-    pdf
-      .create(document, options)
-      .then((res) => {
-        //console.log("Se ha creado exitosamente");
-        openPdf(route);
-      })
-      .catch((error) => {
-        console.error(error);
-        throw error;
-      });
-  } catch (err) {
-    return "Error - GoTo_DocumentoPdf2 " + err;
-  }
+  // const pdf = require("pdf-creator-node");
+  // try {
+  //   let { Html_Body, Html_Footer, Html_Header, Nombre } = JSON.parse(arg);
+  //   var options = {
+  //     // phantomPath:
+  //     //   " C:/Users/santi/Downloads/phantomjs/phantomjs-2.1.1-windows/bin/phantomjs.exe",
+  //     format: "Legal",
+  //     orientation: "portrait",
+  //     border: "0mm",
+  //     header: {
+  //       border: "0cm",
+  //       height: "30mm",
+  //       contents: Html_Header,
+  //     },
+  //     footer: {
+  //       height: "15mm",
+  //       contents: {
+  //         default: Html_Footer, // fallback value
+  //       },
+  //     },
+  //     body: {
+  //       margin: "10cm",
+  //       border: "15cm",
+  //     },
+  //   };
+  //   // let nombre =
+  //   //   Nombre != null && Nombre ? Nombre + ".pdf" : "dataPdf_tmp" + "_data.pdf";
+  //   let nombre = "Prueba.pdf";
+  //   //let route = __dirname + "/" + nombre;
+  //   let route = "D:/Usuario_Santi/Pictures/prueba.pdf";
+  //   console.log("la ruta es :", route);
+  //   var document = {
+  //     html: Html_Body,
+  //     data: {},
+  //     path: route,
+  //     border: "30mm",
+  //     type: "",
+  //   };
+  //   //return resultPdf?.filename ? resultPdf.filename : "No route descrited";
+  //   //return "Ok";
+  //   //return resultPdf;
+  //   // pdf.create(Html_Body, options).toFile(route, function (err, res) {
+  //   //   if (err) return console.log(err);
+  //   //   console.log(res); // { filename: '/app/businesscard.pdf' }
+  //   //   openPdf(route);
+  //   // });
+  //   pdf
+  //     .create(document, options)
+  //     .then((res) => {
+  //       //console.log("Se ha creado exitosamente");
+  //       openPdf(route);
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //       throw error;
+  //     });
+  // } catch (err) {
+  //   return "Error - GoTo_DocumentoPdf2 " + err;
+  // }
 });
 
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {

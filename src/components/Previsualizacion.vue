@@ -77,10 +77,10 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import * as htmlDocx from "html-docx-js/dist/html-docx";
+// import * as htmlDocx from "html-docx-js/dist/html-docx";
 import { jsPDF } from "jspdf";
 //var HtmlDocx = require("html-docx-js");
-import { saveAs } from "file-saver";
+// import { saveAs } from "file-saver";
 import { useQuasar } from "quasar";
 export default defineComponent({
   name: "Previsualizacion",
@@ -177,35 +177,35 @@ export default defineComponent({
         console.log(e);
       });
 
-      return;
-      let { Html_Body_Docx, Html_Header_Docx, Html_Footer, Html_Footer_Docx } =
-        this.CurrentData;
+      //   return;
+      //   let { Html_Body_Docx, Html_Header_Docx, Html_Footer, Html_Footer_Docx } =
+      //     this.CurrentData;
 
-      const footer = Html_Footer_Docx.replace("<center>", "").replace(
-        "</center>",
-        ""
-      );
+      //   const footer = Html_Footer_Docx.replace("<center>", "").replace(
+      //     "</center>",
+      //     ""
+      //   );
 
-      let htmlDoc =
-        '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8" /><title></title>';
-      htmlDoc =
-        htmlDoc +
-        "</head><body>" +
-        Html_Header_Docx +
-        '<div style="width: 100%;>' +
-        Html_Body_Docx +
-        "</div>" +
-        '<div style="text-align: center;border-top:1px solid black">' +
-        footer +
-        "</div>" +
-        "</body></html>";
+      //   let htmlDoc =
+      //     '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8" /><title></title>';
+      //   htmlDoc =
+      //     htmlDoc +
+      //     "</head><body>" +
+      //     Html_Header_Docx +
+      //     '<div style="width: 100%;>' +
+      //     Html_Body_Docx +
+      //     "</div>" +
+      //     '<div style="text-align: center;border-top:1px solid black">' +
+      //     footer +
+      //     "</div>" +
+      //     "</body></html>";
 
-      htmlDocx;
-      let converted = htmlDocx.asBlob(htmlDoc, {
-        orientation: "portrait",
-        margins: { top: 300, right: 1000, left: 1000, bottom: 20, footer: 0 },
-      });
-      saveAs(converted, this.title + "_document");
+      //   htmlDocx;
+      //   let converted = htmlDocx.asBlob(htmlDoc, {
+      //     orientation: "portrait",
+      //     margins: { top: 300, right: 1000, left: 1000, bottom: 20, footer: 0 },
+      //   });
+      //   saveAs(converted, this.title + "_document");
     },
   },
 });

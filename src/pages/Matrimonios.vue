@@ -338,7 +338,6 @@ export default defineComponent({
     },
     getDoyFe() {
       window.myAPI.loadMinistros().then((e) => {
-        //console.log("Ministros juntos ", e);
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
       });
@@ -347,9 +346,6 @@ export default defineComponent({
     insMatrimonio() {
       this.$refs.cards1.getData();
       this.$refs.cards.getData();
-      //console.log(this.dataMatrimonio);
-
-      //console.log(this.dataMatrimonio);
       this.makeValidation((result) => {
         if (result === "OK") {
           let DatosIns = this.dataMatrimonio;
@@ -395,7 +391,11 @@ export default defineComponent({
 
       let msj = "";
       Object.keys(this.dataMatrimonio).map((elem) => {
-        if (elem != "Nota_Marginal") {
+        if (
+          elem != "Nota_Marginal" &&
+          elem != "Cargo" &&
+          elem != "Id_Ministro"
+        ) {
           if (
             this.dataMatrimonio[elem] == null ||
             this.dataMatrimonio[elem] == ""

@@ -8,15 +8,26 @@ const dataBases = {
   serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
   serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
 };
-let sqlConfig = {
+// let sqlConfig = {
+//   user: "sa",
+//   password: "Minecraft123",
+//   database: "ParroquiaBackup",
+//   server: dataBases.serverProd.name,
+
+//   options: {
+//     encrypt: false,
+//     trustServerCertificate: false,
+//     requestTimeout: 30000,
+//   },
+// };
+
+const sqlConfig = {
   user: "sa",
   password: "Minecraft123",
+  server: "192.168.20.27\\SQLEXPRESS",
   database: "ParroquiaBackup",
-  server: dataBases.serverDev.name,
   options: {
     encrypt: false,
-    trustServerCertificate: false,
-    requestTimeout: 30000,
   },
 };
 
@@ -114,13 +125,17 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   //console.log("Los datos son", arg.user);
   try {
     let { user, clave } = arg;
+    console.log("Paso1");
     let data = await sql.connect(sqlConfig);
+    console.log("Paso2");
     if (data.connected) {
       let request = new sql.Request();
       request.input("Usuario", sql.VARCHAR(50), user);
       request.input("Clave", sql.VARCHAR(50), clave);
-
+      console.log("Paso3");
       let exec = await request.execute("BD_Get_Login");
+      console.log("Paso4");
+
       await data.close();
       return exec.recordsets[0];
     }
@@ -518,17 +533,8 @@ ipcMain.handle("myAPI:GoTo_DocumentoPdf2", async (ev, arg) => {
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
   const HTMLtoDOCX = require("html-to-docx");
   try {
-    let {
-      Html_Body,
-      Html_Header,
-      Html_Footer,
-      Html_Body_Docx,
-      Html_Footer_Docx,
-      Html_Header_Docx,
-      Html_Body_Docx_Node,
-      Html_Footer_Docx_Node,
-      Html_Header_Docx_Node,
-    } = JSON.parse(dataHtml);
+    let { Html_Body_Docx_Node, Html_Footer_Docx_Node, Html_Header_Docx_Node } =
+      JSON.parse(dataHtml);
 
     let data = await HTMLtoDOCX(
       Html_Body_Docx_Node,
@@ -542,22 +548,20 @@ ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
         font: "Arial",
         margins: {
           top: "0mm",
-          right: "20mm",
+          right: "16mm",
           bottom: "0mm",
           left: "20mm",
-          header: "0mm",
+          header: "10mm",
           footer: "5mm",
           gutter: "0mm",
         },
-        title: "ParroquiaBaut",
+        title: "Parroquia_Doc",
         lang: "es-co",
       },
       Html_Footer_Docx_Node
     );
     const currentDirectory = app.getAppPath();
     let route = os.homedir() + "/desktop";
-    if (process.env.DEBUGGING) {
-    }
     //let route = __dirname + "/" + nombre;
     fs.writeFileSync(route + "/docWordExport.docx", data);
     shell.openPath(route + "/docWordExport.docx");

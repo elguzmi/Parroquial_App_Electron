@@ -171,12 +171,11 @@ export default defineComponent({
     },
 
     goToWord() {
-      console.log(this.CurrentData);
-
+      this.showLoading("Creando Documento ...");
       window.myAPI.convertToDocx(JSON.stringify(this.CurrentData)).then((e) => {
         console.log(e);
+        this.hideLoading();
       });
-
       //   return;
       //   let { Html_Body_Docx, Html_Header_Docx, Html_Footer, Html_Footer_Docx } =
       //     this.CurrentData;

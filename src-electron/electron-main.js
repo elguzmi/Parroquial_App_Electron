@@ -6,7 +6,8 @@ var fs = require("fs");
 
 const dataBases = {
   serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
-  serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
+  //serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
+  serverProd: { name: "192.168.20.27\\SQLEXPRESS", selected: false },
 };
 // let sqlConfig = {
 //   user: "sa",
@@ -24,7 +25,7 @@ const dataBases = {
 const sqlConfig = {
   user: "sa",
   password: "Minecraft123",
-  server: "192.168.20.27\\SQLEXPRESS",
+  server: dataBases.serverDev.name,
   database: "ParroquiaBackup",
   options: {
     encrypt: false,

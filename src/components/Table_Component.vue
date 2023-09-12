@@ -52,6 +52,7 @@
       />
     </div>
     <Previsualizacion
+      v-if="IdSelected != NULL"
       :title="title"
       :tabla="tablaDirectTo"
       :id="IdSelected"
@@ -126,10 +127,11 @@ export default defineComponent({
       this.IdSelected = this.selected[0].Id;
       //console.log(this.selected[0].Id);
       //console.log(this.$refs.previsualizacion_comp);
-      setTimeout(() => {
-        this.$emit("loadingHide");
-        this.$refs.previsualizacion_comp.searchDoc();
-      }, 1000);
+
+      // setTimeout(() => {
+      //   this.$emit("loadingHide");
+      //   this.$refs.previsualizacion_comp.searchDoc();
+      // }, 1000);
     },
   },
 });

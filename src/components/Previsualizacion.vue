@@ -52,9 +52,9 @@
           </q-btn>
         </q-bar>
         <form
-          autocorrect="off"
-          autocapitalize="off"
-          autocomplete="off"
+          autocorrect="on"
+          autocapitalize="on"
+          autocomplete="on"
           spellcheck="false"
         >
           <q-banner dense class="bg-dark text-white text-center">
@@ -89,7 +89,6 @@ export default defineComponent({
     Doc: { type: Object },
     tabla: { type: String },
     id: { type: Number },
-    openDialog: { type: Boolean },
   },
   setup() {
     const $q = useQuasar();
@@ -114,9 +113,13 @@ export default defineComponent({
   mounted() {
     this.searchDoc();
   },
+  unmounted() {
+    console.log("Se cerro");
+  },
   updated() {},
   methods: {
     searchDoc() {
+      this.showLoading("Cargando Datos");
       let tabla = this.tabla;
       let id = this.id;
       if (!tabla || !id) return;
@@ -126,6 +129,7 @@ export default defineComponent({
         this.FirtData = e;
         this.CurrentData = e;
         this.dialog = true;
+        this.hideLoading();
       });
     },
     goToPdf() {
@@ -205,6 +209,15 @@ export default defineComponent({
       //     margins: { top: 300, right: 1000, left: 1000, bottom: 20, footer: 0 },
       //   });
       //   saveAs(converted, this.title + "_document");
+    },
+  },
+  watch: {
+    dialog(news, old) {
+      // console.log(news, old);
+      // console.log(this.$parent);
+      if (news == false) {
+        this.$parent.IdSelected = null;
+      }
     },
   },
 });

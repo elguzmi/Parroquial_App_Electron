@@ -9,6 +9,7 @@
 /* eslint-env node */
 const ESLintPlugin = require("eslint-webpack-plugin");
 const { configure } = require("quasar/wrappers");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = configure(function (ctx) {
   return {
@@ -66,7 +67,7 @@ module.exports = configure(function (ctx) {
       chainWebpack(chain) {
         chain
           .plugin("eslint-webpack-plugin")
-          .use(ESLintPlugin, [{ extensions: ["js", "vue"] }]);
+          .use(ESLintPlugin, [{ extensions: ["js", "vue", "docx"] }]);
       },
     },
 
@@ -123,7 +124,7 @@ module.exports = configure(function (ctx) {
       chainWebpackWebserver(chain) {
         chain
           .plugin("eslint-webpack-plugin")
-          .use(ESLintPlugin, [{ extensions: ["js"] }]);
+          .use(ESLintPlugin, [{ extensions: ["js", "docx"] }]);
       },
 
       middlewares: [
@@ -232,6 +233,22 @@ module.exports = configure(function (ctx) {
           .plugin("eslint-webpack-plugin")
           .use(ESLintPlugin, [{ extensions: ["js"] }]);
       },
+      // extendWebpack(cfg) {
+      //   // Copiar archivos Word al directorio resources
+      //   cfg.plugins.push(
+      //     new CopyWebpackPlugin({
+      //       patterns: [
+      //         {
+      //           from: path.resolve(__dirname, "src/assets/word-files/*.docx"),
+      //           to: path.resolve(
+      //             __dirname,
+      //             "dist/electron/parroquia_app-win32-x64/resources/"
+      //           ),
+      //         },
+      //       ],
+      //     })
+      //   );
+      // },
     },
   };
 });

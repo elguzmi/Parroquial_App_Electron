@@ -10,7 +10,7 @@
       <q-card class="bg-white text-dark">
         <q-bar>
           <div class="cursor-pointer non-selectable">
-            <q-item clickable @click="goToWord()">
+            <q-item clickable @click="goToWordZip()">
               <q-item-section>Word</q-item-section>
             </q-item>
           </div>
@@ -98,15 +98,27 @@ export default defineComponent({
       });
     }
     const hideLoading = () => $q.loading.hide();
+    const showMessage = (msj, color, icon) => {
+      $q.loading.hide();
+      $q.notify({
+        progress: true,
+        message: msj,
+        icon: icon,
+        color: color,
+        textColor: "white",
+      });
+    };
     return {
       dialog: ref(false),
       maximizedToggle: ref(true),
 
       FirtData: ref({}),
       CurrentData: ref({}),
+      datosDoc: ref(null),
 
       showLoading,
       hideLoading,
+      showMessage,
     };
   },
 
@@ -126,8 +138,11 @@ export default defineComponent({
       window.myAPI.GetDocumentoHtml(tabla, id).then((e) => {
         //e.Html_Footer =
         //  "Autenticación en la curia Diocesana de Fontibón, Carrera 98 # 17 A - 81 Fontibón - Centro. <br> Tel (601) 4181036, Horario de atención, Lunes a Viernes de 9:00 a 1:00 P.M (Validez a 3 Meses)";
-        this.FirtData = e;
-        this.CurrentData = e;
+        console.log(e);
+        this.FirtData = e[0][0];
+        this.CurrentData = e[0][0];
+        this.datosDoc = e[1][0];
+        console.log(e[1][0]);
         this.dialog = true;
         this.hideLoading();
       });
@@ -148,6 +163,7 @@ export default defineComponent({
         : pageSize.getHeight();
 
       const footer = this.CurrentData.Html_Footer_Docx.replace("<br>", "\n")
+        .replaceAll("<br />", "\n")
         .replace("<center>", "")
         .replace("</center>", "");
 
@@ -209,6 +225,21 @@ export default defineComponent({
       //     margins: { top: 300, right: 1000, left: 1000, bottom: 20, footer: 0 },
       //   });
       //   saveAs(converted, this.title + "_document");
+    },
+
+    goToWordZip() {
+      this.showLoading("Creando Documento ...");
+      window.myAPI.convertToDocxZip(JSON.stringify(this.datosDoc)).then((e) => {
+        console.log(e);
+        if (!e.isError) {
+          this.hideLoading();
+          this.showLoading("Abriendo Documento ...");
+          setTimeout(this.hideLoading, 2000);
+        } else {
+          this.hideLoading();
+          this.showMessage(e.errorMessage, "red", "error");
+        }
+      });
     },
   },
   watch: {

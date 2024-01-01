@@ -32,6 +32,10 @@ contextBridge.exposeInMainWorld("myAPI", {
   goToPdf: (dataDoc) => ipcRenderer.invoke("myAPI:GoTo_DocumentoPdf", dataDoc),
   convertToDocx: (dataDoc) =>
     ipcRenderer.invoke("myAPI:convertTo_Docx", dataDoc),
+
+  convertToDocxZip: (dataDoc) =>
+    ipcRenderer.invoke("myAPI:convertTo_Docx_Zip", dataDoc),
+
   getListOfConfigs: (dataDoc) =>
     ipcRenderer.invoke("myAPI:get_ListOfConfigs", dataDoc),
 

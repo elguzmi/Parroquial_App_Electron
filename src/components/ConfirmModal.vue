@@ -33,7 +33,9 @@ export default defineComponent({
     };
   },
 
-  mounted() {},
+  mounted() {
+    console.log("Hola ");
+  },
   methods: {},
 });
 </script>

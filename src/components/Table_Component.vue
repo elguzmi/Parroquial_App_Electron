@@ -80,7 +80,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import Previsualizacion from "components/Previsualizacion.vue";
-
+import { useQuasar } from "quasar";
 export default defineComponent({
   name: "Table_Component",
   components: {
@@ -94,12 +94,14 @@ export default defineComponent({
     visibleColumns: { type: Array },
   },
   setup() {
+    const $q = useQuasar();
     return {
       selected: ref([]),
       fullscreen: ref(false),
       IdSelected: ref(null),
       showDialog: ref(false),
       filterText: ref(null),
+      $q,
     };
   },
 
@@ -117,9 +119,23 @@ export default defineComponent({
       this.selected = [];
     },
 
-    invtRecord() {
-      if (this.selected.length == 0) return;
-      else this.$emit("eventinvt", this.selected[0].Id);
+    async invtRecord() {
+      try {
+        if (this.selected.length == 0) return;
+        this.$q
+          .dialog({
+            title: "Confirm",
+            message: "Esta seguro de eliminar el registro?",
+            cancel: true,
+            persistent: true,
+          })
+          .onOk(() => {
+            this.$emit("eventinvt", this.selected[0].Id);
+          })
+          .onCancel(() => {
+            //console.log("rechazo");
+          });
+      } catch (err) {}
     },
     PrintSelected() {
       this.$emit("loadingShow", "Cargando archivo");

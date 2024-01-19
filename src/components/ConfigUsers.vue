@@ -213,12 +213,9 @@ export default defineComponent({
 
   mounted() {
     this.getListConfigs();
-    console.log("Montado cards");
   },
   methods: {
-    validacionInput(val) {
-      console.log(val);
-    },
+    validacionInput(val) {},
     saveRecord(row, Sp) {
       try {
         setTimeout(() => {
@@ -231,7 +228,6 @@ export default defineComponent({
             };
           else ObjBuilt = { Id: row.Id, Nombre_DoyFe: row.Nombre_DoyFe };
           window.myAPI.executeSp_St(JSON.stringify(ObjBuilt), Sp).then((e) => {
-            console.log("Data Result", e);
             this.$emit("mostrarMsj", e, "positive", "check");
             //this.getListConfigs();
           });
@@ -241,7 +237,7 @@ export default defineComponent({
       }
     },
     getListConfigs() {
-      window.myAPI.getListOfConfigs().then((e) => {
+      window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs").then((e) => {
         this.rows = e[0];
         this.rows_Ministros = e[1];
       });
@@ -253,7 +249,6 @@ export default defineComponent({
       try {
         await this.$refs.confirmModal.confirm();
         window.myAPI.executeSp_St(JSON.stringify({ Id: Id }), Sp).then((e) => {
-          //console.log("Data Result", e);
           if (e.includes("Error")) this.$emit("mostrarMsj", e, "red", "danger");
           else this.$emit("mostrarMsj", e, "positive", "check");
           this.getListConfigs();

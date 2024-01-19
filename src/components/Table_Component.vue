@@ -42,22 +42,38 @@
         @click="invtRecord()"
         :disabled="this.selected.length == 0"
       />
-      <q-btn
+      <!-- <q-btn
         style="width: 30%"
         color="blue"
         label="Imprimir"
         @click="PrintSelected()"
         icon="print"
         :disabled="this.selected.length == 0"
+      /> -->
+      <q-btn
+        style="width: 30%"
+        color="blue"
+        label="Word"
+        @click="PrintWord()"
+        icon="text_snippet"
+        :disabled="this.selected.length == 0"
+      />
+      <q-btn
+        style="width: 30%"
+        color="red"
+        label="Pdf"
+        @click="PrintPdf()"
+        icon="picture_as_pdf"
+        :disabled="this.selected.length == 0"
       />
     </div>
-    <Previsualizacion
+    <!-- <Previsualizacion
       v-if="IdSelected != NULL"
       :title="title"
       :tabla="tablaDirectTo"
       :id="IdSelected"
       ref="previsualizacion_comp"
-    ></Previsualizacion>
+    ></Previsualizacion> -->
   </div>
 </template>
 
@@ -81,10 +97,11 @@
 import { defineComponent, ref } from "vue";
 import Previsualizacion from "components/Previsualizacion.vue";
 import { useQuasar } from "quasar";
+import { jsPDF } from "jspdf";
 export default defineComponent({
   name: "Table_Component",
   components: {
-    Previsualizacion,
+    // Previsualizacion,
   },
   props: {
     title: { type: String },
@@ -105,12 +122,9 @@ export default defineComponent({
     };
   },
 
-  mounted() {
-    //console.log("Montado table");
-  },
+  mounted() {},
   methods: {
     sendSelectedRow() {
-      console.log(this.selected.length);
       if (this.selected.length == 0) return;
       else this.$emit("eventedited", this.selected[0]);
     },
@@ -132,22 +146,80 @@ export default defineComponent({
           .onOk(() => {
             this.$emit("eventinvt", this.selected[0].Id);
           })
-          .onCancel(() => {
-            //console.log("rechazo");
-          });
+          .onCancel(() => {});
       } catch (err) {}
     },
     PrintSelected() {
       this.$emit("loadingShow", "Cargando archivo");
-      //console.log(this.selected[0]);
       this.IdSelected = this.selected[0].Id;
-      //console.log(this.selected[0].Id);
-      //console.log(this.$refs.previsualizacion_comp);
+    },
+    async PrintWord() {
+      this.$emit("loadingShow", "Generando Word");
+      this.IdSelected = this.selected[0].Id;
+      const datosDoc = await this.searchDoc("word");
 
-      // setTimeout(() => {
-      //   this.$emit("loadingHide");
-      //   this.$refs.previsualizacion_comp.searchDoc();
-      // }, 1000);
+      const res = await window.myAPI.convertToDocxZip(JSON.stringify(datosDoc));
+      if (!res.isError) {
+        setTimeout(this.$emit, 2000, "loadingHide", null);
+      } else {
+        this.$emit("loadingHide", null);
+        this.$emit("msjShow", res.errorMessage, "red", "error");
+      }
+    },
+    async PrintPdf() {
+      this.$emit("loadingShow", "Generando Pdf");
+      this.IdSelected = this.selected[0].Id;
+      const datosPdf = await this.searchDoc("pdf");
+      const doc = new jsPDF({
+        format: "legal",
+        unit: "px",
+        orientation: "portrait",
+        //compress: true,
+      });
+      const pageSize = doc.internal.pageSize;
+      const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
+      const pageHeight = pageSize.height
+        ? pageSize.height
+        : pageSize.getHeight();
+
+      const footer = datosPdf.Html_Footer_Docx.replace("<br>", "\n")
+        .replaceAll("<br />", "\n")
+        .replace("<center>", "")
+        .replace("</center>", "");
+
+      // // Footer
+      doc.setFontSize(12);
+      doc.text(footer, 600 - doc.getTextWidth(footer) / 2, pageHeight - 30, {
+        baseline: "bottom",
+        align: "center",
+      });
+
+      doc.html(datosPdf.Html_Header + datosPdf.Html_Body, {
+        callback: (doc) => {
+          doc.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
+          window.open(doc.output("bloburl"));
+          this.$emit("loadingHide", null);
+        },
+        x: 15,
+        y: 15,
+        width: pageWidth - 20, //target width in the PDF document
+        windowWidth: 750, //window width in CSS pixels
+      });
+    },
+
+    async searchDoc(type) {
+      try {
+        let Tabla = this.tablaDirectTo;
+        let Id = this.IdSelected;
+        if (!Tabla || !Id) throw "Error - No tabla detected";
+        const e = await window.myAPI.executeSp_Ds(
+          JSON.stringify({ Id, Tabla }),
+          "BD_Get_Documento"
+        );
+        return type == "word" ? e[1][0] : e[0][0];
+      } catch (err) {
+        this.$emit("msjShow", err, "red", "error");
+      }
     },
   },
 });

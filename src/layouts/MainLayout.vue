@@ -136,7 +136,6 @@ export default {
         if (!val) this.$router.push("/");
         else {
           window.ApiLogin.loadModules(data.Id_Perfil).then((e) => {
-            // console.log("loadModules ", e);
             this.modules = e;
             this.saveModules(e);
             this.$router.push("/Inicio");
@@ -153,9 +152,6 @@ export default {
     closeSession() {
       this.removeLocal();
       this.$router.push("/");
-    },
-    pruebaFn() {
-      //console.log("Holi desde main");
     },
   },
 };

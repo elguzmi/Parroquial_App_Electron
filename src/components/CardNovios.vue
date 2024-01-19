@@ -88,16 +88,10 @@ export default defineComponent({
     };
   },
 
-  updated() {
-    //console.log("Se actualizo");
-  },
-  mounted() {
-    //console.log("Montado cards");
-  },
+  updated() {},
+  mounted() {},
   methods: {
     updateData() {
-      console.log(this.dataForm);
-      console.log(this.dataCard);
       this.dataCard.Nombre_ = this.dataForm["Novi" + this.prefijo];
       this.dataCard.Padres_ = this.dataForm["Padres_Novi" + this.prefijo];
       this.dataCard.Parroquia_ = this.dataForm["Parroquia_Novi" + this.prefijo];
@@ -108,7 +102,6 @@ export default defineComponent({
       this.dataCard.Numero_ = this.dataForm["Acta_Novi" + this.prefijo];
     },
     cleanData() {
-      //console.log(this.dataCard);
       Object.keys(this.dataCard).map((e) => {
         this.dataCard[e] = null;
       });

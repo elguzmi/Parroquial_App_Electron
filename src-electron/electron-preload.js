@@ -1,48 +1,26 @@
 //window.Electron = require("electron");
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("myAPI", {
-  // cargar ministros
-  loadMinistros: () => ipcRenderer.invoke("myAPI:load_Ministros"),
-  loadFirmantes: () => ipcRenderer.invoke("myAPI:load_Firmantes"),
-
-  //conseguir registro para impirmir
-  getRecord: (data) => ipcRenderer.invoke("myAPI:get_Record"),
-
-  //Insercion de datos
-  insRecord: (data, tabla) =>
-    ipcRenderer.invoke("myAPI:ins_Record", data, tabla),
-
-  //Actualizar de datos
-  updRecord: (data, tabla) =>
-    ipcRenderer.invoke("myAPI:upd_Record", data, tabla),
-
-  //actualizar Configuraciones
-  insConfig: (data, sp) => ipcRenderer.invoke("myAPI:ins_Config", data, sp),
-
   //Sp General ejecucion ST
   executeSp_St: (data, sp) =>
     ipcRenderer.invoke("myAPI:executeSp_St", data, sp),
 
-  //Inactivar de datos
-  InvtRecord: (data) => ipcRenderer.invoke("myAPI:Invt_Record", data),
+  //Sp General ejecucion DS
+  executeSp_Dt: (data, sp) =>
+    ipcRenderer.invoke("myAPI:executeSp_Dt", data, sp),
 
-  //Get Documento
-  GetDocumentoHtml: (Tabla, Id) =>
-    ipcRenderer.invoke("myAPI:Get_DocumentoHtml", Tabla, Id),
-  goToPdf: (dataDoc) => ipcRenderer.invoke("myAPI:GoTo_DocumentoPdf", dataDoc),
+  //Sp General ejecucion DS
+  executeSp_Ds: (data, sp) =>
+    ipcRenderer.invoke("myAPI:executeSp_Ds", data, sp),
+
   convertToDocx: (dataDoc) =>
     ipcRenderer.invoke("myAPI:convertTo_Docx", dataDoc),
 
   convertToDocxZip: (dataDoc) =>
     ipcRenderer.invoke("myAPI:convertTo_Docx_Zip", dataDoc),
 
-  getListOfConfigs: (dataDoc) =>
-    ipcRenderer.invoke("myAPI:get_ListOfConfigs", dataDoc),
-
   // metodo para exportar la data de la tabla en un excel
   ExportData: (dataDoc) => ipcRenderer.invoke("myAPI:Export_Data", dataDoc),
-
-  loadDataTables: (tabla) => ipcRenderer.invoke("myAPI:load_DataTables", tabla),
 });
 
 contextBridge.exposeInMainWorld("ApiLogin", {

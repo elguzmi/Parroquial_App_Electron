@@ -32,10 +32,7 @@ export default defineComponent({
       confirm,
     };
   },
-
-  mounted() {
-    console.log("Hola ");
-  },
+  mounted() {},
   methods: {},
 });
 </script>

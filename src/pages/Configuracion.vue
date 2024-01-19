@@ -133,9 +133,7 @@ import ConfigVariablesGlobales from "components/ConfigVariablesGlobales.vue";
 export default defineComponent({
   name: "Configuracion",
   components: { ConfigUsers, ConfigShortCurts, ConfigVariablesGlobales },
-  mounted() {
-    this.getListConfigs();
-  },
+  mounted() {},
   setup() {
     const $q = useQuasar();
 
@@ -176,16 +174,9 @@ export default defineComponent({
     };
   },
   methods: {
-    getListConfigs() {
-      window.myAPI.getListOfConfigs().then((e) => {
-        console.log("Data Config ", e);
-      });
-    },
     exportData() {
-      console.log(this.selectExportData);
       if (this.selectExportData == "Seleccionar Tabla") return;
       window.myAPI.ExportData(this.selectExportData).then((e) => {
-        console.log("Data Config ", e);
         this.showMessage(
           "Se ha guardado exitosamente en la siguiente ruta : " + e,
           "positive",
@@ -194,7 +185,6 @@ export default defineComponent({
       });
     },
     openModalEdited(mdlEdited) {
-      console.log(mdlEdited);
       this.editedModl = mdlEdited;
       this.persistent = true;
     },
@@ -212,11 +202,8 @@ export default defineComponent({
         objName = "newShortCut";
       }
 
-      console.log(window.myAPI.insConfig);
       let dataJson = JSON.stringify(this[objName]);
-      console.log(dataJson);
-      window.myAPI.insConfig(dataJson, sp).then((e) => {
-        console.log("Data insConfig ", e);
+      window.myAPI.executeSp_St(dataJson, sp).then((e) => {
         if (e.includes("Error")) {
           this.showMessage(e, "red", "danger");
         } else {

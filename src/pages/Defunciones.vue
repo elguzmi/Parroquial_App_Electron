@@ -204,6 +204,7 @@
         @eventinvt="invtrecord"
         @loadingShow="showLoading"
         @loadingHide="hideLoading"
+        @msjShow="showMessage"
       ></Table_Component>
     </section>
   </q-page>
@@ -222,7 +223,6 @@ export default defineComponent({
   mounted() {
     this.showLoading("Cargando Datos...");
     this.getDataLogin((e, data) => {
-      //console.log(e, data);
       this.perfil = data.Id_Perfil;
       this.getId_MinistroDoyFe();
       if (this.perfil == 1 || this.perfil == 2) this.getDefunciones();
@@ -293,18 +293,26 @@ export default defineComponent({
     };
   },
   methods: {
-    getId_MinistroDoyFe() {
-      window.myAPI.loadMinistros().then((e) => {
-        //console.log("Ministros juntos ", e);
+    async getId_MinistroDoyFe() {
+      try {
+        const e = await window.myAPI.executeSp_Ds(
+          JSON.stringify({}),
+          "BD_Get_Lists_Ministros"
+        );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
-      });
+      } catch (error) {
+        this.showMessage(error, "red", "danger");
+      }
     },
-    getDefunciones() {
-      window.myAPI.loadDataTables("Defunciones").then((e) => {
+    async getDefunciones() {
+      try {
+        const e = await window.myAPI.executeSp_Ds(
+          "{}",
+          "BD_Get_Lists_Defunciones"
+        );
         this.columns = [];
         let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-        //console.log(e[0]);
         Columnas = Columnas.split("|");
         Columnas_Label = Columnas_Label.split("|");
         Columnas_Visibles = Columnas_Visibles.split("|");
@@ -320,50 +328,40 @@ export default defineComponent({
         });
         this.rows = e[0];
         this.hideLoading();
-      });
+      } catch (error) {
+        this.hideLoading();
+        this.showMessage(error, "red", "danger");
+      }
     },
     saveDefuncion() {
-      this.makeValidation((result) => {
-        if (result === "OK") {
-          let DatosIns = this.dataDefunciones;
-          DatosIns.Libro = this.Libro;
-          DatosIns.Folio = this.Folio;
-          DatosIns.Numero = this.Numero;
-          if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
-          if (this.Id != null && this.Id != "") {
-            window.myAPI
-              .updRecord(JSON.stringify(DatosIns), "Defuncion")
-              .then((e) => {
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.resetValues();
-                  this.getDefunciones();
-                }
-              });
-          } else {
-            window.myAPI
-              .insRecord(JSON.stringify(DatosIns), "Defuncion")
-              .then((e) => {
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.resetValues();
-                  this.$refs.tableComponent.cleanSelectedRow();
-                  this.getDefunciones();
-                }
-              });
-          }
-        } else this.showMessage(result, "red", "danger");
-      });
+      try {
+        const result = this.makeValidation();
+        if (result != "OK") throw result;
+        let DatosIns = this.dataDefunciones;
+        DatosIns.Libro = this.Libro;
+        DatosIns.Folio = this.Folio;
+        DatosIns.Numero = this.Numero;
+        if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
+        const e = window.myAPI.executeSp_St(
+          JSON.stringify(DatosIns),
+          this.Id != null && this.Id != ""
+            ? "BD_Upd_Defuncion"
+            : "BD_Ins_Defuncion"
+        );
+        if (e.toLowerCase().indexOf("error") >= 0) throw e;
+        this.showMessage(e, "positive", "check");
+        this.resetValues();
+        this.$refs.tableComponent.cleanSelectedRow();
+        this.getDefunciones();
+      } catch (error) {
+        this.hideLoading();
+        this.showMessage(error, "red", "danger");
+      }
     },
-    makeValidation(res) {
-      if (this.No_Defuncion != this.Libro + this.Folio + this.Numero)
-        return res("Error - El codigo de partida no coincide");
-
+    makeValidation() {
       let msj = "";
+      if (this.No_Defuncion != this.Libro + this.Folio + this.Numero)
+        msj = "Error - El codigo de partida no coincide";
       Object.keys(this.dataDefunciones).map((elem) => {
         if (elem != "NotaMarginal") {
           if (
@@ -375,8 +373,7 @@ export default defineComponent({
               : " - " + elem;
         }
       });
-      if (msj == "") res("OK");
-      else res(msj);
+      return msj;
     },
     setrecord(data) {
       this.Id = data.Id;
@@ -395,20 +392,15 @@ export default defineComponent({
         (e) => e.Id == this.dataDefunciones.Id_Firmante
       )?.Cargo;
     },
-    invtrecord(Id) {
+    async invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
-      let data = { Id: Id, Sp: "BD_Invt_Defuncion" };
-      window.myAPI.InvtRecord(data).then((e) => {
-        //console.log(e);
-        if (e[0][""]) {
-          if (e[0][""].includes("Error"))
-            this.showMessage(e[0][""], "red", "error");
-          else {
-            this.showMessage(e[0][""], "positive", "check");
-            this.getDefunciones();
-          }
-        }
-      });
+      const res = await window.myAPI.executeSp_St(
+        JSON.stringify({ Id }),
+        "BD_Invt_Defuncion"
+      );
+      if (res.includes("Error")) this.showMessage(res, "red", "error");
+      else this.showMessage(res, "positive", "check");
+      this.getDefunciones();
     },
     resetValues() {
       this.Id = null;

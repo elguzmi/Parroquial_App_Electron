@@ -141,8 +141,7 @@ export default defineComponent({
       }
     },
     getListConfigs() {
-      window.myAPI.getListOfConfigs().then((e) => {
-        console.log("Data Config ShortCuts", e[2]);
+      window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs").then((e) => {
         this.rows = e[2];
       });
     },
@@ -154,7 +153,6 @@ export default defineComponent({
       try {
         await this.$refs.confirmModal.confirm();
         window.myAPI.executeSp_St(JSON.stringify({ Id: Id }), Sp).then((e) => {
-          //console.log("Data Result", e);
           if (e.includes("Error")) this.$emit("mostrarMsj", e, "red", "danger");
           else this.$emit("mostrarMsj", e, "positive", "check");
           this.getListConfigs();

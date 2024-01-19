@@ -270,6 +270,7 @@
         @eventinvt="invtrecord"
         @loadingShow="showLoading"
         @loadingHide="hideLoading"
+        @msjShow="showMessage"
       ></Table_Component>
     </section>
   </q-page>
@@ -292,7 +293,6 @@ export default defineComponent({
 
     this.getDataLogin(async (e, data) => {
       try {
-        console.log(e, data);
         this.perfil = data.Id_Perfil;
         await this.getId_MinistroDoyFe();
         if (this.perfil == 1 || this.perfil == 2) this.getConfirmaciones();
@@ -373,91 +373,79 @@ export default defineComponent({
     };
   },
   methods: {
-    getId_MinistroDoyFe() {
-      return new Promise((res, rej) => {
-        try {
-          window.myAPI.loadMinistros().then((e) => {
-            //console.log("Ministros juntos ", e);
-            this.ListId_MinistroDoyFe = e[0];
-            this.ListMinistros = e[1];
-            res();
-          });
-        } catch (e) {
-          rej(e);
-        }
-      });
-    },
-    getConfirmaciones() {
+    async getId_MinistroDoyFe() {
       try {
-        window.myAPI.loadDataTables("Confirmaciones").then((e) => {
-          this.columns = [];
-          let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-          //console.log(e[0]);
-          Columnas = Columnas.split("|");
-          Columnas_Label = Columnas_Label.split("|");
-          Columnas_Visibles = Columnas_Visibles.split("|");
-          this.visibleColumns = Columnas_Visibles;
-          Object.keys(Columnas).map((el, idx) => {
-            this.columns.push({
-              name: Columnas[el],
-              align: "center",
-              label: Columnas_Label[idx],
-              field: Columnas[el],
-              sortable: true,
-            });
+        const e = await window.myAPI.executeSp_Ds(
+          JSON.stringify({}),
+          "BD_Get_Lists_Ministros"
+        );
+        this.ListId_MinistroDoyFe = e[0];
+        this.ListMinistros = e[1];
+      } catch (error) {
+        this.hideLoading();
+        this.showMessage(error, "red", "error");
+      }
+    },
+    async getConfirmaciones() {
+      try {
+        const e = await window.myAPI.executeSp_Ds(
+          "{}",
+          "BD_Get_Lists_Confirmaciones"
+        );
+        this.columns = [];
+        let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
+        Columnas = Columnas.split("|");
+        Columnas_Label = Columnas_Label.split("|");
+        Columnas_Visibles = Columnas_Visibles.split("|");
+        this.visibleColumns = Columnas_Visibles;
+        Object.keys(Columnas).map((el, idx) => {
+          this.columns.push({
+            name: Columnas[el],
+            align: "center",
+            label: Columnas_Label[idx],
+            field: Columnas[el],
+            sortable: true,
           });
-          this.rows = e[0];
-          this.hideLoading();
         });
+        this.rows = e[0];
+        this.hideLoading();
       } catch (e) {
         this.hideLoading();
         this.showMessage(e, "red", "error");
       }
     },
-    saveConfirmacion() {
-      this.makeValidation((result) => {
-        if (result === "OK") {
-          let DatosIns = this.dataConfirmacion;
-          DatosIns.Libro = this.Libro;
-          DatosIns.Folio = this.Folio;
-          DatosIns.Numero = this.Numero;
-          if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
-          if (this.Id != null && this.Id != "") {
-            window.myAPI
-              .updRecord(JSON.stringify(DatosIns), "Confirmacion")
-              .then((e) => {
-                console.log(e);
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.resetValues();
-                  this.$refs.tableComponent.cleanSelectedRow();
-                  this.getConfirmaciones();
-                }
-              });
-          } else {
-            window.myAPI
-              .insRecord(JSON.stringify(DatosIns), "Confirmacion")
-              .then((e) => {
-                console.log(e);
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.getConfirmaciones();
-                  this.resetValues();
-                }
-              });
-          }
-        } else this.showMessage(result, "red", "error");
-      });
+    async saveConfirmacion() {
+      try {
+        const result = this.makeValidation();
+        if (result != "OK") throw result;
+        let DatosIns = this.dataConfirmacion;
+        DatosIns.Libro = this.Libro;
+        DatosIns.Folio = this.Folio;
+        DatosIns.Numero = this.Numero;
+        if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
+        const e = await window.myAPI.executeSp_St(
+          JSON.stringify(DatosIns),
+          this.Id != null && this.Id != ""
+            ? "BD_Upd_Confirmacion"
+            : "BD_Ins_Confirmacion"
+        );
+        if (e.toLowerCase().indexOf("error") >= 0)
+          this.showMessage(e, "red", "error");
+        else {
+          this.showMessage(e, "positive", "check");
+          this.resetValues();
+          this.$refs.tableComponent.cleanSelectedRow();
+          this.getConfirmaciones();
+        }
+      } catch (error) {
+        this.showMessage(error, "red", "error");
+      }
     },
-    makeValidation(res) {
+    makeValidation() {
+      let msj = "OK";
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
-        return res("Error - El codigo de partida no coincide");
+        msj = "Error - El codigo de partida no coincide";
 
-      let msj = "";
       Object.keys(this.dataConfirmacion).map((elem) => {
         if (elem != "Notas_Correcciones") {
           if (
@@ -469,8 +457,7 @@ export default defineComponent({
               : " - " + elem;
         }
       });
-      if (msj == "") res("OK");
-      else res(msj);
+      return msj;
     },
     setCargoFirm() {
       this.dataConfirmacion.Cargo = this.ListMinistros.find(
@@ -479,33 +466,29 @@ export default defineComponent({
     },
 
     setrecord(data) {
-      console.log("Recogido desde el compoentn padre", data);
       this.Id = data.Id;
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-
       for (const key in this.dataConfirmacion) {
         this.dataConfirmacion[key] = data[key];
       }
       this.setCargoFirm();
     },
 
-    invtrecord(Id) {
-      this.showLoading("Realizando Eliminacion, Espera un momento...");
-      console.log("Id de inactivacion", Id);
-      let data = { Id: Id, Sp: "BD_Invt_Confirmacion" };
-      window.myAPI.InvtRecord(data).then((e) => {
-        console.log(e);
-        if (e[0][""]) {
-          if (e[0][""].includes("Error"))
-            this.showMessage(e[0][""], "red", "error");
-          else {
-            this.showMessage(e[0][""], "positive", "check");
-            this.getConfirmaciones();
-          }
-        }
-      });
+    async invtrecord(Id) {
+      try {
+        this.showLoading("Realizando Eliminacion, Espera un momento...");
+        const res = await window.myAPI.executeSp_St(
+          JSON.stringify({ Id }),
+          "BD_Invt_Confirmacion"
+        );
+        if (res.includes("Error")) this.showMessage(res, "red", "error");
+        else this.showMessage(res, "positive", "check");
+        this.getConfirmaciones();
+      } catch (error) {
+        this.showMessage(error, "red", "error");
+      }
     },
 
     resetValues() {

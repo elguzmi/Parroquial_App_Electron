@@ -5,45 +5,22 @@ const sql = require("mssql");
 var fs = require("fs");
 
 console.log(process.env.NODE_ENV);
-
 const dataBases = {
   serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
   //serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
   serverProd: { name: "192.168.20.27\\SQLEXPRESS", selected: false },
 };
-// let sqlConfig = {
-//   user: "sa",
-//   password: "Minecraft123",
-//   database: "ParroquiaBackup",
-//   server: dataBases.serverProd.name,
-
-//   options: {
-//     encrypt: false,
-//     trustServerCertificate: false,
-//     requestTimeout: 30000,
-//   },
-// };
-
 const sqlConfig = {
   user: "sa",
   password: "Minecraft123",
-  server: dataBases.serverProd.name,
+  server: dataBases.serverDev.name,
   database: "ParroquiaBackup",
   options: {
     encrypt: false,
   },
 };
 
-// needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
-
-try {
-  if (platform === "win32" && nativeTheme.shouldUseDarkColors === true) {
-    require("fs").unlinkSync(
-      path.join(app.getPath("userData"), "DevTools Extensions")
-    );
-  }
-} catch (_) {}
 
 let mainWindow;
 
@@ -52,7 +29,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     icon: path.resolve(__dirname, "icons/icon.png"), // tray icon
     width: 1300,
-    height: 659,
+    height: 660,
     useContentSize: true,
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -85,7 +62,6 @@ function createWindow() {
 }
 
 app.whenReady().then(createWindow);
-
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {
     app.quit();
@@ -98,19 +74,6 @@ app.on("activate", () => {
   }
 });
 
-function openPdf(fileRoute) {
-  let ventana = null;
-  ventana = new BrowserWindow({
-    icon: path.resolve(__dirname, "icons/icon.png"), // tray icon
-    width: 1300,
-    height: 659,
-    useContentSize: true,
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    //args: ["--no-sandbox"],
-  });
-  ventana.loadURL("file:///" + fileRoute);
-}
 //#region Api login
 
 // ********** API DE LOGIN
@@ -125,20 +88,14 @@ ipcMain.handle("ApiLogin:change_Database", async (ev, arg) => {
 
 // ********** API DE LOGIN
 ipcMain.handle("ApiLogin:login", async (ev, arg) => {
-  //console.log("Los datos son", arg.user);
   try {
     let { user, clave } = arg;
-    console.log("Paso1");
     let data = await sql.connect(sqlConfig);
-    console.log("Paso2");
     if (data.connected) {
       let request = new sql.Request();
       request.input("Usuario", sql.VARCHAR(50), user);
       request.input("Clave", sql.VARCHAR(50), clave);
-      console.log("Paso3");
       let exec = await request.execute("BD_Get_Login");
-      console.log("Paso4");
-
       await data.close();
       return exec.recordsets[0];
     }
@@ -148,7 +105,6 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
 });
 
 ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
-  //console.log("Load Modules", IdPerfil);
   try {
     let data = await sql.connect(sqlConfig);
     if (data.connected == true) {
@@ -165,178 +121,12 @@ ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
 
 //#endregion
 
-ipcMain.handle("myAPI:load_Ministros", async () => {
-  try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      let exec = await request.execute("BD_Get_Lists_Ministros");
-      await data.close();
-      return exec.recordsets;
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "Api_DoyFe " + err };
-  }
-});
-
-ipcMain.handle("myAPI:load_Firmantes", async () => {
-  try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      let exec = await request.execute("Wp_Get_ListaMinistros");
-      await data.close();
-      return exec.recordsets[0];
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "API_load_Firmantes " + err };
-  }
-});
-
-// ****************    METODO DE INSERCION **************-----------------------
-ipcMain.handle("myAPI:ins_Record", async (ev, arg, tabla) => {
-  try {
-    let parametersIn = null;
-    parametersIn = await getParametersSp("BD_Ins_" + tabla);
-    arg = JSON.parse(arg);
-    //console.log(arg, tabla);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      parametersIn.map((e) => {
-        // console.log(e["ParameterN"]);
-        // console.log(getTypeData(e["Type"], e["max_length"]));
-        // console.log(arg[e["ParameterN"]]);
-        request.input(
-          e["ParameterN"],
-          getTypeData(e["Type"], e["max_length"]),
-          arg[e["ParameterN"]]
-        );
-      });
-      let exec = await request.execute("BD_Ins_" + tabla);
-      await conn.close();
-      return exec.recordset[0][""];
-    }
-  } catch (err) {
-    return "Error - ins_Record " + err;
-  }
-});
-
-// ****************    METODO DE ACTUALIZACION **************-----------------------
-ipcMain.handle("myAPI:upd_Record", async (ev, arg, tabla) => {
-  try {
-    let parametersIn = null;
-    parametersIn = await getParametersSp("BD_Upd_" + tabla);
-    arg = JSON.parse(arg);
-    //console.log(arg, tabla);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      parametersIn.map((e) => {
-        // console.log(e["ParameterN"]);
-        // console.log(getTypeData(e["Type"], e["max_length"]));
-        // console.log(arg[e["ParameterN"]]);
-        request.input(
-          e["ParameterN"],
-          getTypeData(e["Type"], e["max_length"]),
-          arg[e["ParameterN"]]
-        );
-      });
-      let exec = await request.execute("BD_Upd_" + tabla);
-      //console.log(exec);
-      await conn.close();
-      return exec.recordset[0][""];
-    }
-  } catch (err) {
-    return "Error - upd_Record " + err;
-  }
-});
-
-//************** METODOS DE INACTIVACION ********************* */
-ipcMain.handle("myAPI:Invt_Record", async (ev, data) => {
-  try {
-    let { Id, Sp } = data;
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Id", sql.Int, Id);
-      let exec = await request.execute(Sp);
-      await conn.close();
-      return exec.recordsets[0];
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "Invt_record " + err };
-  }
-});
-
-//************** Metodo que consigue el html del documento ********************* */
-ipcMain.handle("myAPI:Get_DocumentoHtml", async (ev, Tabla, Id) => {
-  try {
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Tabla", sql.VarChar(50), Tabla);
-      request.input("Id", sql.Int, Id);
-      let exec = await request.execute("BD_Get_Documento");
-      await conn.close();
-      //console.log(exec);
-      return exec.recordsets;
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Documento " + err };
-  }
-});
-
-//************** Metodo que consigue la lista de configuraciones ********************* */
-ipcMain.handle("myAPI:get_ListOfConfigs", async (ev) => {
-  try {
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      let exec = await request.execute("BD_Get_Lists_Configs");
-      await conn.close();
-      return exec.recordsets;
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Lists_Configs " + err };
-  }
-});
-
-ipcMain.handle("myAPI:ins_Config", async (ev, data, sp) => {
-  try {
-    let parametersIn = null;
-    parametersIn = await getParametersSp(sp);
-    let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      parametersIn.map((e) => {
-        // console.log(e["ParameterN"]);
-        // console.log(getTypeData(e["Type"], e["max_length"]));
-        // console.log(arg[e["ParameterN"]]);
-        request.input(
-          e["ParameterN"],
-          getTypeData(e["Type"], e["max_length"]),
-          arg[e["ParameterN"]]
-        );
-      });
-      let exec = await request.execute(sp);
-      // console.log(exec);
-      await conn.close();
-      return exec.recordset[0][""];
-    }
-  } catch (err) {
-    return "Error - ins_Config " + err;
-  }
-});
-
 //** procedimiento  que se ejecuta y devuelve un string  */
 ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
   try {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    //console.log(arg, sp);
     let conn = await sql.connect(sqlConfig);
     if (conn.connected == true) {
       let request = new sql.Request();
@@ -402,7 +192,7 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
       return exec.recordsets;
     }
   } catch (ex) {
-    return "Error - executeSp_St " + err;
+    return { isError: true, errorMessage: "executeSp_Ds " + ex };
   }
 });
 
@@ -460,7 +250,6 @@ ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
     //let route = __dirname + "/" + nombre;
     fs.writeFileSync(route + "/docWordExport.docx", data);
     shell.openPath(route + "/docWordExport.docx");
-    //console.log(route + "/docWordExport.docx");
     return route + "/docWordExport.docx";
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx " + err };
@@ -486,12 +275,23 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
       paragraphLoop: true,
       linebreaks: true,
     });
+
     // Cargar el contenido HTML en Cheerio
-    const textoEnCheer = cheerio.load(obj["Nota_Marginal"]);
+    // si es confirmaciones
+    if (obj["Nombre_Archivo"] == "TemplateConfirmacion.docx") {
+      const textoEnCheer = cheerio.load(obj["Notas_Correcciones"]);
+      const plainText = textoEnCheer.text();
+      obj["Notas_Correcciones"] = plainText;
+    } else if (obj["Nombre_Archivo"] == "TemplateDefuncion.docx") {
+      const textoEnCheer = cheerio.load(obj["NotaMarginal"]);
+      const plainText = textoEnCheer.text();
+      obj["NotaMarginal"] = plainText;
+    } else {
+      const textoEnCheer = cheerio.load(obj["Nota_Marginal"]);
+      const plainText = textoEnCheer.text();
+      obj["Nota_Marginal"] = plainText;
+    }
     // Obtener el texto sin etiquetas
-    const plainText = textoEnCheer.text();
-    obj["Nota_Marginal"] = plainText;
-    //console.log(obj);
     doc.render(obj);
     // Get the zip document and generate it as a nodebuffer
     const buf = doc.getZip().generate({
@@ -519,21 +319,6 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
 });
 
 // APILIST
-ipcMain.handle("myAPI:load_DataTables", async (ev, arg) => {
-  try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      let sp = "BD_Get_Lists_" + arg;
-      let exec = await request.execute(sp);
-      await data.close();
-      return exec.recordsets;
-    }
-  } catch (err) {
-    return { isError: true, errorMessage: "BD_Get_Lists_" + arg + " - " + err };
-  }
-});
-
 function exportData(headers, datos, tabla) {
   return new Promise((res, rej) => {
     const xl = require("excel4node");

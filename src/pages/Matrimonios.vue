@@ -201,6 +201,7 @@
         @eventinvt="invtrecord"
         @loadingShow="showLoading"
         @loadingHide="hideLoading"
+        @msjShow="showMessage"
       ></Table_Component>
     </section>
   </q-page>
@@ -221,7 +222,6 @@ export default defineComponent({
   mounted() {
     this.showLoading("Cargando Datos...");
     this.getDataLogin((e, data) => {
-      console.log(e, data);
       this.perfil = data.Id_Perfil;
       this.getDoyFe();
       if (this.perfil == 1 || this.perfil == 2) this.getMatrimonios();
@@ -309,87 +309,79 @@ export default defineComponent({
     };
   },
   methods: {
-    getMatrimonios() {
+    async getMatrimonios() {
       try {
-        window.myAPI.loadDataTables("Matrimonios").then((e) => {
-          this.columns = [];
-          let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
-          //console.log(e[0]);
-          Columnas = Columnas.split("|");
-          Columnas_Label = Columnas_Label.split("|");
-          Columnas_Visibles = Columnas_Visibles.split("|");
-          this.visibleColumns = Columnas_Visibles;
-          Object.keys(Columnas).map((el, idx) => {
-            this.columns.push({
-              name: Columnas[el],
-              align: "center",
-              label: Columnas_Label[idx],
-              field: Columnas[el],
-              sortable: true,
-            });
+        const e = await window.myAPI.executeSp_Ds(
+          "{}",
+          "BD_Get_Lists_Matrimonios"
+        );
+        this.columns = [];
+        let { Columnas, Columnas_Label, Columnas_Visibles } = e[1][0];
+        Columnas = Columnas.split("|");
+        Columnas_Label = Columnas_Label.split("|");
+        Columnas_Visibles = Columnas_Visibles.split("|");
+        this.visibleColumns = Columnas_Visibles;
+        Object.keys(Columnas).map((el, idx) => {
+          this.columns.push({
+            name: Columnas[el],
+            align: "center",
+            label: Columnas_Label[idx],
+            field: Columnas[el],
+            sortable: true,
           });
-          this.rows = e[0];
-          this.hideLoading();
         });
+        this.rows = e[0];
+        this.hideLoading();
       } catch (e) {
         this.hideLoading();
         this.showMessage(e, "red", "error");
       }
     },
-    getDoyFe() {
-      window.myAPI.loadMinistros().then((e) => {
+    async getDoyFe() {
+      try {
+        const e = await window.myAPI.executeSp_Ds(
+          JSON.stringify({}),
+          "BD_Get_Lists_Ministros"
+        );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
-      });
+      } catch (error) {
+        this.hideLoading();
+        this.showMessage(error, "red", "danger");
+      }
     },
 
-    insMatrimonio() {
-      this.$refs.cards1.getData();
-      this.$refs.cards.getData();
-      this.makeValidation((result) => {
-        if (result === "OK") {
-          let DatosIns = this.dataMatrimonio;
-          DatosIns.Libro = this.Libro;
-          DatosIns.Folio = this.Folio;
-          DatosIns.Numero = this.Numero;
-          console.log(DatosIns);
-          if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
-          if (this.Id != null && this.Id != "") {
-            window.myAPI
-              .updRecord(JSON.stringify(DatosIns), "Matrimonio")
-              .then((e) => {
-                console.log(e);
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.resetValues();
-                  this.$refs.tableComponent.cleanSelectedRow();
-                  this.getMatrimonios();
-                }
-              });
-          } else {
-            window.myAPI
-              .insRecord(JSON.stringify(DatosIns), "Matrimonio")
-              .then((e) => {
-                console.log(e);
-                if (e.toLowerCase().indexOf("error") >= 0)
-                  this.showMessage(e, "red", "error");
-                else {
-                  this.showMessage(e, "positive", "check");
-                  this.resetValues();
-                  this.getMatrimonios();
-                }
-              });
-          }
-        } else this.showMessage(result, "red", "danger");
-      });
+    async insMatrimonio() {
+      try {
+        this.$refs.cards1.getData();
+        this.$refs.cards.getData();
+        const result = this.makeValidation();
+        if (result != "OK") throw result;
+        let DatosIns = this.dataMatrimonio;
+        DatosIns.Libro = this.Libro;
+        DatosIns.Folio = this.Folio;
+        DatosIns.Numero = this.Numero;
+        if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
+        let e = await window.myAPI.executeSp_St(
+          JSON.stringify(DatosIns),
+          this.Id != null && this.Id != ""
+            ? "BD_Upd_Matrimonio"
+            : "BD_Ins_Matrimonio"
+        );
+        if (e.indexOf("Error") >= 0) this.showMessage(e, "red", "error");
+        this.showMessage(e, "positive", "check");
+        this.resetValues();
+        this.$refs.tableComponent.cleanSelectedRow();
+        this.getMatrimonios();
+      } catch (error) {
+        this.showMessage(error, "red", "danger");
+      }
     },
-    makeValidation(res) {
+    makeValidation() {
+      let msj = "OK";
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
-        return res("Error - El codigo de partida no coincide");
+        msj = "Error - El codigo de partida no coincide";
 
-      let msj = "";
       Object.keys(this.dataMatrimonio).map((elem) => {
         if (
           elem != "Nota_Marginal" &&
@@ -405,11 +397,9 @@ export default defineComponent({
               : " - " + elem;
         }
       });
-      if (msj == "") res("OK");
-      else res(msj);
+      return msj;
     },
     setrecord(data) {
-      //console.log("Recogido desde el compoentn padre", data);
       this.Id = data.Id;
       this.Codigo_Partida = data.Codigo_Partida;
       this.Libro = data.Libro;
@@ -425,7 +415,6 @@ export default defineComponent({
     },
 
     SetearInfoCards(data, prefijo) {
-      console.log("Dta set info", data, prefijo);
       this.dataMatrimonio["Novi" + prefijo] = data.Nombre_;
       this.dataMatrimonio["Padres_Novi" + prefijo] = data.Padres_;
       this.dataMatrimonio["Parroquia_Novi" + prefijo] = data.Parroquia_;
@@ -436,21 +425,15 @@ export default defineComponent({
       this.dataMatrimonio["Acta_Novi" + prefijo] = data.Numero_;
     },
 
-    invtrecord(Id) {
+    async invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
-      console.log("Id de inactivacion", Id);
-      let data = { Id: Id, Sp: "BD_Invt_Matrimonio" };
-      window.myAPI.InvtRecord(data).then((e) => {
-        console.log(e);
-        if (e[0][""]) {
-          if (e[0][""].includes("Error"))
-            this.showMessage(e[0][""], "red", "error");
-          else {
-            this.showMessage(e[0][""], "positive", "check");
-            this.getMatrimonios();
-          }
-        }
-      });
+      const res = await window.myAPI.executeSp_St(
+        JSON.stringify({ Id }),
+        "BD_Invt_Matrimonio"
+      );
+      if (res.includes("Error")) this.showMessage(res, "red", "error");
+      else this.showMessage(res, "positive", "check");
+      this.getMatrimonios();
     },
 
     setCargoFirm() {

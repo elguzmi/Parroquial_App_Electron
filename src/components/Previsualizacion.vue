@@ -125,9 +125,6 @@ export default defineComponent({
   mounted() {
     this.searchDoc();
   },
-  unmounted() {
-    console.log("Se cerro");
-  },
   updated() {},
   methods: {
     searchDoc() {
@@ -138,18 +135,16 @@ export default defineComponent({
       window.myAPI.GetDocumentoHtml(tabla, id).then((e) => {
         //e.Html_Footer =
         //  "Autenticación en la curia Diocesana de Fontibón, Carrera 98 # 17 A - 81 Fontibón - Centro. <br> Tel (601) 4181036, Horario de atención, Lunes a Viernes de 9:00 a 1:00 P.M (Validez a 3 Meses)";
-        console.log(e);
+
         this.FirtData = e[0][0];
         this.CurrentData = e[0][0];
         this.datosDoc = e[1][0];
-        console.log(e[1][0]);
         this.dialog = true;
         this.hideLoading();
       });
     },
     goToPdf() {
       this.showLoading("Cargando Documento ...");
-      //console.log(this.CurrentData);
       const doc = new jsPDF({
         format: "legal",
         unit: "px",
@@ -185,15 +180,11 @@ export default defineComponent({
         width: pageWidth - 20, //target width in the PDF document
         windowWidth: 750, //window width in CSS pixels
       });
-      // window.myAPI.goToPdf(JSON.stringify(this.CurrentData)).then((e) => {
-      //   console.log(e);
-      // });
     },
 
     goToWord() {
       this.showLoading("Creando Documento ...");
       window.myAPI.convertToDocx(JSON.stringify(this.CurrentData)).then((e) => {
-        console.log(e);
         this.hideLoading();
       });
       //   return;
@@ -230,7 +221,6 @@ export default defineComponent({
     goToWordZip() {
       this.showLoading("Creando Documento ...");
       window.myAPI.convertToDocxZip(JSON.stringify(this.datosDoc)).then((e) => {
-        console.log(e);
         if (!e.isError) {
           this.hideLoading();
           this.showLoading("Abriendo Documento ...");
@@ -244,8 +234,6 @@ export default defineComponent({
   },
   watch: {
     dialog(news, old) {
-      // console.log(news, old);
-      // console.log(this.$parent);
       if (news == false) {
         this.$parent.IdSelected = null;
       }

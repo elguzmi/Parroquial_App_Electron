@@ -152,12 +152,10 @@ export default defineComponent({
       let data = { user: this.userName, clave: this.clave };
       this.showLoading("Cargando.. Por favor espera");
       window.ApiLogin.loadLogin(data).then((e) => {
-        //console.log(e);
         if (e.isError)
           this.showMessage("Error -" + e.errorMessage, "negative", "error");
         else {
           if (e.length > 0) {
-            //console.log(e);
             this.saveLogin(e[0], () => {
               this.hideLoading();
               this.showMessage(
@@ -179,16 +177,10 @@ export default defineComponent({
         }
       });
     },
-    changeDB() {
-      console.log(this.dbSelected);
-    },
   },
   watch: {
     dbSelected(newV, oldV) {
-      console.log(newV, oldV);
-      window.ApiLogin.changeDatabase(newV).then((e) => {
-        console.log(e);
-      });
+      window.ApiLogin.changeDatabase(newV);
     },
   },
 });

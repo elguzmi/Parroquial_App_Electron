@@ -108,7 +108,6 @@ export default defineComponent({
   },
   methods: {
     validacionInput(val) {
-      console.log("valor" + val);
       if (val.length > 5) return true;
       else return false;
     },
@@ -130,8 +129,7 @@ export default defineComponent({
       }
     },
     getListConfigs() {
-      window.myAPI.getListOfConfigs().then((e) => {
-        console.log("Data Config Variables Globales", e[3]);
+      window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs").then((e) => {
         this.rows = e[3];
       });
     },

@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; justify-content: space-around">
-    <div class="Doy_Fe" style="width: 40%">
+    <div class="Doy_Fe" style="width: 50%">
       <q-card-section>
         <div class="text-h6">Ministros Doy Fe</div>
         <div>
@@ -57,7 +57,7 @@
       </q-table>
     </div>
 
-    <div class="MinistrosFirmante" style="width: 40%">
+    <div class="MinistrosFirmante" style="width: 45%">
       <!-- Tabla De ministros firmantes -->
       <q-card-section>
         <div class="text-h6">Ministros Firmantes</div>

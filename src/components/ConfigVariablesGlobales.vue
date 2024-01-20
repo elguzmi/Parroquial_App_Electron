@@ -1,6 +1,8 @@
 <template>
   <q-card-section>
-    <div class="text-h6">Datos Generales</div>
+    <div class="text-h6">
+      Editar cabezal de pagina (UNICAMENTE PARA FORMATO PDF)
+    </div>
   </q-card-section>
 
   <q-table
@@ -10,7 +12,8 @@
     :columns="columns"
     row-key="Id"
     binary-state-sort
-    class="my-sticky-column-table"
+    class="my-sticky-column-table full-width"
+    style="margin: 0 auto"
     :visible-columns="['Nombre', 'Valor']"
   >
     <template v-slot:body="props">

@@ -1,4 +1,11 @@
-import { app, BrowserWindow, nativeTheme, ipcMain, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  nativeTheme,
+  ipcMain,
+  shell,
+  autoUpdater,
+} from "electron";
 import path from "path";
 import os from "os";
 const sql = require("mssql");
@@ -13,7 +20,7 @@ const dataBases = {
 const sqlConfig = {
   user: "sa",
   password: "Minecraft123",
-  server: dataBases.serverDev.name,
+  server: dataBases.serverProd.name,
   database: "ParroquiaBackup",
   options: {
     encrypt: false,
@@ -215,6 +222,22 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
   }
 });
 
+ipcMain.handle("myAPI:openFilesTemplates", async (ev, tabla) => {
+  try {
+    //shell.showItemInFolder
+    const rutaFiles =
+      process.env.NODE_ENV == "development"
+        ? __dirname
+        : path.dirname(__dirname);
+
+    shell.showItemInFolder(
+      path.resolve(rutaFiles, "TemplateConfirmacion.docx")
+    );
+    return rutaFiles, "TemplateConfirmacion.docx";
+  } catch (err) {
+    return { isError: true, errorMessage: "openFilesTemplates " + err };
+  }
+});
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
   const HTMLtoDOCX = require("html-to-docx");
   try {

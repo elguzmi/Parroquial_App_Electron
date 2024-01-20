@@ -16,7 +16,7 @@
       <div
         class="full-width row no-wrap justify-around items-start content-around"
       >
-        <div class="col-5">
+        <div class="col-6">
           <ConfigShortCurts
             @mostrarMsj="showMessage"
             @openModal="openModalEdited"
@@ -24,16 +24,7 @@
           ></ConfigShortCurts>
         </div>
         <div class="col-5">
-          <ConfigVariablesGlobales
-            @mostrarMsj="showMessage"
-          ></ConfigVariablesGlobales>
-        </div>
-      </div>
-      <br />
-      <div
-        class="full-width row no-wrap justify-around items-start content-around"
-      >
-        <div class="col-5">
+          <h6>Exportar información</h6>
           <q-select
             v-model="selectExportData"
             :options="[
@@ -54,6 +45,75 @@
           />
         </div>
       </div>
+      <br />
+      <q-card
+        class="my-card text-white q-pt-10 q-mt-md q-pa-md"
+        style="background: radial-gradient(circle, #ff8585 0%, #bc2900 100%)"
+      >
+        <div class="row" v-if="headerDocPdf != null">
+          <div class="col-6">
+            <ConfigVariablesGlobales
+              class="full-width"
+              @mostrarMsj="showMessage"
+            ></ConfigVariablesGlobales>
+          </div>
+          <div class="col-6 text-center">
+            <h5>Editar pie de pagina (UNICAMENTE PARA FORMATO PDF)</h5>
+            <q-editor
+              v-model="footerDocPdf"
+              toolbar-text-color="red"
+              color="red"
+              :content-style="{  color: 'black' }"
+            />
+            <q-btn
+              class="q-my-md"
+              color="secondary"
+              icon="save"
+              label="Guardar Footer"
+              @click="saveFooterPdf()"
+            />
+          </div>
+        </div>
+      </q-card>
+
+      <q-card
+        class="my-card text-white q-mt-md q-pa-md"
+        style="background: radial-gradient(circle, #35a2ff 0%, #0778db 100%)"
+      >
+        <q-card-section class="text-center text-h5">
+          Editar cabezales y pie de pagina en formato de word
+          <q-icon name="description" />
+        </q-card-section>
+        <q-separator inset />
+
+        <q-card-section>
+          <p class="text-h7">
+            <strong>Nota :</strong> Los documentos de word (bautismos ,
+            confirmaciones , defunciones y matrimonios) se editan directamente
+            en las plantillas con nombre que comienza por "Template" vistas al
+            darle click en el boton de "Ver plantillas"
+          </p>
+          <p>
+            <ol>
+              <li>TemplateBautismo.docx</li>
+              <li>TemplateConfirmacion.docx</li>
+              <li>TemplateDefuncion.docx</li>
+              <li>TemplateMatrimonio.docx</li>
+            </ol>
+          </p>
+          <p>
+            Al finalizar de editar por favor guardar y cerrar el word.
+          </p>
+        </q-card-section>
+        <q-card-section>
+          <q-btn
+            color="secondary"
+            icon="visibility"
+            label="Ver plantillas"
+            @click="showOpenFileTemplates()"
+          />
+        </q-card-section>
+      </q-card>
     </div>
     <div>
       <q-dialog
@@ -133,7 +193,9 @@ import ConfigVariablesGlobales from "components/ConfigVariablesGlobales.vue";
 export default defineComponent({
   name: "Configuracion",
   components: { ConfigUsers, ConfigShortCurts, ConfigVariablesGlobales },
-  mounted() {},
+  mounted() {
+    this.getHeaderPdf();
+  },
   setup() {
     const $q = useQuasar();
 
@@ -171,6 +233,8 @@ export default defineComponent({
       newDoyFe: ref({
         Nombre_DoyFe: ref(null),
       }),
+      headerDocPdf: ref(null),
+      footerDocPdf: ref(null),
     };
   },
   methods: {
@@ -183,6 +247,15 @@ export default defineComponent({
           "check"
         );
       });
+    },
+    async getHeaderPdf() {
+      const result = await window.myAPI.executeSp_Dt(
+        "{}",
+        "BD_Get_Setting_Pdf"
+      );
+      console.log(result);
+      this.footerDocPdf = result.Html_Footer_Docx;
+      this.headerDocPdf = result.Html_Header;
     },
     openModalEdited(mdlEdited) {
       this.editedModl = mdlEdited;
@@ -214,6 +287,25 @@ export default defineComponent({
           this.$refs.shortCuts.getListConfigs();
         }
       });
+    },
+    async saveFooterPdf() {
+      console.log(this.footerDocPdf);
+      let json = { FooterDocPdf: this.footerDocPdf };
+      const res = await window.myAPI.executeSp_St(
+        JSON.stringify(json),
+        "BD_Upd_FooterPdf"
+      );
+      if (res.includes("Error")) {
+        this.showMessage(res, "red", "danger");
+      } else {
+        this.showMessage(res, "positive", "check");
+        this.editedModl = 0;
+        this.persistent = false;
+      }
+    },
+    async showOpenFileTemplates() {
+      const res = await window.myAPI.openFileTemplate();
+      console.log(res);
     },
   },
 });

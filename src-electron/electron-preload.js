@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld("myAPI", {
 
   // metodo para exportar la data de la tabla en un excel
   ExportData: (dataDoc) => ipcRenderer.invoke("myAPI:Export_Data", dataDoc),
+
+  openFileTemplate: () => ipcRenderer.invoke("myAPI:openFilesTemplates"),
 });
 
 contextBridge.exposeInMainWorld("ApiLogin", {

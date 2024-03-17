@@ -172,6 +172,13 @@
             <div class="col-3">
               <q-select
                 v-model="dataConfirmacion.Ministro"
+                label="Ministro"
+                filled
+                fill-input
+                hide-selected
+                input-debounce="0"
+                use-input
+                dense
                 :options="[
                   'YOEL GÓMEZ RAMÍREZ. Pbro.',
                   'LORENZO ALZATE ARBOLEDA. Pbro',
@@ -179,9 +186,7 @@
                   'MONSEÑOR ENRIQUE SARMIENTO ANGULO',
                   'MONSEÑOR JUAN VICENTE CÓRDOBA VILLOTA. SJ.',
                 ]"
-                label="Ministro"
-                filled
-                dense
+                @input-value="setModel"
               />
             </div>
             <div class="col-3">
@@ -515,6 +520,9 @@ export default defineComponent({
       this.dataConfirmacion.Id_Ministro = 0;
       this.dataConfirmacion.Cargo = null;
       this.$refs.tableComponent.cleanSelectedRow();
+    },
+    setModel(val) {
+      this.dataConfirmacion.Ministro = val;
     },
   },
 

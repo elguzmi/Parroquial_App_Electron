@@ -180,6 +180,7 @@
                 use-input
                 dense
                 :options="[
+                  'JAIRO ALBERTO AGUILAR GONZÁLEZ. Pbro.',	
                   'YOEL GÓMEZ RAMÍREZ. Pbro.',
                   'LORENZO ALZATE ARBOLEDA. Pbro',
                   'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',

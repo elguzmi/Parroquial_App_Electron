@@ -13,7 +13,7 @@ var fs = require("fs");
 
 console.log(process.env.NODE_ENV);
 const dataBases = {
-  serverDev: { name: "GAMINGUZMI\\SERVERSANTI", selected: true },
+  serverDev: { name: "CESARPC\\SQLEXPRESS01", selected: true },
   //serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
   serverProd: { name: "192.168.20.27\\SQLEXPRESS", selected: false },
 };

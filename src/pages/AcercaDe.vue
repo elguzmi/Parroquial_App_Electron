@@ -2,13 +2,44 @@
   <q-page class="flex flex-center" style="background-color: black">
     <div class="q-pa-md">
       <q-card class="my-card">
-        <img src="../assets/img/logo_kapri.jpg" />
+        <img src="../assets/img/logo_kapri.jpg" style="width:40%; margin: 0 auto;" />
+
         <q-card-section>
           <div class="text-h6">Kapri Technology</div>
-          <div class="text-subtitle2">Kamilo Prieto // Santiago Guzman</div>
+          <div class="text-subtitle2">Kamilo Prieto // Santiago Guzmán</div>
         </q-card-section>
+
         <q-card-section>
-          Trabajamos en sus necesidades para tu tipo de software
+          <p>
+            <strong>Kapri Technology</strong> es una iniciativa enfocada en el desarrollo
+            de soluciones tecnológicas modernas y escalables. Nos especializamos en la
+            creación de software confiable, eficiente y adaptable, diseñado para apoyar
+            el crecimiento y la transformación digital de empresas, instituciones y
+            organizaciones.
+          </p>
+
+          <p>
+            Nuestro enfoque se centra en el desarrollo de aplicaciones web, móviles y
+            de escritorio, utilizando tecnologías modernas que permiten construir
+            sistemas robustos, seguros y preparados para escalar conforme evolucionan
+            las necesidades de cada proyecto. Buscamos crear herramientas digitales
+            que optimicen procesos, mejoren la productividad y faciliten la gestión
+            de la información.
+          </p>
+
+          <p>
+            En Kapri Technology trabajamos con un compromiso constante hacia la
+            calidad del software, la innovación tecnológica y la creación de
+            soluciones intuitivas y eficientes, capaces de adaptarse a distintos
+            entornos y sectores, brindando a nuestros clientes plataformas
+            tecnológicas confiables y preparadas para el futuro.
+          </p>
+
+          <p>
+            <strong>Contacto:</strong><br>
+            📧 kapritecnology@gmail.com<br>
+            📱 320 410 2229
+          </p>
         </q-card-section>
       </q-card>
     </div>

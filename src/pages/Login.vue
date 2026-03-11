@@ -2,20 +2,12 @@
   <q-layout>
     <q-page-container>
       <q-page>
-        <q-select
-          label="DB"
-          transition-show="flip-up"
-          transition-hide="flip-down"
-          filled
-          v-model="dbSelected"
-          :options="['serverProd', 'serverDev']"
-          class="hidden"
-          style="width: 100px; position: absolute; opacity: 0.1"
-        />
-        <div class="background__">
+        <div class="background__" v-if="store.state.appConfig.appConfig.fondo_login"
+         :style="{ backgroundImage: `url(${getImg(store.state.appConfig.appConfig.fondo_login)})` }" >
           <q-card class="my-card" style="width: 50%; opacity: 0.9">
             <q-img
-              src="../assets/img/Logo_Parroquia.jpeg"
+              v-if="store.state.appConfig.appConfig.logo_login"
+              :src="require(`src/assets/img/${store.state.appConfig.appConfig.logo_login}`)"
               style="height: 150px"
               fit="contain"
             />
@@ -93,7 +85,6 @@
 <style>
 .background__ {
   height: 100vh;
-  background-image: url("../assets/img/iglesia.jpg");
   background-size: cover;
   display: flex;
   justify-content: space-around;
@@ -104,28 +95,34 @@
 <script>
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
+import { useStore } from "vuex";
 
 export default defineComponent({
   name: "PageIndex",
-  mounted() {},
+  mounted() {
+    window.ApiLogin.getConfigParroquia().then((e) => {
+      this.store.commit('appConfig/setAppConfig', e);
+    });
+  },
   setup() {
-    const $q = useQuasar();
+    const q = useQuasar();
+    const store = useStore();
 
     function saveLogin(data, cl) {
-      $q.localStorage.set("SK", JSON.stringify(data)); // SessionKey
-      if ($q.localStorage.has("SK")) cl(true);
+      q.localStorage.set("SK", JSON.stringify(data)); // SessionKey
+      if (q.localStorage.has("SK")) cl(true);
       else cl(false);
     }
 
     function showLoading(msj) {
-      $q.loading.show({
+      q.loading.show({
         message: msj,
       });
     }
-    const hideLoading = () => $q.loading.hide();
+    const hideLoading = () => q.loading.hide();
     const showMessage = (msj, color, icon) => {
-      $q.loading.hide();
-      $q.notify({
+      q.loading.hide();
+      q.notify({
         progress: true,
         message: msj,
         icon: icon,
@@ -135,8 +132,7 @@ export default defineComponent({
     };
 
     return {
-      dbSelected: ref(null),
-
+      store,
       userName: ref(null),
       clave: ref(null),
       tries: ref(0),
@@ -148,15 +144,18 @@ export default defineComponent({
     };
   },
   methods: {
+    getImg(name) {
+      return require(`src/assets/img/${name}`)
+    },
     tryLogin() {
       let data = { user: this.userName, clave: this.clave };
       this.showLoading("Cargando.. Por favor espera");
       window.ApiLogin.loadLogin(data).then((e) => {
-        if (e.isError)
+        if (e.success == false)
           this.showMessage("Error -" + e.errorMessage, "negative", "error");
         else {
-          if (e.length > 0) {
-            this.saveLogin(e[0], () => {
+          if (e.data.length > 0) {
+            this.saveLogin(e.data[0], () => {
               this.hideLoading();
               this.showMessage(
                 "Sesion Iniciada correctamente",
@@ -179,9 +178,6 @@ export default defineComponent({
     },
   },
   watch: {
-    dbSelected(newV, oldV) {
-      window.ApiLogin.changeDatabase(newV);
-    },
   },
 });
 </script>

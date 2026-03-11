@@ -1,46 +1,36 @@
 import {
   app,
   BrowserWindow,
-  nativeTheme,
   ipcMain,
   shell,
-  autoUpdater,
 } from "electron";
 import path from "path";
 import os from "os";
 const sql = require("mssql");
 var fs = require("fs");
+import configParroquia from "./configParroquia";
 
-console.log(process.env.NODE_ENV);
-const dataBases = {
-  serverDev: { name: "CESARPC\\SQLEXPRESS01", selected: true },
-  //serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
-  serverProd: { name: "192.168.20.27\\SQLEXPRESS", selected: false },
-};
-const sqlConfig = {
-  user: "sa",
-  password: "Minecraft123",
-  server: dataBases.serverProd.name,
-  database: "ParroquiaBackup",
-  options: {
-    encrypt: false,
-  },
-};
 
+// global config de la aplicacion
+const globalConfig = configParroquia["localDev"];
 const platform = process.platform || os.platform();
-
 let mainWindow;
+let pool = null;
+
+const { sqlConfig } = globalConfig;
+
 
 function createWindow() {
   /* Initial window options*/
   mainWindow = new BrowserWindow({
-    icon: path.resolve(__dirname, "icons/icon.png"), // tray icon
+    icon: path.resolve(__dirname, `icons/${globalConfig.logo}`), // tray icon
     width: 1300,
     height: 660,
     useContentSize: true,
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
     webPreferences: {
+      additionalArguments: [JSON.stringify(configParroquia)],
       contextIsolation: true,
       sandbox: false,
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script
@@ -52,7 +42,6 @@ function createWindow() {
   });
 
   mainWindow.loadURL(process.env.APP_URL);
-
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
     mainWindow.webContents.openDevTools();
@@ -81,48 +70,65 @@ app.on("activate", () => {
   }
 });
 
+async function getConnection() {
+  console.log(pool)
+  if (!pool) {
+    pool = await sql.connect(sqlConfig);
+  }
+  return pool;
+}
+
 //#region Api login
 
 // ********** API DE LOGIN
-ipcMain.handle("ApiLogin:change_Database", async (ev, arg) => {
+ipcMain.handle("ApiLogin:getConfigParroquia", async (ev, arg) => {
   try {
-    sqlConfig.server = dataBases[arg].name;
-    return "OK";
+    return globalConfig;
   } catch (err) {
-    return "Error -" + err;
+    return { isError: true, errorMessage: "getConfigParroquia " + err };
   }
 });
 
 // ********** API DE LOGIN
+
 ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   try {
-    let { user, clave } = arg;
-    let data = await sql.connect(sqlConfig);
-    if (data.connected) {
-      let request = new sql.Request();
-      request.input("Usuario", sql.VARCHAR(50), user);
-      request.input("Clave", sql.VARCHAR(50), clave);
-      let exec = await request.execute("BD_Get_Login");
-      await data.close();
-      return exec.recordsets[0];
-    }
+    const { user, clave } = arg;
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Usuario", sql.VarChar(50), user);
+    request.input("Clave", sql.VarChar(50), clave);
+    const result = await request.execute("BD_Get_Login");
+    return {
+      success: true,
+      data: result.recordset
+    };
   } catch (err) {
-    return { isError: true, errorMessage: "Apilogin " + err };
+    console.error("Login error:", err);
+    return {
+      success: false,
+      message: err.message
+    };
   }
 });
 
+
 ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
   try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      request.input("IdPerfil", sql.Int, IdPerfil);
-      let exec = await request.execute("BD_Get_ModulosPerfil");
-      await await data.close();
-      return exec.recordsets[0];
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("IdPerfil", sql.Int, IdPerfil);
+    let exec = await request.execute("BD_Get_ModulosPerfil");
+    return {
+      success: true,
+      data: exec.recordsets[0]
+    };
+    
   } catch (err) {
-    return "Load_Modules " + err;
+    return {
+      success: false,
+      message: err.message
+    };
   }
 });
 
@@ -134,9 +140,8 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
+    const pool = await getConnection();
+    const request = pool.request();
       parametersIn.map((e) => {
         request.input(
           e["ParameterN"],
@@ -144,10 +149,8 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
           arg[e["ParameterN"]]
         );
       });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordset[0][""];
-    }
+    const result = await request.execute(sp);
+    return result.recordset[0][""];
   } catch (err) {
     return "Error - executeSp_St " + err;
   }
@@ -159,9 +162,8 @@ ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
+    const pool = await getConnection();
+    const request = pool.request();
       parametersIn.map((e) => {
         request.input(
           e["ParameterN"],
@@ -169,10 +171,9 @@ ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
           arg[e["ParameterN"]]
         );
       });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordset[0];
-    }
+    const result = await request.execute(sp);
+    return result.recordset[0];
+    
   } catch (ex) {
     return "Error - executeSp_St " + err;
   }
@@ -184,20 +185,18 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      parametersIn.map((e) => {
-        request.input(
-          e["ParameterN"],
-          getTypeData(e["Type"], e["max_length"]),
-          arg[e["ParameterN"]]
-        );
-      });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordsets;
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    parametersIn.map((e) => {
+      request.input(
+        e["ParameterN"],
+        getTypeData(e["Type"], e["max_length"]),
+        arg[e["ParameterN"]]
+      );
+    });
+    const result = await request.execute(sp);
+    return result.recordsets;
+    
   } catch (ex) {
     return { isError: true, errorMessage: "executeSp_Ds " + ex };
   }
@@ -206,17 +205,14 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
 ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
   try {
     if (!tabla) return "Error - No Data to search";
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Tabla", sql.VarChar(20), tabla);
-      let exec = await request.execute("BD_GetData_FromTable");
-      await conn.close();
-      let datos = exec.recordsets[0];
-      let headers = Object.keys(datos[0]);
-      let msj = await exportData(headers, datos, tabla);
-      return msj;
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Tabla", sql.VarChar(20), tabla);
+    const result = await request.execute("BD_GetData_FromTable");
+    const datos = result.recordsets[0];
+    const headers = Object.keys(datos[0]);
+    const msj = await exportData(headers, datos, tabla);
+    return msj;
   } catch (err) {
     return { isError: true, errorMessage: "Fn_Export_Data " + err };
   }
@@ -372,14 +368,11 @@ function exportData(headers, datos, tabla) {
 
 function getParametersSp(Sp) {
   return new Promise(async (resolve) => {
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Sp", sql.VarChar(50), Sp);
-      let exec = await request.execute("BD_Get_Lists_Parameters");
-      await conn.close();
-      resolve(exec.recordset);
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Sp", sql.VarChar(50), Sp);
+    const result = await request.execute("BD_Get_Lists_Parameters");
+    resolve(result.recordset);
   });
 }
 

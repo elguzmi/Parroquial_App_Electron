@@ -1,4 +1,3 @@
-//window.Electron = require("electron");
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("myAPI", {
   //Sp General ejecucion ST
@@ -29,4 +28,5 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   loadLogin: (datosUser) => ipcRenderer.invoke("ApiLogin:login", datosUser),
   loadModules: (perfil) => ipcRenderer.invoke("ApiLogin:Load_Modules", perfil),
   changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
+  getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
 });

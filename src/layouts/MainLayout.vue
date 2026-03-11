@@ -136,10 +136,14 @@ export default {
         if (!val) this.$router.push("/");
         else {
           window.ApiLogin.loadModules(data.Id_Perfil).then((e) => {
-            this.modules = e;
-            this.saveModules(e);
-            this.$router.push("/Inicio");
-            this.hideLoading();
+            if (e.success == false)
+              this.showMessage("Error -" + e.message, "negative", "error");
+            else {
+              this.modules = e.data;
+              this.saveModules(e.data);
+              this.$router.push("/Inicio");
+              this.hideLoading();
+            }
           });
         }
       });

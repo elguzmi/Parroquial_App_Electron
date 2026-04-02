@@ -1,8 +1,7 @@
 import { store } from "quasar/wrappers";
 import { createStore } from "vuex";
-//import example from './module-example'
 import appConfig from './app-config'
-
+import userInfo from './app-user-info'
 /*
  * If not building with SSR mode, you can
  * directly export the Store instantiation;
@@ -15,7 +14,8 @@ import appConfig from './app-config'
 export default store(function (/* { ssrContext } */) {
   const Store = createStore({
     modules: {
-      appConfig
+      appConfig,
+      userInfo
     },
 
     // enable strict mode (adds overhead!)

@@ -168,43 +168,55 @@ export default defineComponent({
     },
     async PrintPdf() {
       this.$emit("loadingShow", "Generando Pdf");
-      this.IdSelected = this.selected[0].Id;
-      const datosPdf = await this.searchDoc("pdf");
-      const doc = new jsPDF({
-        format: "legal",
-        unit: "px",
-        orientation: "portrait",
-        //compress: true,
-      });
-      const pageSize = doc.internal.pageSize;
-      const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
-      const pageHeight = pageSize.height
-        ? pageSize.height
-        : pageSize.getHeight();
+      try {
+        this.IdSelected = this.selected[0].Id;
+        const datosPdf = await this.searchDoc("pdf");
+        const doc = new jsPDF({
+          format: "legal",
+          unit: "px",
+          orientation: "portrait",
+          //compress: true,
+        });
+        const pageSize = doc.internal.pageSize;
+        const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
+        const pageHeight = pageSize.height
+          ? pageSize.height
+          : pageSize.getHeight();
+  
+        const footer = datosPdf.Html_Footer_Docx.replaceAll("<br>", "\n")
+          .replaceAll("<br />", "\n")
+          .replaceAll("<center>", "")
+          .replaceAll("</center>", "");
 
-      const footer = datosPdf.Html_Footer_Docx.replace("<br>", "\n")
-        .replaceAll("<br />", "\n")
-        .replace("<center>", "")
-        .replace("</center>", "");
-
-      // // Footer
-      doc.setFontSize(12);
-      doc.text(footer, 600 - doc.getTextWidth(footer) / 2, pageHeight - 30, {
-        baseline: "bottom",
-        align: "center",
-      });
-
-      doc.html(datosPdf.Html_Header + datosPdf.Html_Body, {
-        callback: (doc) => {
-          doc.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
-          window.open(doc.output("bloburl"));
-          this.$emit("loadingHide", null);
-        },
-        x: 15,
-        y: 15,
-        width: pageWidth - 20, //target width in the PDF document
-        windowWidth: 750, //window width in CSS pixels
-      });
+  
+        // // Footer
+        doc.setFontSize(12);
+        doc.text(footer, 600 / 2, pageHeight - 30, {
+          baseline: "bottom",
+          align: "center",
+        });
+        // doc.text(footer, 600 - doc.getTextWidth(footer) / 2, pageHeight - 30, {
+        //   baseline: "bottom",
+        //   align: "center",
+        // });
+        console.log('DatosPdf',datosPdf);
+  
+        doc.html(datosPdf.Html_Header + datosPdf.Html_Body, {
+          callback: (doc) => {
+            doc.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
+            window.open(doc.output("bloburl"));
+            this.$emit("loadingHide", null);
+          },
+          x: 15,
+          y: 15,
+          width: pageWidth - 20, //target width in the PDF document
+          windowWidth: 750, //window width in CSS pixels
+        });
+      } catch (error) {
+        this.$emit("loadingHide", null);
+        console.error('Error',error);
+        this.$emit("msjShow", error.message, "red", "error");
+      }
     },
 
     async searchDoc(type) {
@@ -212,6 +224,8 @@ export default defineComponent({
         let Tabla = this.tablaDirectTo;
         let Id = this.IdSelected;
         if (!Tabla || !Id) throw "Error - No tabla detected";
+        console.log('Tabla',Tabla);
+        console.log('Id',Id);
         const e = await window.myAPI.executeSp_Ds(
           JSON.stringify({ Id, Tabla }),
           "BD_Get_Documento"

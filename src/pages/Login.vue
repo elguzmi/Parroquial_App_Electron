@@ -109,6 +109,7 @@ export default defineComponent({
     const store = useStore();
 
     function saveLogin(data, cl) {
+      store.commit('userInfo/setUserInfo', data);
       q.localStorage.set("SK", JSON.stringify(data)); // SessionKey
       if (q.localStorage.has("SK")) cl(true);
       else cl(false);

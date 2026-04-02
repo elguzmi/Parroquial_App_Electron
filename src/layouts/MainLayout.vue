@@ -13,7 +13,7 @@
           class="q-mr-sm"
         />
         <div class="q-pr-lg text-h6" v-if="$q.screen.gt.xs">
-          Parroquia Jesús Eucaristía
+          {{ store.getters['userInfo/getUserInfo'].Parroquia }}
         </div>
 
         <q-space />
@@ -80,12 +80,14 @@
 <script>
 import { ref } from "vue";
 import { useQuasar } from "quasar";
+import { useStore } from "vuex";
 
 export default {
   name: "GooglePlayLayout",
 
   setup() {
     const $q = useQuasar();
+    const store = useStore();
     const leftDrawerOpen = ref(false);
     const search = ref("");
     const storage = ref(0.26);
@@ -113,6 +115,7 @@ export default {
     const removeLocal = () => $q.localStorage.clear();
 
     return {
+      store,
       leftDrawerOpen,
       search,
       storage,

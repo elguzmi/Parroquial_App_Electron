@@ -157,6 +157,7 @@ export default defineComponent({
       this.$emit("loadingShow", "Generando Word");
       this.IdSelected = this.selected[0].Id;
       const datosDoc = await this.searchDoc("word");
+      console.log('DatosDoc',datosDoc);
 
       const res = await window.myAPI.convertToDocxZip(JSON.stringify(datosDoc));
       if (!res.isError) {
@@ -199,8 +200,6 @@ export default defineComponent({
         //   baseline: "bottom",
         //   align: "center",
         // });
-        console.log('DatosPdf',datosPdf);
-  
         doc.html(datosPdf.Html_Header + datosPdf.Html_Body, {
           callback: (doc) => {
             doc.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
@@ -224,8 +223,6 @@ export default defineComponent({
         let Tabla = this.tablaDirectTo;
         let Id = this.IdSelected;
         if (!Tabla || !Id) throw "Error - No tabla detected";
-        console.log('Tabla',Tabla);
-        console.log('Id',Id);
         const e = await window.myAPI.executeSp_Ds(
           JSON.stringify({ Id, Tabla }),
           "BD_Get_Documento"

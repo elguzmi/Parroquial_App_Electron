@@ -253,7 +253,6 @@ export default defineComponent({
         "{}",
         "BD_Get_Setting_Pdf"
       );
-      console.log(result);
       this.footerDocPdf = result.Html_Footer_Docx;
       this.headerDocPdf = result.Html_Header;
     },
@@ -289,7 +288,6 @@ export default defineComponent({
       });
     },
     async saveFooterPdf() {
-      console.log(this.footerDocPdf);
       let json = { FooterDocPdf: this.footerDocPdf };
       const res = await window.myAPI.executeSp_St(
         JSON.stringify(json),
@@ -304,8 +302,7 @@ export default defineComponent({
       }
     },
     async showOpenFileTemplates() {
-      const res = await window.myAPI.openFileTemplate();
-      console.log(res);
+      await window.myAPI.openFileTemplate();
     },
   },
 });

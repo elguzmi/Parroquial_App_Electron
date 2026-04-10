@@ -12,7 +12,7 @@ import configParroquia from "./configParroquia";
 
 
 // global config de la aplicacion
-const globalConfig = configParroquia["localDev"];
+const globalConfig = configParroquia["parroquiaSalud"];
 const platform = process.platform || os.platform();
 let mainWindow;
 let pool = null;
@@ -297,16 +297,17 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
 
     // Cargar el contenido HTML en Cheerio
     // si es confirmaciones
+    console.log('obj',obj);
     if (obj["Nombre_Archivo"] == "TemplateConfirmacion.docx") {
-      const textoEnCheer = cheerio.load(obj["Notas_Correcciones"]);
+      const textoEnCheer = cheerio.load(obj["Notas_Correcciones"] ?? "");
       const plainText = textoEnCheer.text();
       obj["Notas_Correcciones"] = plainText;
     } else if (obj["Nombre_Archivo"] == "TemplateDefuncion.docx") {
-      const textoEnCheer = cheerio.load(obj["NotaMarginal"]);
+      const textoEnCheer = cheerio.load(obj["NotaMarginal"] ?? "");
       const plainText = textoEnCheer.text();
       obj["NotaMarginal"] = plainText;
     } else {
-      const textoEnCheer = cheerio.load(obj["Nota_Marginal"]);
+      const textoEnCheer = cheerio.load(obj["Nota_Marginal"] ?? "");
       const plainText = textoEnCheer.text();
       obj["Nota_Marginal"] = plainText;
     }

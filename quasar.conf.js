@@ -196,7 +196,8 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
-      bundler: "packager", // 'packager' or 'builder'
+      //bundler: "packager", // 'packager' or 'builder'
+      bundler: "builder", // 'packager' or 'builder'
 
       // should you wish to change default files
       sourceFiles: {
@@ -212,12 +213,23 @@ module.exports = configure(function (ctx) {
         // protocol: 'myapp://path',
         // Windows only
         // win32metadata: { ... }
+         icon: "src-electron/icons/icon.ico"
       },
 
       builder: {
         // https://www.electron.build/configuration/configuration
 
         appId: "parroquia_app",
+        productName: "Parroquia App",
+        win: {
+          target: "nsis",
+          icon: "src-electron/icons/icon.ico"
+        },
+        nsis: {
+          oneClick: false,
+          perMachine: false,
+          allowToChangeInstallationDirectory: true
+        }
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain

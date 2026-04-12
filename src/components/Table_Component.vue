@@ -157,7 +157,6 @@ export default defineComponent({
       this.$emit("loadingShow", "Generando Word");
       this.IdSelected = this.selected[0].Id;
       const datosDoc = await this.searchDoc("word");
-      console.log('DatosDoc',datosDoc);
 
       const res = await window.myAPI.convertToDocxZip(JSON.stringify(datosDoc));
       if (!res.isError) {

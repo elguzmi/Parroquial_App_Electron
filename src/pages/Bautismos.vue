@@ -171,7 +171,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="ListMinistros"
+                :options="[...ListMinistros, ...ListMinistrosNoActive]"
                 label="Firma Documento"
                 filled
                 dense
@@ -316,6 +316,7 @@ export default defineComponent({
       }),
       ListDoyFe: ref([]),
       ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
       rows: ref([]),
       columns: ref([]),
       visibleColumns: ref([]),
@@ -370,6 +371,7 @@ export default defineComponent({
         this.Libro = data.Libro;
         this.Folio = data.Folio;
         this.Numero = data.Numero;
+        this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
         for (const key in this.dataBautizos) {
           this.dataBautizos[key] = data[key];
         }
@@ -378,6 +380,11 @@ export default defineComponent({
         this.hideLoading();
         this.showMessage(error, "negative", "danger");
       }
+    },
+
+    addMinistroToList(id , name) {
+      const verify = this.ListMinistros.some((e) => e.Id == id) || this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
     },
 
     async invtrecord(Id) {
@@ -438,6 +445,7 @@ export default defineComponent({
       this.dataBautizos.Id_Ministro = 0;
       this.dataBautizos.Cargo = null;
       this.$refs.tableComponent.cleanSelectedRow();
+      this.ListMinistrosNoActive = [];
     },
     makeValidation() {
       let msj = "OK";

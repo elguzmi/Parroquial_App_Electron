@@ -155,7 +155,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="ListMinistros"
+                :options="[...ListMinistros, ...ListMinistrosNoActive]"
                 label="Firma Documento"
                 filled
                 dense
@@ -230,22 +230,22 @@ export default defineComponent({
     });
   },
   setup() {
-    const $q = useQuasar();
+    const q = useQuasar();
 
     const getDataLogin = (cll) => {
-      if ($q.localStorage.has("SK"))
-        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      if (q.localStorage.has("SK"))
+        cll(true, JSON.parse(q.localStorage.getItem("SK")));
       else cll(false, {});
     };
 
     function showLoading(msj) {
-      $q.loading.show({
+      q.loading.show({
         message: msj,
       });
     }
     const showMessage = (msj, color, icon) => {
-      $q.loading.hide();
-      $q.notify({
+      q.loading.hide();
+      q.notify({
         progress: true,
         message: msj,
         icon: icon,
@@ -253,7 +253,7 @@ export default defineComponent({
         textColor: "white",
       });
     };
-    const hideLoading = () => $q.loading.hide();
+    const hideLoading = () => q.loading.hide();
     return {
       perfil: ref(null),
       getDataLogin,
@@ -290,6 +290,7 @@ export default defineComponent({
       visibleColumns: ref([]),
       ListId_MinistroDoyFe: ref([]),
       ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
     };
   },
   methods: {
@@ -333,7 +334,7 @@ export default defineComponent({
         this.showMessage(error, "red", "danger");
       }
     },
-    saveDefuncion() {
+    async saveDefuncion() {
       try {
         const result = this.makeValidation();
         if (result != "OK") throw result;
@@ -342,7 +343,7 @@ export default defineComponent({
         DatosIns.Folio = this.Folio;
         DatosIns.Numero = this.Numero;
         if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
-        const e = window.myAPI.executeSp_St(
+        const e = await window.myAPI.executeSp_St(
           JSON.stringify(DatosIns),
           this.Id != null && this.Id != ""
             ? "BD_Upd_Defuncion"
@@ -359,7 +360,7 @@ export default defineComponent({
       }
     },
     makeValidation() {
-      let msj = "";
+      let msj = "OK";
       if (this.No_Defuncion != this.Libro + this.Folio + this.Numero)
         msj = "Error - El codigo de partida no coincide";
       Object.keys(this.dataDefunciones).map((elem) => {
@@ -381,12 +382,17 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
+      this.addMinistroToList(data.Id_Firmante, data.Nombre_Firmante);
       for (const key in this.dataDefunciones) {
         this.dataDefunciones[key] = data[key];
       }
       this.setCargoFirm();
     },
 
+    addMinistroToList(id , name) {
+      const verify = this.ListMinistros.some((e) => e.Id == id) || this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
+    },
     setCargoFirm() {
       this.dataDefunciones.Cargo_Firmante = this.ListMinistros.find(
         (e) => e.Id == this.dataDefunciones.Id_Firmante
@@ -420,6 +426,7 @@ export default defineComponent({
       this.dataDefunciones.Id_Firmante = 0;
       this.dataDefunciones.Cargo_Firmante = null;
       this.$refs.tableComponent.cleanSelectedRow();
+      this.ListMinistrosNoActive = [];
     },
   },
   watch: {

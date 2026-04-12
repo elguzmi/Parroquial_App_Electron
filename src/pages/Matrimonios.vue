@@ -153,7 +153,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="ListMinistros"
+                :options="[...ListMinistros, ...ListMinistrosNoActive]"
                 label="Firma Documento"
                 filled
                 dense
@@ -301,8 +301,9 @@ export default defineComponent({
       }),
 
       isDense: true,
-      ListDoyFe: ref(null),
-      ListMinistros: ref(null),
+      ListDoyFe: ref([]),
+      ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
       // *** data de la tabla
       rows: ref([]),
       columns: ref([]),
@@ -406,13 +407,18 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-
+      this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
       for (const key in this.dataMatrimonio) {
         this.dataMatrimonio[key] = data[key];
       }
       this.$refs.cards.updateData();
       this.$refs.cards1.updateData();
       this.setCargoFirm();
+    },
+
+    addMinistroToList(id , name) {
+      const verify = this.ListMinistros.some((e) => e.Id == id) || this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
     },
 
     SetearInfoCards(data, prefijo) {
@@ -477,6 +483,7 @@ export default defineComponent({
       this.$refs.cards.cleanData();
       this.$refs.cards1.cleanData();
       this.$refs.tableComponent.cleanSelectedRow();
+      this.ListMinistrosNoActive = [];
     },
   },
   watch: {

@@ -347,6 +347,7 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
+        this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
         this.showMessage(error, "red", "danger");
@@ -413,6 +414,7 @@ export default defineComponent({
       }
       this.$refs.cards.updateData();
       this.$refs.cards1.updateData();
+      this.setFirmanteFav();
       this.setCargoFirm();
     },
 
@@ -444,10 +446,22 @@ export default defineComponent({
     },
 
     setCargoFirm() {
-      this.dataMatrimonio.Cargo = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataMatrimonio.Id_Ministro
       )?.Cargo;
+      if (cargo) this.dataMatrimonio.Cargo = cargo;
     },
+
+    setFirmanteFav(){
+      const selectDefault = this.ListMinistros.find(
+        (e) => e.isCurrent == 1
+      );
+      if (selectDefault) {
+        this.dataMatrimonio.Id_Ministro = selectDefault.Id;
+        this.dataMatrimonio.Cargo = selectDefault.Cargo;
+      }
+    },
+
     setModel(val) {
       this.dataMatrimonio.Presencio = val;
     },
@@ -484,6 +498,7 @@ export default defineComponent({
       this.$refs.cards1.cleanData();
       this.$refs.tableComponent.cleanSelectedRow();
       this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
     },
   },
   watch: {

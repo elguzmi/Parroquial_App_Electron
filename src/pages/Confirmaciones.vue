@@ -388,6 +388,7 @@ export default defineComponent({
         );
         this.ListId_MinistroDoyFe = e[0];
         this.ListMinistros = e[1];
+        this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
         this.showMessage(error, "red", "error");
@@ -467,9 +468,10 @@ export default defineComponent({
       return msj;
     },
     setCargoFirm() {
-      this.dataConfirmacion.Cargo = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataConfirmacion.Id_Ministro
       )?.Cargo;
+      if (cargo) this.dataConfirmacion.Cargo = cargo;
     },
 
     setrecord(data) {
@@ -481,6 +483,7 @@ export default defineComponent({
       for (const key in this.dataConfirmacion) {
         this.dataConfirmacion[key] = data[key];
       }
+      this.setFirmanteFav();
       this.setCargoFirm();
     },
 
@@ -529,7 +532,19 @@ export default defineComponent({
       this.dataConfirmacion.Cargo = null;
       this.$refs.tableComponent.cleanSelectedRow();
       this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
     },
+
+    setFirmanteFav(){
+      const selectDefault = this.ListMinistros.find(
+        (e) => e.isCurrent == 1
+      );
+      if (selectDefault) {
+        this.dataConfirmacion.Id_Ministro = selectDefault.Id;
+        this.dataConfirmacion.Cargo = selectDefault.Cargo;
+      }
+    },
+
     setModel(val) {
       this.dataConfirmacion.Ministro = val;
     },

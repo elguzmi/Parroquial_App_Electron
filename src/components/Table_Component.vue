@@ -111,14 +111,14 @@ export default defineComponent({
     visibleColumns: { type: Array },
   },
   setup() {
-    const $q = useQuasar();
+    const q = useQuasar();
     return {
       selected: ref([]),
       fullscreen: ref(false),
       IdSelected: ref(null),
       showDialog: ref(false),
       filterText: ref(null),
-      $q,
+      q,
     };
   },
 
@@ -136,7 +136,7 @@ export default defineComponent({
     async invtRecord() {
       try {
         if (this.selected.length == 0) return;
-        this.$q
+        this.q
           .dialog({
             title: "Confirm",
             message: "Esta seguro de eliminar el registro?",

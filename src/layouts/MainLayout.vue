@@ -13,7 +13,7 @@
           class="q-mr-sm"
         />
         <div class="q-pr-lg text-h6" v-if="$q.screen.gt.xs">
-          {{ store.getters['userInfo/getUserInfo'].Parroquia }}
+          {{ store.getters['userInfo/getUserInfo'].Parroquia ?? "Parroquia" }}
         </div>
 
         <q-space />

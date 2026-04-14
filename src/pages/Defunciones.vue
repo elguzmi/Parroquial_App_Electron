@@ -302,6 +302,7 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
+        this.setFirmanteFav();
       } catch (error) {
         this.showMessage(error, "red", "danger");
       }
@@ -386,6 +387,7 @@ export default defineComponent({
       for (const key in this.dataDefunciones) {
         this.dataDefunciones[key] = data[key];
       }
+      this.setFirmanteFav();
       this.setCargoFirm();
     },
 
@@ -394,9 +396,10 @@ export default defineComponent({
       if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
     },
     setCargoFirm() {
-      this.dataDefunciones.Cargo_Firmante = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataDefunciones.Id_Firmante
       )?.Cargo;
+      if (cargo) this.dataDefunciones.Cargo_Firmante = cargo;
     },
     async invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
@@ -427,6 +430,16 @@ export default defineComponent({
       this.dataDefunciones.Cargo_Firmante = null;
       this.$refs.tableComponent.cleanSelectedRow();
       this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
+    },
+    setFirmanteFav(){
+      const selectDefault = this.ListMinistros.find(
+        (e) => e.isCurrent == 1
+      );
+      if (selectDefault) {
+        this.dataDefunciones.Id_Firmante = selectDefault.Id;
+        this.dataDefunciones.Cargo_Firmante = selectDefault.Cargo;
+      }
     },
   },
   watch: {

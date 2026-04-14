@@ -256,27 +256,27 @@ export default defineComponent({
       this.perfil = data.Id_Perfil;
       this.getDoyFe();
       if (this.perfil == 1 || this.perfil == 2) this.getBautismos();
-      else this.hideLoading();
+      else this.hideLoading();      
     });
   },
   computed: {},
   setup() {
-    const $q = useQuasar();
+    const q = useQuasar();
 
     const getDataLogin = (cll) => {
-      if ($q.localStorage.has("SK"))
-        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      if (q.localStorage.has("SK"))
+        cll(true, JSON.parse(q.localStorage.getItem("SK")));
       else cll(false, {});
     };
 
     function showLoading(msj) {
-      $q.loading.show({
+      q.loading.show({
         message: msj,
       });
     }
     const showMessage = (msj, color, icon) => {
-      $q.loading.hide();
-      $q.notify({
+      q.loading.hide();
+      q.notify({
         progress: true,
         message: msj,
         icon: icon,
@@ -284,7 +284,7 @@ export default defineComponent({
         textColor: "white",
       });
     };
-    const hideLoading = () => $q.loading.hide();
+    const hideLoading = () => q.loading.hide();
     return {
       Documento: ref(null),
       showDialog: ref(false),
@@ -359,6 +359,7 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
+        this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
         this.showMessage(error, "red", "error");
@@ -375,6 +376,7 @@ export default defineComponent({
         for (const key in this.dataBautizos) {
           this.dataBautizos[key] = data[key];
         }
+        this.setFirmanteFav();
         this.setCargoFirm();
       } catch (error) {
         this.hideLoading();
@@ -446,7 +448,19 @@ export default defineComponent({
       this.dataBautizos.Cargo = null;
       this.$refs.tableComponent.cleanSelectedRow();
       this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
     },
+
+    setFirmanteFav(){
+      const selectDefault = this.ListMinistros.find(
+        (e) => e.isCurrent == 1
+      );
+      if (selectDefault) {
+        this.dataBautizos.Id_Ministro = selectDefault.Id;
+        this.dataBautizos.Cargo = selectDefault.Cargo;
+      }
+    },
+
     makeValidation() {
       let msj = "OK";
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
@@ -464,9 +478,10 @@ export default defineComponent({
     },
 
     setCargoFirm() {
-      this.dataBautizos.Cargo = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataBautizos.Id_Ministro
       )?.Cargo;
+      if (cargo) this.dataBautizos.Cargo = cargo;
     },
     setModel(val) {
       this.dataBautizos.Ministro = val;

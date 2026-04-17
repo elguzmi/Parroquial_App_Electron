@@ -155,7 +155,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="[...ListMinistros, ...ListMinistrosNoActive]"
+                :options="[...ListMinistros ]"
                 label="Firma Documento"
                 filled
                 dense

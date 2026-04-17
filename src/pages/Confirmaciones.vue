@@ -180,12 +180,14 @@
                 use-input
                 dense
                 :options="[
-                  'JAIRO ALBERTO AGUILAR GONZÁLEZ. Pbro.',	
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                  'MONSEÑOR ENRIQUE SARMIENTO ANGULO',
-                  'MONSEÑOR JUAN VICENTE CÓRDOBA VILLOTA. SJ.',
+                  'LUIS HERNANDO RÍOS ALDANA. PBRO.',
+                  'LUIS FERNANDO LEÓN ROBAYO. PBRO',
+                  'CÉSAR AUGUSTO ALMONACID RUBIO. PBRO',
+                  'HUMBERTO RENGIFO. PBRO.',
+                  'JOSÉ CARLOS MANZANO ASCANIO. PBRO.',
+                  'JOSÉ AQUILINO SABOGAL MORA. PBRO.',
+                  'OMAR JAVIER OJEDA TEUTA. PBRO.',
+                  'YOEL GÓMEZ RAMÍREZ. PBRO.',
                 ]"
                 @input-value="setModel"
               />
@@ -212,7 +214,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="[...ListMinistros, ...ListMinistrosNoActive]"
+                :options="[...ListMinistros ]"
                 label="Firma Documento"
                 filled
                 dense

@@ -48,17 +48,6 @@
             class="full-width row no-wrap justify-around items-start content-around"
           >
             <div class="col-6">
-              <!-- <q-select
-                v-model="dataMatrimonio.Presencio"
-                :options="[
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                ]"
-                label="Presencio"
-                filled
-                dense
-              /> -->
               <q-select
                 filled
                 v-model="dataMatrimonio.Presencio"
@@ -69,10 +58,14 @@
                 fill-input
                 input-debounce="0"
                 :options="[
-                  'JAIRO ALBERTO AGUILAR GONZÁLEZ. Pbro.',	
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
+                  'LUIS HERNANDO RÍOS ALDANA. PBRO.',
+                  'LUIS FERNANDO LEÓN ROBAYO. PBRO',
+                  'CÉSAR AUGUSTO ALMONACID RUBIO. PBRO',
+                  'HUMBERTO RENGIFO. PBRO.',
+                  'JOSÉ CARLOS MANZANO ASCANIO. PBRO.',
+                  'JOSÉ AQUILINO SABOGAL MORA. PBRO.',
+                  'OMAR JAVIER OJEDA TEUTA. PBRO.',
+                  'YOEL GÓMEZ RAMÍREZ. PBRO.',
                 ]"
                 @input-value="setModel"
                 dense
@@ -153,7 +146,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="[...ListMinistros, ...ListMinistrosNoActive]"
+                :options="[...ListMinistros ]"
                 label="Firma Documento"
                 filled
                 dense
@@ -408,7 +401,7 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-      this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
+      //this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
       for (const key in this.dataMatrimonio) {
         this.dataMatrimonio[key] = data[key];
       }

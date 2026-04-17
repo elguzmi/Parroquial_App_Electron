@@ -52,25 +52,18 @@
                 fill-input
                 input-debounce="0"
                 :options="[
-                  'JAIRO ALBERTO AGUILAR GONZÁLEZ Pbro.',
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
+                  'LUIS HERNANDO RÍOS ALDANA. PBRO.',
+                  'LUIS FERNANDO LEÓN ROBAYO. PBRO',
+                  'CÉSAR AUGUSTO ALMONACID RUBIO. PBRO',
+                  'HUMBERTO RENGIFO. PBRO.',
+                  'JOSÉ CARLOS MANZANO ASCANIO. PBRO.',
+                  'JOSÉ AQUILINO SABOGAL MORA. PBRO.',
+                  'OMAR JAVIER OJEDA TEUTA. PBRO.',
+                  'YOEL GÓMEZ RAMÍREZ. PBRO.',
                 ]"
                 @input-value="setModel"
               >
               </q-select>
-              <!-- <q-select
-                v-model="dataBautizos.Ministro"
-                :options="[
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                ]"
-                label="Ministro"
-                filled
-                dense
-              /> -->
             </div>
           </div>
           <div
@@ -171,7 +164,7 @@
                 option-label="Nombre"
                 emit-value
                 map-options
-                :options="[...ListMinistros, ...ListMinistrosNoActive]"
+                :options="[...ListMinistros ]"
                 label="Firma Documento"
                 filled
                 dense
@@ -465,6 +458,9 @@ export default defineComponent({
       let msj = "OK";
       if (this.Codigo_Partida != this.Libro + this.Folio + this.Numero)
         msj = "Error - El codigo de partida no coincide";
+
+      if ( this.Codigo_Partida == null || this.Codigo_Partida.trim().length === 0 || this.Codigo_Partida == "")
+        msj = "Error - Completa el codigo de partida, es requerido";
 
       Object.keys(this.dataBautizos).map((elem) => {
         if (elem != "Nota_Marginal") {

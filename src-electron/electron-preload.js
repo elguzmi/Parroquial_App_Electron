@@ -30,3 +30,14 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
   getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
 });
+
+contextBridge.exposeInMainWorld("ApiSetup", {
+  isConfigured: () => ipcRenderer.invoke("ApiSetup:isConfigured"),
+  getPublicConfig: () => ipcRenderer.invoke("ApiSetup:getPublicConfig"),
+  testConnection: (sqlConfig) =>
+    ipcRenderer.invoke("ApiSetup:testConnection", sqlConfig),
+  pickImage: (kind) => ipcRenderer.invoke("ApiSetup:pickImage", kind),
+  getAssetDataUrl: (filename) =>
+    ipcRenderer.invoke("ApiSetup:getAssetDataUrl", filename),
+  saveConfig: (payload) => ipcRenderer.invoke("ApiSetup:saveConfig", payload),
+});

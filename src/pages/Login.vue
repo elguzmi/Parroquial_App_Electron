@@ -2,19 +2,23 @@
   <q-layout>
     <q-page-container>
       <q-page>
-        <div class="background__" v-if="store.state.appConfig.appConfig.fondo_login"
-         :style="{ backgroundImage: `url(${getImg(store.state.appConfig.appConfig.fondo_login)})` }" >
-          <q-card class="my-card" style="width: 50%; opacity: 0.9">
+        <div
+          class="background__"
+          :style="backgroundStyle"
+        >
+          <q-card class="my-card" style="width: min(520px, 92%); opacity: 0.92">
             <q-img
-              v-if="store.state.appConfig.appConfig.logo_login"
-              :src="require(`src/assets/img/${store.state.appConfig.appConfig.logo_login}`)"
+              v-if="logoSrc"
+              :src="logoSrc"
               style="height: 150px"
               fit="contain"
             />
 
             <q-card-section>
               <div class="row no-wrap items-center">
-                <div class="col text-h6 ellipsis">LOGIN</div>
+                <div class="col text-h6 ellipsis">
+                  {{ parroquiaName || "LOGIN" }}
+                </div>
               </div>
             </q-card-section>
 
@@ -65,13 +69,15 @@
                 </div>
               </q-card-actions>
               <q-separator />
-              <q-card-section>
-                <q-img
-                  :srcset="require('../assets/img/logo_kapri.jpg')"
-                  width="200px"
-                  spinner-size="82px"
-                  spinner-color="primary"
-                  style="float: right"
+              <q-card-section class="text-right">
+                <q-btn
+                  flat
+                  dense
+                  size="sm"
+                  color="primary"
+                  icon="settings"
+                  label="Reconfigurar"
+                  @click="$router.push('/setup/database')"
                 />
               </q-card-section>
             </q-form>
@@ -86,6 +92,8 @@
 .background__ {
   height: 100vh;
   background-size: cover;
+  background-position: center;
+  background-color: #0b2431;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -99,17 +107,45 @@ import { useStore } from "vuex";
 
 export default defineComponent({
   name: "PageIndex",
-  mounted() {
-    window.ApiLogin.getConfigParroquia().then((e) => {
-      this.store.commit('appConfig/setAppConfig', e);
-    });
+  data() {
+    return {
+      fondoSrc: "",
+      logoSrc: "",
+    };
+  },
+  computed: {
+    parroquiaName() {
+      return this.store.state.appConfig.appConfig?.parroquia || "";
+    },
+    backgroundStyle() {
+      if (this.fondoSrc) {
+        return { backgroundImage: `url(${this.fondoSrc})` };
+      }
+      return {
+        backgroundImage:
+          "linear-gradient(145deg, #0b2431 0%, #123848 42%, #1a4d57 100%)",
+      };
+    },
+  },
+  async mounted() {
+    if (window.ApiSetup?.isConfigured) {
+      const check = await window.ApiSetup.isConfigured();
+      if (!check.configured) {
+        this.$router.replace("/setup/database");
+        return;
+      }
+    }
+
+    const config = await window.ApiLogin.getConfigParroquia();
+    this.store.commit("appConfig/setAppConfig", config);
+    await this.loadVisualAssets(config);
   },
   setup() {
     const q = useQuasar();
     const store = useStore();
 
     function saveLogin(data, cl) {
-      store.commit('userInfo/setUserInfo', data);
+      store.commit("userInfo/setUserInfo", data);
       q.localStorage.set("SK", JSON.stringify(data)); // SessionKey
       if (q.localStorage.has("SK")) cl(true);
       else cl(false);
@@ -145,15 +181,28 @@ export default defineComponent({
     };
   },
   methods: {
-    getImg(name) {
-      return require(`src/assets/img/${name}`)
+    async resolveAsset(filename) {
+      if (!filename) return "";
+      if (window.ApiSetup?.getAssetDataUrl) {
+        const res = await window.ApiSetup.getAssetDataUrl(filename);
+        if (res?.success && res.dataUrl) return res.dataUrl;
+      }
+      try {
+        return require(`src/assets/img/${filename}`);
+      } catch (_) {
+        return "";
+      }
+    },
+    async loadVisualAssets(config) {
+      this.logoSrc = await this.resolveAsset(config?.logo_login);
+      this.fondoSrc = await this.resolveAsset(config?.fondo_login);
     },
     tryLogin() {
       let data = { user: this.userName, clave: this.clave };
       this.showLoading("Cargando.. Por favor espera");
       window.ApiLogin.loadLogin(data).then((e) => {
         if (e.success == false)
-          this.showMessage("Error -" + e.errorMessage, "negative", "error");
+          this.showMessage("Error -" + (e.message || e.errorMessage), "negative", "error");
         else {
           if (e.data.length > 0) {
             this.saveLogin(e.data[0], () => {
@@ -178,7 +227,6 @@ export default defineComponent({
       });
     },
   },
-  watch: {
-  },
+  watch: {},
 });
 </script>

@@ -30,3 +30,14 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
   getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
 });
+
+contextBridge.exposeInMainWorld("ApiUpdate", {
+  getVersion: () => ipcRenderer.invoke("ApiUpdate:getVersion"),
+  check: () => ipcRenderer.invoke("ApiUpdate:check"),
+  install: () => ipcRenderer.invoke("ApiUpdate:install"),
+  onStatus: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("ApiUpdate:status", listener);
+    return () => ipcRenderer.removeListener("ApiUpdate:status", listener);
+  },
+});

@@ -57,7 +57,12 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+const { setupAutoUpdater } = require("./autoUpdate");
+
+app.whenReady().then(() => {
+  createWindow();
+  setupAutoUpdater(() => mainWindow);
+});
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {
     app.quit();

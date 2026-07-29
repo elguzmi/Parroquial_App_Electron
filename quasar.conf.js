@@ -22,7 +22,7 @@ module.exports = configure(function (ctx) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/boot-files
-    boot: ["axios"],
+    boot: ["axios", "updater"],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
     css: ["app.scss"],
@@ -229,11 +229,21 @@ module.exports = configure(function (ctx) {
           oneClick: false,
           perMachine: false,
           allowToChangeInstallationDirectory: true
-        }
+        },
+        // Auto-update: publica artefactos en GitHub Releases
+        publish: {
+          provider: "github",
+          owner: "elguzmi",
+          repo: "Parroquial_App_Electron",
+          releaseType: "release",
+        },
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
       chainWebpackMain(chain) {
+        chain.externals({
+          "electron-updater": "commonjs electron-updater",
+        });
         chain
           .plugin("eslint-webpack-plugin")
           .use(ESLintPlugin, [{ extensions: ["js"] }]);

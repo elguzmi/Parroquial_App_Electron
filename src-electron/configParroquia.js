@@ -26,7 +26,7 @@ export default {
         sqlConfig:{
             user: "sa",
             password:"Minecraft123",
-            server: "DESKTOP-S14Q5DM\\SQLEXPRESS",
+            server: "DESKTOP-LODRGA0\\SQLEXPRESS",
             database: "Parroquia_salud",
             options: {
                 encrypt: false,

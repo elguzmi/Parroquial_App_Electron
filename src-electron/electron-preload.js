@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld("ApiSetup", {
   getAssetDataUrl: (filename) =>
     ipcRenderer.invoke("ApiSetup:getAssetDataUrl", filename),
   saveConfig: (payload) => ipcRenderer.invoke("ApiSetup:saveConfig", payload),
+  getTemplatesStatus: () =>
+    ipcRenderer.invoke("ApiSetup:getTemplatesStatus"),
 });
 
 contextBridge.exposeInMainWorld("ApiUpdate", {

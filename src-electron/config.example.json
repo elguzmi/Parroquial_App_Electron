@@ -16,5 +16,6 @@
     "logo": "",
     "fondo_login": "",
     "logo_login": ""
-  }
+  },
+  "_comment_templates": "Las plantillas Word viven en %APPDATA%/parroquia_app/templates/ (TemplateBautismo.docx, etc.). Se copian desde resources/templates/default en el primer arranque y no se sobrescriben en actualizaciones."
 }

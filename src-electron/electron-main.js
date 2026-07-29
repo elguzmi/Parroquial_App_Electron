@@ -80,9 +80,12 @@ function createWindow() {
   });
 }
 
+const { setupAutoUpdater } = require("./autoUpdate");
+
 app.whenReady().then(() => {
   console.log("[config] userData:", app.getPath("userData"));
   createWindow();
+  setupAutoUpdater(() => mainWindow);
 });
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {

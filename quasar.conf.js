@@ -230,6 +230,14 @@ module.exports = configure(function (ctx) {
           perMachine: false,
           allowToChangeInstallationDirectory: true
         },
+        // Plantillas Word fuera del asar (resources/templates/…)
+        extraResources: [
+          {
+            from: "src-electron/templates",
+            to: "templates",
+            filter: ["**/*.docx", "!**/output_*.docx"],
+          },
+        ],
         // Auto-update: publica artefactos en GitHub Releases
         publish: {
           provider: "github",
@@ -255,22 +263,6 @@ module.exports = configure(function (ctx) {
           .plugin("eslint-webpack-plugin")
           .use(ESLintPlugin, [{ extensions: ["js"] }]);
       },
-      // extendWebpack(cfg) {
-      //   // Copiar archivos Word al directorio resources
-      //   cfg.plugins.push(
-      //     new CopyWebpackPlugin({
-      //       patterns: [
-      //         {
-      //           from: path.resolve(__dirname, "src/assets/word-files/*.docx"),
-      //           to: path.resolve(
-      //             __dirname,
-      //             "dist/electron/parroquia_app-win32-x64/resources/"
-      //           ),
-      //         },
-      //       ],
-      //     })
-      //   );
-      // },
     },
   };
 });

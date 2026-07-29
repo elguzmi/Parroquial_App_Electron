@@ -91,7 +91,10 @@
             <strong>Nota :</strong> Los documentos de word (bautismos ,
             confirmaciones , defunciones y matrimonios) se editan directamente
             en las plantillas con nombre que comienza por "Template" vistas al
-            darle click en el boton de "Ver plantillas"
+            darle click en el boton de "Ver plantillas". Las plantillas viven en
+            la carpeta de datos de la aplicación (AppData), no en la carpeta de
+            instalación, para que cada parroquia pueda personalizarlas sin
+            perder cambios al actualizar.
           </p>
           <p>
             <ol>
@@ -102,7 +105,8 @@
             </ol>
           </p>
           <p>
-            Al finalizar de editar por favor guardar y cerrar el word.
+            Al finalizar de editar por favor guardar y cerrar el word. Puede
+            reemplazar cualquier archivo manteniendo el mismo nombre.
           </p>
         </q-card-section>
         <q-card-section>

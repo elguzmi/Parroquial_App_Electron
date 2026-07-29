@@ -17,7 +17,7 @@ app.setName(APP_FOLDER_NAME);
 app.setPath("userData", path.join(app.getPath("appData"), APP_FOLDER_NAME));
 
 const configStore = require("./configStore");
-
+const templateStore = require("./templateStore");
 
 // Fallback legacy (dev) si aún no hay config.json en AppData
 const legacyConfig = configParroquia["parroquiaSalud"];
@@ -84,6 +84,8 @@ const { setupAutoUpdater } = require("./autoUpdate");
 
 app.whenReady().then(() => {
   console.log("[config] userData:", app.getPath("userData"));
+  const seed = templateStore.ensureTemplatesSeeded();
+  console.log("[templates]", seed);
   createWindow();
   setupAutoUpdater(() => mainWindow);
 });
@@ -224,8 +226,18 @@ ipcMain.handle("ApiSetup:saveConfig", async (_ev, payload) => {
       updatedAt: new Date().toISOString(),
     };
     configStore.saveConfig(config);
+    // Asegura plantillas en AppData al completar el setup de la parroquia
+    templateStore.ensureTemplatesSeeded();
     await closePool();
     return { success: true, data: configStore.getPublicConfig(config) };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getTemplatesStatus", async () => {
+  try {
+    return { success: true, data: templateStore.getTemplatesStatus() };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -376,22 +388,31 @@ ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
   }
 });
 
-ipcMain.handle("myAPI:openFilesTemplates", async (ev, tabla) => {
+ipcMain.handle("myAPI:openFilesTemplates", async () => {
   try {
-    //shell.showItemInFolder
-    const rutaFiles =
-      process.env.NODE_ENV == "development"
-        ? __dirname
-        : path.dirname(__dirname);
+    const status = templateStore.getTemplatesStatus();
+    const templatesDir = status.templatesDir;
+    const sample =
+      status.files?.[0] ||
+      templateStore.REQUIRED_TEMPLATES[0];
+    const samplePath = path.join(templatesDir, sample);
 
-    shell.showItemInFolder(
-      path.resolve(rutaFiles, "TemplateConfirmacion.docx")
-    );
-    return rutaFiles, "TemplateConfirmacion.docx";
+    if (fs.existsSync(samplePath)) {
+      shell.showItemInFolder(samplePath);
+    } else {
+      await shell.openPath(templatesDir);
+    }
+
+    return {
+      isError: false,
+      templatesDir,
+      files: status.files,
+    };
   } catch (err) {
     return { isError: true, errorMessage: "openFilesTemplates " + err };
   }
 });
+
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
   const HTMLtoDOCX = require("html-to-docx");
   try {
@@ -422,12 +443,10 @@ ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
       },
       Html_Footer_Docx_Node
     );
-    const currentDirectory = app.getAppPath();
-    let route = os.homedir() + "/desktop";
-    //let route = __dirname + "/" + nombre;
-    fs.writeFileSync(route + "/docWordExport.docx", data);
-    shell.openPath(route + "/docWordExport.docx");
-    return route + "/docWordExport.docx";
+    const route = templateStore.resolveExportPath("docWordExport.docx");
+    fs.writeFileSync(route, data);
+    shell.openPath(route);
+    return route;
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx " + err };
   }
@@ -438,60 +457,43 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
   const Docxtemplater = require("docxtemplater");
   const cheerio = require("cheerio");
 
-  const rutaFiles =
-    process.env.NODE_ENV == "development" ? __dirname : path.dirname(__dirname);
   try {
     let obj = JSON.parse(data);
-    const content = fs.readFileSync(
-      path.resolve(rutaFiles, obj["Nombre_Archivo"]),
-      "binary"
-    );
-    // Unzip the content of the file
+    const templateName = obj["Nombre_Archivo"];
+    const templatePath = templateStore.resolveTemplatePath(templateName);
+    const content = fs.readFileSync(templatePath, "binary");
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
     });
 
-    // Cargar el contenido HTML en Cheerio
-    // si es confirmaciones
-    if (obj["Nombre_Archivo"] == "TemplateConfirmacion.docx") {
+    if (templateName == "TemplateConfirmacion.docx") {
       const textoEnCheer = cheerio.load(obj["Notas_Correcciones"] ?? "");
-      const plainText = textoEnCheer.text();
-      obj["Notas_Correcciones"] = plainText;
-    } else if (obj["Nombre_Archivo"] == "TemplateDefuncion.docx") {
+      obj["Notas_Correcciones"] = textoEnCheer.text();
+    } else if (templateName == "TemplateDefuncion.docx") {
       const textoEnCheer = cheerio.load(obj["NotaMarginal"] ?? "");
-      const plainText = textoEnCheer.text();
-      obj["NotaMarginal"] = plainText;
+      obj["NotaMarginal"] = textoEnCheer.text();
     } else {
       const textoEnCheer = cheerio.load(obj["Nota_Marginal"] ?? "");
-      const plainText = textoEnCheer.text();
-      obj["Nota_Marginal"] = plainText;
+      obj["Nota_Marginal"] = textoEnCheer.text();
     }
-    // Obtener el texto sin etiquetas
+
     doc.render(obj);
-    // Get the zip document and generate it as a nodebuffer
     const buf = doc.getZip().generate({
       type: "nodebuffer",
-      // compression: DEFLATE adds a compression step.
-      // For a 50MB output document, expect 500ms additional CPU time
       compression: "DEFLATE",
     });
 
-    // buf is a nodejs Buffer, you can either write it to a
-    // file or res.send it with express for example.
-    fs.writeFileSync(
-      path.resolve(rutaFiles, "output_" + obj["Nombre_Archivo"]),
-      buf
+    const outputPath = templateStore.resolveExportPath(
+      "output_" + templateName
     );
+    fs.writeFileSync(outputPath, buf);
+    shell.openPath(outputPath);
 
-    shell.openPath(
-      path.resolve(path.join(rutaFiles, "output_" + obj["Nombre_Archivo"]))
-    );
-
-    return { isError: false, data: "OK" };
+    return { isError: false, data: "OK", path: outputPath };
   } catch (err) {
-    return { isError: true, errorMessage: "convertTo_Docx_Zip" + err };
+    return { isError: true, errorMessage: "convertTo_Docx_Zip " + err };
   }
 });
 

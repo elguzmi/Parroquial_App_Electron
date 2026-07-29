@@ -1,5 +1,23 @@
 const routes = [
   {
+    path: "/setup",
+    component: () => import("layouts/SetupLayout.vue"),
+    children: [
+      {
+        path: "",
+        redirect: "/setup/database",
+      },
+      {
+        path: "database",
+        component: () => import("pages/setup/SetupDatabase.vue"),
+      },
+      {
+        path: "parroquia",
+        component: () => import("pages/setup/SetupParroquia.vue"),
+      },
+    ],
+  },
+  {
     path: "/Home",
     component: () => import("layouts/MainLayout.vue"),
     children: [

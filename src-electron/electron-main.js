@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   shell,
 } from "electron";
@@ -10,27 +11,49 @@ const sql = require("mssql");
 var fs = require("fs");
 import configParroquia from "./configParroquia";
 
+// Nombre fijo para userData (evita caer en %APPDATA%\Electron)
+const APP_FOLDER_NAME = "parroquia_app";
+app.setName(APP_FOLDER_NAME);
+app.setPath("userData", path.join(app.getPath("appData"), APP_FOLDER_NAME));
 
-// global config de la aplicacion
-const globalConfig = configParroquia["localDev"];
+const configStore = require("./configStore");
+
+
+// Fallback legacy (dev) si aún no hay config.json en AppData
+const legacyConfig = configParroquia["parroquiaSalud"];
 const platform = process.platform || os.platform();
 let mainWindow;
 let pool = null;
 
-const { sqlConfig } = globalConfig;
+function resolveRuntimeConfig() {
+  const stored = configStore.loadConfig();
+  if (stored) return stored;
+  return null;
+}
 
+function resolveWindowIcon() {
+  const stored = resolveRuntimeConfig();
+  if (stored?.parroquia?.logo) {
+    const assetPath = configStore.getAssetPath(stored.parroquia.logo);
+    if (assetPath) return assetPath;
+  }
+  if (legacyConfig?.logo) {
+    const legacyIcon = path.resolve(__dirname, `icons/${legacyConfig.logo}`);
+    if (fs.existsSync(legacyIcon)) return legacyIcon;
+  }
+  return path.resolve(__dirname, "icons/icon.ico");
+}
 
 function createWindow() {
   /* Initial window options*/
   mainWindow = new BrowserWindow({
-    icon: path.resolve(__dirname, `icons/${globalConfig.logo}`), // tray icon
+    icon: resolveWindowIcon(),
     width: 1300,
-    height: 660,
+    height: 760,
     useContentSize: true,
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
     webPreferences: {
-      additionalArguments: [JSON.stringify(configParroquia)],
       contextIsolation: true,
       sandbox: false,
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script
@@ -60,6 +83,7 @@ function createWindow() {
 const { setupAutoUpdater } = require("./autoUpdate");
 
 app.whenReady().then(() => {
+  console.log("[config] userData:", app.getPath("userData"));
   createWindow();
   setupAutoUpdater(() => mainWindow);
 });
@@ -75,19 +99,149 @@ app.on("activate", () => {
   }
 });
 
+async function closePool() {
+  if (pool) {
+    try {
+      await pool.close();
+    } catch (err) {
+      console.error("closePool:", err);
+    }
+    pool = null;
+  }
+}
+
 async function getConnection() {
   if (!pool) {
+    const stored = resolveRuntimeConfig();
+    const sqlConfig = stored
+      ? configStore.toSqlConfig(stored.sql)
+      : legacyConfig.sqlConfig;
+    if (!sqlConfig) {
+      throw new Error("La aplicación aún no está configurada.");
+    }
     pool = await sql.connect(sqlConfig);
   }
   return pool;
 }
 
+//#region Setup / Config runtime
+
+ipcMain.handle("ApiSetup:isConfigured", async () => {
+  try {
+    return { success: true, configured: configStore.isConfigured() };
+  } catch (err) {
+    return { success: false, configured: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getPublicConfig", async () => {
+  try {
+    const stored = configStore.getPublicConfig();
+    if (stored) return { success: true, data: stored };
+    // compat: branding legacy sin exponer sql
+    const { sqlConfig, ...publicLegacy } = legacyConfig;
+    return { success: true, data: { ...publicLegacy, configured: false } };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:testConnection", async (_ev, sqlInput) => {
+  let testPool = null;
+  try {
+    const sqlConfig = configStore.toSqlConfig(sqlInput);
+    testPool = await new sql.ConnectionPool(sqlConfig).connect();
+    await testPool.request().query("SELECT 1 AS ok");
+    return { success: true, message: "Conexión exitosa" };
+  } catch (err) {
+    return { success: false, message: err.message || String(err) };
+  } finally {
+    if (testPool) {
+      try {
+        await testPool.close();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  }
+});
+
+ipcMain.handle("ApiSetup:pickImage", async (_ev, kind) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Seleccionar imagen",
+      properties: ["openFile"],
+      filters: [
+        { name: "Imágenes", extensions: ["png", "jpg", "jpeg", "webp", "gif"] },
+      ],
+    });
+    if (result.canceled || !result.filePaths?.length) {
+      return { success: false, canceled: true };
+    }
+    const sourcePath = result.filePaths[0];
+    const targetName = kind || `asset_${Date.now()}`;
+    const savedName = configStore.saveAssetFromPath(sourcePath, targetName);
+    const dataUrl = configStore.getAssetDataUrl(savedName);
+    return { success: true, filename: savedName, dataUrl };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getAssetDataUrl", async (_ev, filename) => {
+  try {
+    const dataUrl = configStore.getAssetDataUrl(filename);
+    return { success: Boolean(dataUrl), dataUrl };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:saveConfig", async (_ev, payload) => {
+  try {
+    if (!payload?.sql || !payload?.parroquia) {
+      return { success: false, message: "Configuración incompleta" };
+    }
+    const config = {
+      version: 1,
+      id: payload.id || 1,
+      sql: {
+        server: payload.sql.server,
+        port: payload.sql.port || null,
+        database: payload.sql.database,
+        user: payload.sql.user,
+        password: payload.sql.password,
+        encrypt: Boolean(payload.sql.encrypt),
+        trustServerCertificate: payload.sql.trustServerCertificate !== false,
+      },
+      parroquia: {
+        nombre: payload.parroquia.nombre,
+        color: payload.parroquia.color || "#0f4c81",
+        logo: payload.parroquia.logo || "",
+        fondo_login: payload.parroquia.fondo_login || "",
+        logo_login: payload.parroquia.logo_login || "",
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    configStore.saveConfig(config);
+    await closePool();
+    return { success: true, data: configStore.getPublicConfig(config) };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+//#endregion
+
 //#region Api login
 
 // ********** API DE LOGIN
-ipcMain.handle("ApiLogin:getConfigParroquia", async (ev, arg) => {
+ipcMain.handle("ApiLogin:getConfigParroquia", async () => {
   try {
-    return globalConfig;
+    const stored = configStore.getPublicConfig();
+    if (stored) return stored;
+    const { sqlConfig, ...publicLegacy } = legacyConfig;
+    return publicLegacy;
   } catch (err) {
     return { isError: true, errorMessage: "getConfigParroquia " + err };
   }

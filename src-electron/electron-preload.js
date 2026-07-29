@@ -31,6 +31,17 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
 });
 
+contextBridge.exposeInMainWorld("ApiSetup", {
+  isConfigured: () => ipcRenderer.invoke("ApiSetup:isConfigured"),
+  getPublicConfig: () => ipcRenderer.invoke("ApiSetup:getPublicConfig"),
+  testConnection: (sqlConfig) =>
+    ipcRenderer.invoke("ApiSetup:testConnection", sqlConfig),
+  pickImage: (kind) => ipcRenderer.invoke("ApiSetup:pickImage", kind),
+  getAssetDataUrl: (filename) =>
+    ipcRenderer.invoke("ApiSetup:getAssetDataUrl", filename),
+  saveConfig: (payload) => ipcRenderer.invoke("ApiSetup:saveConfig", payload),
+});
+
 contextBridge.exposeInMainWorld("ApiUpdate", {
   getVersion: () => ipcRenderer.invoke("ApiUpdate:getVersion"),
   check: () => ipcRenderer.invoke("ApiUpdate:check"),

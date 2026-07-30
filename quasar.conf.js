@@ -231,11 +231,17 @@ module.exports = configure(function (ctx) {
           allowToChangeInstallationDirectory: true
         },
         // Plantillas Word fuera del asar (resources/templates/…)
+        // Migraciones SQL fuera del asar (resources/db/migrations/…)
         extraResources: [
           {
             from: "src-electron/templates",
             to: "templates",
             filter: ["**/*.docx", "!**/output_*.docx"],
+          },
+          {
+            from: "src-electron/db/migrations",
+            to: "db/migrations",
+            filter: ["**/*.sql"],
           },
         ],
         // Auto-update: publica artefactos en GitHub Releases

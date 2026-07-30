@@ -347,11 +347,28 @@ export default defineComponent({
           store.commit("appConfig/setAppConfig", result.data);
         }
 
-        $q.notify({
-          type: "positive",
-          message: "Configuración guardada. Ya puedes iniciar sesión.",
-          position: "top",
-        });
+        if (result.migrations && result.migrations.ok === false) {
+          $q.notify({
+            type: "warning",
+            message:
+              "Configuración guardada, pero falló la actualización de esquema: " +
+              (result.migrations.error || "revisar SQL"),
+            position: "top",
+            timeout: 6000,
+          });
+        } else if (result.migrations?.newlyApplied?.length) {
+          $q.notify({
+            type: "positive",
+            message: `Configuración guardada. Esquema actualizado (${result.migrations.newlyApplied.length}).`,
+            position: "top",
+          });
+        } else {
+          $q.notify({
+            type: "positive",
+            message: "Configuración guardada. Ya puedes iniciar sesión.",
+            position: "top",
+          });
+        }
         router.replace("/");
       } catch (err) {
         status.type = "error";

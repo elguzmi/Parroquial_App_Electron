@@ -1,242 +1,257 @@
 <template>
-  <q-page class="flex" padding>
-    <section style="width: 100%">
-      <div class="form">
-        <q-form
-          @submit="saveBautismo()"
-          @reset="resetValues()"
-          class="q-gutter-md"
+  <q-page class="sac-page">
+    <div class="sac-shell">
+      <header class="sac-header">
+        <h1 class="sac-header__title">Bautizos</h1>
+        <div
+          class="sac-mode"
+          :class="{ 'sac-mode--edit': isEditing }"
+          role="status"
         >
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Codigo de partida"
-                readonly
-                v-model="Codigo_Partida"
-                dense
-              />
-            </div>
-            <div class="col-2">
-              <q-input type="text" label="Libro" v-model="Libro" dense />
-            </div>
-            <div class="col-2">
-              <q-input type="text" label="Folio" v-model="Folio" dense />
-            </div>
-            <div class="col-2">
-              <q-input type="text" label="Numero" v-model="Numero" dense />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-6">
-              <q-input
-                v-model="dataBautizos.Nombre"
-                type="text"
-                label="Nombre"
-                dense
-              />
-            </div>
+          <q-icon :name="isEditing ? 'edit' : 'add_circle_outline'" size="16px" />
+          {{ isEditing ? "Editando registro" : "Nuevo registro" }}
+        </div>
+      </header>
 
-            <div class="col-4">
-              <q-select
-                filled
-                v-model="dataBautizos.Ministro"
-                :model-value="dataBautizos.Ministro"
-                use-input
-                label="Ministro"
-                hide-selected
-                fill-input
-                input-debounce="0"
-                :options="[
-                  'LUIS HERNANDO RÍOS ALDANA. PBRO.',
-                  'LUIS FERNANDO LEÓN ROBAYO. PBRO',
-                  'CÉSAR AUGUSTO ALMONACID RUBIO. PBRO',
-                  'HUMBERTO RENGIFO. PBRO.',
-                  'JOSÉ CARLOS MANZANO ASCANIO. PBRO.',
-                  'JOSÉ AQUILINO SABOGAL MORA. PBRO.',
-                  'OMAR JAVIER OJEDA TEUTA. PBRO.',
-                  'YOEL GÓMEZ RAMÍREZ. PBRO.',
-                ]"
-                @input-value="setModel"
-              >
-              </q-select>
+      <section class="sac-panel" aria-labelledby="bautizos-form-title">
+        <h2 id="bautizos-form-title" class="sr-only">Formulario de bautizo</h2>
+        <q-form class="sac-form" @submit="saveBautismo()" @reset="resetValues()">
+          <!-- Partida -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="menu_book" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Partida</h3>
             </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-3">
-              <q-input
-                v-model="dataBautizos.Fecha_Bautismo"
-                type="text"
-                label="Fecha Bautismo"
-                dense
-              />
-            </div>
-
-            <div class="col-3">
-              <q-input
-                v-model="dataBautizos.Lugar_Nacimiento"
-                type="text"
-                label="Lugar de Nacimiento"
-                dense
-              />
-            </div>
-
-            <div class="col-3">
-              <q-input
-                v-model="dataBautizos.Fecha_Nacimiento"
-                type="text"
-                label="Fecha de Nacimiento"
-                dense
-              />
-            </div>
-          </div>
-
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataBautizos.Padres"
-                type="text"
-                label="Nombre_Padres"
-                dense
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataBautizos.Abuelos_Paternos"
-                type="text"
-                label="Abuelos Paternos"
-                dense
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataBautizos.Abuelos_Maternos"
-                type="text"
-                label="Abuelos Maternos"
-                dense
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataBautizos.Padrinos"
-                type="text"
-                label="Padrinos"
-                dense
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-select
-                v-model="dataBautizos.Id_MinistroDoyFe"
-                label="Doy Fe"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListDoyFe"
-                filled
-                dense
-              />
-            </div>
-            <div class="col-4">
-              <q-select
-                v-model="dataBautizos.Id_Ministro"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="[...ListMinistros ]"
-                label="Firma Documento"
-                filled
-                dense
-                @update:model-value="setCargoFirm()"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                v-model="dataBautizos.Cargo"
-                type="text"
-                label="Cargo Firmante"
-                disable
-                dense
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-12">
-              <div class="q-pa-md q-gutter-sm">
-                <label for="">Nota Marginal</label>
-                <q-editor
-                  v-model="dataBautizos.Nota_Marginal"
-                  min-height="5rem"
+            <div class="sac-grid sac-grid--partida">
+              <div class="sac-field">
+                <label class="sac-label" for="bau-codigo">Código de partida</label>
+                <q-input
+                  id="bau-codigo"
+                  v-model="Codigo_Partida"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  readonly
+                  hide-bottom-space
                 />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-libro">Libro</label>
+                <q-input id="bau-libro" v-model="Libro" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-folio">Folio</label>
+                <q-input id="bau-folio" v-model="Folio" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-numero">Número</label>
+                <q-input id="bau-numero" v-model="Numero" class="sac-input" type="text" dense outlined hide-bottom-space />
               </div>
             </div>
           </div>
-          <div class="q-pa-md">
-            <q-btn-group spread>
-              <q-btn
-                color="green"
-                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
-                type="submit"
-                icon="save"
+
+          <!-- Bautizado -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="person" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Datos del bautizado</h3>
+            </div>
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field">
+                <label class="sac-label" for="bau-nombre">Nombre completo</label>
+                <q-input id="bau-nombre" v-model="dataBautizos.Nombre" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-ministro">Ministro</label>
+                <q-select
+                  id="bau-ministro"
+                  v-model="dataBautizos.Ministro"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  hide-selected
+                  fill-input
+                  input-debounce="0"
+                  :options="ministroOptions"
+                  hide-bottom-space
+                  @input-value="setModel"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-fecha-b">Fecha de bautismo</label>
+                <q-input id="bau-fecha-b" v-model="dataBautizos.Fecha_Bautismo" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-lugar-n">Lugar de nacimiento</label>
+                <q-input id="bau-lugar-n" v-model="dataBautizos.Lugar_Nacimiento" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-fecha-n">Fecha de nacimiento</label>
+                <q-input id="bau-fecha-n" v-model="dataBautizos.Fecha_Nacimiento" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+            </div>
+          </div>
+
+          <!-- Familia -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="groups" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Familia y padrinos</h3>
+            </div>
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field">
+                <label class="sac-label" for="bau-padres">Nombre de los padres</label>
+                <q-input id="bau-padres" v-model="dataBautizos.Padres" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-abuelos-p">Abuelos paternos</label>
+                <q-input id="bau-abuelos-p" v-model="dataBautizos.Abuelos_Paternos" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-abuelos-m">Abuelos maternos</label>
+                <q-input id="bau-abuelos-m" v-model="dataBautizos.Abuelos_Maternos" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-padrinos">Padrinos</label>
+                <q-input id="bau-padrinos" v-model="dataBautizos.Padrinos" class="sac-input" type="text" dense outlined hide-bottom-space />
+              </div>
+            </div>
+          </div>
+
+          <!-- Firmas -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="draw" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Firmas del documento</h3>
+            </div>
+            <div class="sac-grid sac-grid--firma">
+              <div class="sac-field">
+                <label class="sac-label" for="bau-doyfe">Doy fe</label>
+                <q-select
+                  id="bau-doyfe"
+                  v-model="dataBautizos.Id_MinistroDoyFe"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="ListDoyFe"
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-firma">Firma del documento</label>
+                <q-select
+                  id="bau-firma"
+                  v-model="dataBautizos.Id_Ministro"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="[...ListMinistros, ...ListMinistrosNoActive]"
+                  hide-bottom-space
+                  @update:model-value="setCargoFirm()"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="bau-cargo">Cargo firmante</label>
+                <q-input id="bau-cargo" v-model="dataBautizos.Cargo" class="sac-input" type="text" dense outlined disable hide-bottom-space />
+              </div>
+            </div>
+          </div>
+
+          <!-- Nota -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="notes" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Nota marginal</h3>
+            </div>
+            <div class="sac-editor-wrap">
+              <label class="sac-label" for="bau-nota">Observaciones (opcional)</label>
+              <q-editor
+                id="bau-nota"
+                v-model="dataBautizos.Nota_Marginal"
+                class="sac-editor"
+                min-height="3rem"
+                :toolbar="[['bold', 'italic', 'underline'], ['unordered', 'ordered'], ['undo', 'redo']]"
               />
-              <q-btn
-                color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
-                type="reset"
-                icon="restart_alt"
-              />
-            </q-btn-group>
+            </div>
+          </div>
+
+          <div class="sac-actions">
+            <q-btn
+              class="sac-btn sac-btn--ghost"
+              outline
+              no-caps
+              type="reset"
+              icon="restart_alt"
+              :label="isEditing ? 'Cancelar edición' : 'Limpiar formulario'"
+            />
+            <q-btn
+              class="sac-btn sac-btn--primary"
+              unelevated
+              no-caps
+              type="submit"
+              icon="save"
+              :label="isEditing ? 'Actualizar bautizo' : 'Guardar bautizo'"
+            />
           </div>
         </q-form>
-      </div>
-    </section>
-    <hr />
-    <section style="width: 100%">
-      <Table_Component
-        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
-        ref="tableComponent"
-        title="Bautizos"
-        tablaDirectTo="fact_bautismos"
-        :columns="columns"
-        :rows="rows"
-        :visibleColumns="visibleColumns"
-        @eventedited="setrecord"
-        @eventinvt="invtrecord"
-        @loadingShow="showLoading"
-        @loadingHide="hideLoading"
-        @msjShow="showMessage"
-      ></Table_Component>
-    </section>
+      </section>
+
+      <section
+        v-if="perfil == 1 || perfil == 2"
+        class="sac-panel sac-registry"
+        aria-labelledby="bautizos-registry-title"
+      >
+        <h2 id="bautizos-registry-title" class="sr-only">Listado de bautizos</h2>
+        <Table_Component
+          v-if="rows.length > 0"
+          ref="tableComponent"
+          title="Registros de bautizos"
+          tablaDirectTo="fact_bautismos"
+          :columns="columns"
+          :rows="rows"
+          :visibleColumns="visibleColumns"
+          @eventedited="setrecord"
+          @eventinvt="invtrecord"
+          @loadingShow="showLoading"
+          @loadingHide="hideLoading"
+          @msjShow="showMessage"
+        />
+        <p v-else class="sac-registry__empty">
+          Aún no hay bautizos cargados o está consultando el listado…
+        </p>
+      </section>
+    </div>
   </q-page>
 </template>
+
 
 <script>
 import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import { useQuasar } from "quasar";
+import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Bautismos",
@@ -252,7 +267,11 @@ export default defineComponent({
       else this.hideLoading();      
     });
   },
-  computed: {},
+  computed: {
+    isEditing() {
+      return this.Id != null && this.Id !== "";
+    },
+  },
   setup() {
     const q = useQuasar();
 
@@ -269,11 +288,13 @@ export default defineComponent({
     }
     const showMessage = (msj, color, icon) => {
       q.loading.hide();
+      const tone =
+        color === "red" || color === "danger" ? "negative" : color || "primary";
       q.notify({
         progress: true,
         message: msj,
         icon: icon,
-        color: color,
+        color: tone,
         textColor: "white",
       });
     };
@@ -291,6 +312,8 @@ export default defineComponent({
       Libro: ref(""),
       Folio: ref(""),
       Numero: ref(""),
+
+      ministroOptions: ref([]),
 
       dataBautizos: ref({
         Nombre: ref(null),
@@ -350,8 +373,9 @@ export default defineComponent({
           JSON.stringify({}),
           "BD_Get_Lists_Ministros"
         );
-        this.ListDoyFe = e[0];
-        this.ListMinistros = e[1];
+        this.ListDoyFe = e[0] || [];
+        this.ListMinistros = e[1] || [];
+        this.ministroOptions = await loadCelebranteNombreOptions(e);
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
@@ -411,7 +435,7 @@ export default defineComponent({
         else {
           this.showMessage(e, "positive", "check");
           this.resetValues();
-          this.$refs.tableComponent.cleanSelectedRow();
+          this.$refs.tableComponent?.cleanSelectedRow?.();
           this.getBautismos();
         }
       } catch (error) {
@@ -439,7 +463,7 @@ export default defineComponent({
       this.dataBautizos.Nota_Marginal = null;
       this.dataBautizos.Id_Ministro = 0;
       this.dataBautizos.Cargo = null;
-      this.$refs.tableComponent.cleanSelectedRow();
+      this.$refs.tableComponent?.cleanSelectedRow?.();
       this.ListMinistrosNoActive = [];
       this.setFirmanteFav();
     },

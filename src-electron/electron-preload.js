@@ -44,6 +44,11 @@ contextBridge.exposeInMainWorld("ApiSetup", {
     ipcRenderer.invoke("ApiSetup:getTemplatesStatus"),
 });
 
+contextBridge.exposeInMainWorld("ApiDb", {
+  ensureMigrations: () => ipcRenderer.invoke("ApiDb:ensureMigrations"),
+  getMigrationStatus: () => ipcRenderer.invoke("ApiDb:getMigrationStatus"),
+});
+
 contextBridge.exposeInMainWorld("ApiUpdate", {
   getVersion: () => ipcRenderer.invoke("ApiUpdate:getVersion"),
   check: () => ipcRenderer.invoke("ApiUpdate:check"),

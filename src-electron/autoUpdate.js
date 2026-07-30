@@ -1,3 +1,5 @@
+const path = require("path");
+const fs = require("fs");
 const { app, ipcMain } = require("electron");
 const { autoUpdater } = require("electron-updater");
 
@@ -10,10 +12,41 @@ function sendStatus(payload) {
   }
 }
 
+/**
+ * En `quasar dev`, Electron no empaqueta el package.json de la app, así que
+ * `app.getVersion()` suele devolver la versión de Electron (ej. 23.2.0).
+ * Preferimos el version del package.json del proyecto.
+ */
+function getAppVersion() {
+  try {
+    if (app.isPackaged) {
+      return app.getVersion();
+    }
+
+    const candidates = [
+      path.join(process.cwd(), "package.json"),
+      path.join(__dirname, "..", "package.json"),
+      path.join(app.getAppPath(), "package.json"),
+    ];
+
+    for (const pkgPath of candidates) {
+      if (!fs.existsSync(pkgPath)) continue;
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+      if (pkg?.version && pkg?.name !== "electron") {
+        return String(pkg.version);
+      }
+    }
+  } catch (err) {
+    console.warn("[autoUpdate] getAppVersion fallback:", err?.message || err);
+  }
+
+  return app.getVersion();
+}
+
 function setupAutoUpdater(getMainWindow) {
   mainWindowRef = typeof getMainWindow === "function" ? getMainWindow() : getMainWindow;
 
-  ipcMain.handle("ApiUpdate:getVersion", async () => app.getVersion());
+  ipcMain.handle("ApiUpdate:getVersion", async () => getAppVersion());
 
   ipcMain.handle("ApiUpdate:check", async () => {
     if (!app.isPackaged) {

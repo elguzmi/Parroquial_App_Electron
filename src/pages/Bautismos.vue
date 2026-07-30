@@ -251,6 +251,7 @@
 import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import { useQuasar } from "quasar";
+import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Bautismos",
@@ -374,10 +375,7 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0] || [];
         this.ListMinistros = e[1] || [];
-        // [2] Celebrantes: el valor guardado en Ministro es el Nombre
-        this.ministroOptions = Array.isArray(e[2])
-          ? e[2].map((r) => r.Nombre).filter(Boolean)
-          : [];
+        this.ministroOptions = await loadCelebranteNombreOptions(e);
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();

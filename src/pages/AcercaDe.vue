@@ -84,6 +84,10 @@
               <strong>v{{ appVersion }}</strong>
             </li>
             <li>
+              <span>Esquema DB</span>
+              <strong>{{ dbSchemaLabel }}</strong>
+            </li>
+            <li>
               <span>Plataforma</span>
               <strong>Escritorio · Electron</strong>
             </li>
@@ -298,6 +302,9 @@ export default defineComponent({
       // Fuente confiable: package.json del producto (no la de Electron).
       appVersion: packageInfo.version || "0.0.0",
       productName: "Parroquia App",
+      dbLastMigration: null,
+      dbPendingCount: 0,
+      dbMigrationError: null,
       showGuideDialog: false,
       showLicenseDialog: false,
       modules: [
@@ -317,6 +324,14 @@ export default defineComponent({
     currentYear() {
       return new Date().getFullYear();
     },
+    dbSchemaLabel() {
+      if (this.dbMigrationError) return "Error al leer esquema";
+      if (this.dbPendingCount > 0) {
+        return `${this.dbPendingCount} pendiente(s)`;
+      }
+      if (this.dbLastMigration) return this.dbLastMigration;
+      return "Sin migraciones registradas";
+    },
   },
   async mounted() {
     try {
@@ -327,6 +342,23 @@ export default defineComponent({
       }
     } catch (_) {
       // Se mantiene packageInfo.version
+    }
+
+    try {
+      if (window.ApiDb?.getMigrationStatus) {
+        const status = await window.ApiDb.getMigrationStatus();
+        if (status?.ok || status?.success) {
+          this.dbLastMigration = status.lastMigrationId || null;
+          this.dbPendingCount = Array.isArray(status.pending)
+            ? status.pending.length
+            : 0;
+          this.dbMigrationError = null;
+        } else {
+          this.dbMigrationError = status?.error || status?.message || "Error";
+        }
+      }
+    } catch (err) {
+      this.dbMigrationError = err?.message || String(err);
     }
   },
   setup() {

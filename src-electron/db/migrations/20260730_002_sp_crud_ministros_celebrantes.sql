@@ -1,23 +1,7 @@
 /*
-================================================================================
-  NOTA: despliegue oficial vía migrador Electron
-  src-electron/db/migrations/20260730_002_sp_crud_ministros_celebrantes.sql
-  (+ 001 tabla/seed, 003 BD_Get_MinistrosCelebrantes)
-  Este archivo queda como referencia / ejecución manual de emergencia.
-================================================================================
-*/
-
-/*
-================================================================================
-  CRUD Ministros Celebrantes + listado en Configuración
-================================================================================
-  FE (ConfigUsers / Configuracion):
-  - Alta:   BD_Ins_NewMinistroCelebrante  { Nombre }
-  - Edición: BD_Upd_MinistroCelebrante    { Id, Nombre }
-  - Baja:   BD_Invt_MinistroCelebrante    { Id }
-
-  Mensaje de retorno: SELECT sin alias (NO usar AS '').
-================================================================================
+  20260730_002_sp_crud_ministros_celebrantes
+  SPs de alta / edición / baja lógica para Configuración.
+  Payload FE: { Nombre } | { Id, Nombre } | { Id }
 */
 
 IF OBJECT_ID(N'dbo.BD_Ins_NewMinistroCelebrante', N'P') IS NOT NULL

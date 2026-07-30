@@ -221,6 +221,7 @@ export default defineComponent({
     const config = await window.ApiLogin.getConfigParroquia();
     this.store.commit("appConfig/setAppConfig", config);
     await this.loadVisualAssets(config);
+    await this.runDatabaseMigrations();
   },
   setup() {
     const q = useQuasar();
@@ -280,6 +281,37 @@ export default defineComponent({
     async loadVisualAssets(config) {
       this.logoSrc = await this.resolveAsset(config?.logo_login);
       this.fondoSrc = await this.resolveAsset(config?.fondo_login);
+    },
+    async runDatabaseMigrations() {
+      if (!window.ApiDb?.ensureMigrations) return;
+      try {
+        const result = await window.ApiDb.ensureMigrations();
+        if (result?.skipped && !result?.success) return;
+
+        if (result?.ok === false || result?.success === false) {
+          this.showMessage(
+            "No se pudo actualizar la base de datos: " +
+              (result.error || result.message || "error desconocido"),
+            "negative",
+            "error"
+          );
+          return;
+        }
+
+        if (result?.newlyApplied?.length) {
+          this.showMessage(
+            `Base de datos actualizada (${result.newlyApplied.length} cambio(s)).`,
+            "positive",
+            "check"
+          );
+        }
+      } catch (err) {
+        this.showMessage(
+          err?.message || "Error al verificar migraciones de base de datos",
+          "negative",
+          "error"
+        );
+      }
     },
     tryLogin() {
       const data = { user: this.userName, clave: this.clave };

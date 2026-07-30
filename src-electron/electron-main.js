@@ -18,12 +18,16 @@ app.setPath("userData", path.join(app.getPath("appData"), APP_FOLDER_NAME));
 
 const configStore = require("./configStore");
 const templateStore = require("./templateStore");
+const dbMigrator = require("./db/dbMigrator");
 
 // Fallback legacy (dev) si aún no hay config.json en AppData
 const legacyConfig = configParroquia["parroquiaSalud"];
 const platform = process.platform || os.platform();
 let mainWindow;
 let pool = null;
+/** Último resultado de migraciones en esta sesión */
+let lastMigrationResult = null;
+let migrationsAttemptedForPool = false;
 
 function resolveRuntimeConfig() {
   const stored = configStore.loadConfig();
@@ -110,9 +114,53 @@ async function closePool() {
     }
     pool = null;
   }
+  migrationsAttemptedForPool = false;
 }
 
-async function getConnection() {
+function resolveAppVersionForMigrations() {
+  try {
+    if (app.isPackaged) return app.getVersion();
+    const pkgPath = path.join(process.cwd(), "package.json");
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+      if (pkg?.version) return String(pkg.version);
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return app.getVersion();
+}
+
+/**
+ * Aplica migraciones pendientes una vez por ciclo de pool/conexión.
+ */
+async function ensureDatabaseMigrations(force = false) {
+  const activePool = await getConnection({ skipMigrations: true });
+  if (!force && migrationsAttemptedForPool && lastMigrationResult) {
+    return lastMigrationResult;
+  }
+  const result = await dbMigrator.runMigrations(activePool, {
+    appVersion: resolveAppVersionForMigrations(),
+  });
+  lastMigrationResult = result;
+  migrationsAttemptedForPool = true;
+  if (result.ok) {
+    if (result.newlyApplied?.length) {
+      console.log(
+        "[db-migrations] Aplicadas:",
+        result.newlyApplied.join(", ")
+      );
+    } else {
+      console.log("[db-migrations] Esquema al día");
+    }
+  } else {
+    console.error("[db-migrations] Error:", result.error);
+  }
+  return result;
+}
+
+async function getConnection(options = {}) {
+  const skipMigrations = Boolean(options.skipMigrations);
   if (!pool) {
     const stored = resolveRuntimeConfig();
     const sqlConfig = stored
@@ -122,7 +170,13 @@ async function getConnection() {
       throw new Error("La aplicación aún no está configurada.");
     }
     pool = await sql.connect(sqlConfig);
+    migrationsAttemptedForPool = false;
   }
+
+  if (!skipMigrations && !migrationsAttemptedForPool) {
+    await ensureDatabaseMigrations(false);
+  }
+
   return pool;
 }
 
@@ -229,7 +283,23 @@ ipcMain.handle("ApiSetup:saveConfig", async (_ev, payload) => {
     // Asegura plantillas en AppData al completar el setup de la parroquia
     templateStore.ensureTemplatesSeeded();
     await closePool();
-    return { success: true, data: configStore.getPublicConfig(config) };
+
+    // Primera conexión post-setup: aplica migraciones de esquema
+    let migrations = null;
+    try {
+      migrations = await ensureDatabaseMigrations(true);
+    } catch (migErr) {
+      migrations = {
+        ok: false,
+        error: migErr?.message || String(migErr),
+      };
+    }
+
+    return {
+      success: true,
+      data: configStore.getPublicConfig(config),
+      migrations,
+    };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -240,6 +310,54 @@ ipcMain.handle("ApiSetup:getTemplatesStatus", async () => {
     return { success: true, data: templateStore.getTemplatesStatus() };
   } catch (err) {
     return { success: false, message: err.message };
+  }
+});
+
+//#endregion
+
+//#region Api DB migrations
+
+ipcMain.handle("ApiDb:ensureMigrations", async () => {
+  try {
+    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+      return {
+        success: false,
+        skipped: true,
+        message: "La aplicación aún no está configurada.",
+      };
+    }
+    const result = await ensureDatabaseMigrations(true);
+    return { success: result.ok, ...result };
+  } catch (err) {
+    return {
+      success: false,
+      ok: false,
+      error: err?.message || String(err),
+    };
+  }
+});
+
+ipcMain.handle("ApiDb:getMigrationStatus", async () => {
+  try {
+    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+      return {
+        success: false,
+        message: "La aplicación aún no está configurada.",
+      };
+    }
+    const activePool = await getConnection({ skipMigrations: true });
+    const status = await dbMigrator.getMigrationStatus(activePool);
+    return {
+      success: status.ok,
+      ...status,
+      lastRun: lastMigrationResult,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      ok: false,
+      error: err?.message || String(err),
+    };
   }
 });
 
@@ -271,13 +389,15 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
     const result = await request.execute("BD_Get_Login");
     return {
       success: true,
-      data: result.recordset
+      data: result.recordset,
+      migrations: lastMigrationResult,
     };
   } catch (err) {
     console.error("Login error:", err);
     return {
       success: false,
-      message: err.message
+      message: err.message,
+      migrations: lastMigrationResult,
     };
   }
 });

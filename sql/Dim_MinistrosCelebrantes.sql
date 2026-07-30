@@ -1,5 +1,19 @@
 /*
 ================================================================================
+  NOTA (julio 2026): estos scripts manuales quedaron como referencia.
+  El flujo oficial de despliegue es el migrador de Electron:
+
+    src-electron/db/migrations/
+      20260730_001_dim_ministros_celebrantes.sql
+      20260730_002_sp_crud_ministros_celebrantes.sql
+      20260730_003_sp_get_ministros_celebrantes.sql
+
+  La app aplica pendientes automáticamente al conectar.
+================================================================================
+*/
+
+/*
+================================================================================
   Ministros celebrantes (Presidió / Ministro) — multi-parroquia
 ================================================================================
   Contexto FE:

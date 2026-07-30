@@ -135,8 +135,8 @@
             <div>
               <h2 class="config-panel__title">Datos institucionales</h2>
               <p class="config-panel__desc">
-                Variables del encabezado PDF y exportación de registros
-                sacramentales.
+                Variables del encabezado PDF, exportación y estado del esquema
+                SQL de esta parroquia.
               </p>
             </div>
           </div>
@@ -177,6 +177,118 @@
                     :disable="!selectExportData"
                     :loading="exporting"
                     @click="exportData"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <article class="config-surface config-schema">
+              <div
+                class="config-surface__icon"
+                :class="{
+                  'config-surface__icon--gold': schemaStatusTone === 'ok',
+                  'config-surface__icon--warn': schemaStatusTone === 'pending',
+                  'config-surface__icon--danger': schemaStatusTone === 'error',
+                }"
+                aria-hidden="true"
+              >
+                <q-icon name="storage" size="22px" />
+              </div>
+              <div class="config-surface__body full-width">
+                <div class="config-schema__head">
+                  <div>
+                    <h3 class="config-surface__title">Esquema de base de datos</h3>
+                    <p class="config-surface__text">
+                      Versiones SQL aplicadas en esta parroquia. La app actualiza
+                      el esquema al iniciar; aquí puede verificar o reintentar.
+                    </p>
+                  </div>
+                  <span
+                    class="config-schema__badge"
+                    :class="'config-schema__badge--' + schemaStatusTone"
+                  >
+                    {{ schemaStatusLabel }}
+                  </span>
+                </div>
+
+                <dl class="config-schema__meta">
+                  <div>
+                    <dt>Última migración</dt>
+                    <dd>
+                      <code>{{ migrationStatus.lastMigrationId || "—" }}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Aplicadas</dt>
+                    <dd>{{ migrationStatus.applied.length }}</dd>
+                  </div>
+                  <div>
+                    <dt>Pendientes</dt>
+                    <dd>{{ migrationStatus.pending.length }}</dd>
+                  </div>
+                </dl>
+
+                <div
+                  v-if="migrationStatus.pending.length"
+                  class="config-schema__list-wrap"
+                >
+                  <p class="config-schema__list-title">Pendientes de aplicar</p>
+                  <ul class="config-schema__list">
+                    <li
+                      v-for="id in migrationStatus.pending"
+                      :key="'p-' + id"
+                    >
+                      <code>{{ id }}</code>
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  v-else-if="migrationStatus.applied.length"
+                  class="config-schema__list-wrap"
+                >
+                  <p class="config-schema__list-title">
+                    Últimas aplicadas
+                    <button
+                      type="button"
+                      class="config-schema__toggle"
+                      @click="showAllMigrations = !showAllMigrations"
+                    >
+                      {{ showAllMigrations ? "Ver menos" : "Ver todas" }}
+                    </button>
+                  </p>
+                  <ul class="config-schema__list">
+                    <li
+                      v-for="id in visibleAppliedMigrations"
+                      :key="'a-' + id"
+                    >
+                      <code>{{ id }}</code>
+                    </li>
+                  </ul>
+                </div>
+
+                <p v-if="migrationStatus.error" class="config-schema__error">
+                  {{ migrationStatus.error }}
+                </p>
+
+                <div class="config-schema__actions">
+                  <q-btn
+                    class="cfg-btn cfg-btn--ghost"
+                    outline
+                    no-caps
+                    icon="refresh"
+                    label="Verificar estado"
+                    :loading="loadingSchemaStatus"
+                    @click="loadMigrationStatus"
+                  />
+                  <q-btn
+                    class="cfg-btn cfg-btn--primary"
+                    unelevated
+                    no-caps
+                    icon="system_update_alt"
+                    label="Actualizar esquema"
+                    :loading="runningMigrations"
+                    @click="runSchemaMigrations"
                   />
                 </div>
               </div>
@@ -311,6 +423,7 @@ export default defineComponent({
   components: { ConfigUsers, ConfigShortCurts, ConfigVariablesGlobales },
   mounted() {
     this.getHeaderPdf();
+    this.loadMigrationStatus();
   },
   setup() {
     const $q = useQuasar();
@@ -352,6 +465,16 @@ export default defineComponent({
       savingFooter: ref(false),
       exporting: ref(false),
       openingTemplates: ref(false),
+      loadingSchemaStatus: ref(false),
+      runningMigrations: ref(false),
+      showAllMigrations: ref(false),
+      migrationStatus: ref({
+        applied: [],
+        pending: [],
+        available: [],
+        lastMigrationId: null,
+        error: null,
+      }),
       newShortCut: ref({
         ShortCut: "",
         Template: "",
@@ -399,6 +522,25 @@ export default defineComponent({
       }
       return "";
     },
+    schemaStatusTone() {
+      if (this.migrationStatus.error) return "error";
+      if (this.migrationStatus.pending.length) return "pending";
+      if (this.migrationStatus.applied.length) return "ok";
+      return "pending";
+    },
+    schemaStatusLabel() {
+      if (this.migrationStatus.error) return "Error";
+      if (this.migrationStatus.pending.length) {
+        return `${this.migrationStatus.pending.length} pendiente(s)`;
+      }
+      if (this.migrationStatus.applied.length) return "Al día";
+      return "Sin historial";
+    },
+    visibleAppliedMigrations() {
+      const list = [...(this.migrationStatus.applied || [])].reverse();
+      if (this.showAllMigrations) return list;
+      return list.slice(0, 5);
+    },
   },
   methods: {
     resetCreateForms() {
@@ -406,6 +548,82 @@ export default defineComponent({
       this.newMinistro = { Nombre_Ministro: "", Cargo: "" };
       this.newShortCut = { ShortCut: "", Template: "" };
       this.newCelebrante = { Nombre: "" };
+    },
+    async loadMigrationStatus() {
+      if (!window.ApiDb?.getMigrationStatus) {
+        this.migrationStatus = {
+          applied: [],
+          pending: [],
+          available: [],
+          lastMigrationId: null,
+          error: "API de migraciones no disponible (modo Electron requerido).",
+        };
+        return;
+      }
+      this.loadingSchemaStatus = true;
+      try {
+        const status = await window.ApiDb.getMigrationStatus();
+        this.migrationStatus = {
+          applied: Array.isArray(status?.applied) ? status.applied : [],
+          pending: Array.isArray(status?.pending) ? status.pending : [],
+          available: Array.isArray(status?.available) ? status.available : [],
+          lastMigrationId: status?.lastMigrationId || null,
+          error:
+            status?.ok === false || status?.success === false
+              ? status.error || status.message || "No se pudo leer el esquema"
+              : null,
+        };
+      } catch (err) {
+        this.migrationStatus = {
+          applied: [],
+          pending: [],
+          available: [],
+          lastMigrationId: null,
+          error: err?.message || String(err),
+        };
+      } finally {
+        this.loadingSchemaStatus = false;
+      }
+    },
+    async runSchemaMigrations() {
+      if (!window.ApiDb?.ensureMigrations) {
+        this.showMessage(
+          "API de migraciones no disponible",
+          "warning",
+          "warning"
+        );
+        return;
+      }
+      this.runningMigrations = true;
+      try {
+        const result = await window.ApiDb.ensureMigrations();
+        await this.loadMigrationStatus();
+        if (result?.ok === false || result?.success === false) {
+          this.showMessage(
+            result.error || result.message || "Falló la actualización del esquema",
+            "negative",
+            "error"
+          );
+          return;
+        }
+        if (result?.newlyApplied?.length) {
+          this.showMessage(
+            `Esquema actualizado (${result.newlyApplied.length} migración(es)).`,
+            "positive",
+            "check"
+          );
+        } else {
+          this.showMessage("El esquema ya está al día.", "positive", "check");
+        }
+      } catch (err) {
+        this.showMessage(
+          err?.message || "Error al actualizar el esquema",
+          "negative",
+          "error"
+        );
+      } finally {
+        this.runningMigrations = false;
+      }
     },
     closeCreateModal() {
       this.persistent = false;
@@ -722,6 +940,142 @@ export default defineComponent({
 .config-surface__icon--gold {
   background: rgba(201, 162, 39, 0.14);
   color: var(--cfg-gold-soft);
+}
+
+.config-surface__icon--warn {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.config-surface__icon--danger {
+  background: rgba(185, 28, 28, 0.1);
+  color: #b91c1c;
+}
+
+.config-schema__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.config-schema__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.config-schema__badge--ok {
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+
+.config-schema__badge--pending {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+.config-schema__badge--error {
+  background: rgba(185, 28, 28, 0.12);
+  color: #b91c1c;
+}
+
+.config-schema__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 1rem 0 0;
+}
+
+.config-schema__meta dt {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cfg-muted);
+}
+
+.config-schema__meta dd {
+  margin: 0.25rem 0 0;
+  color: var(--cfg-navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.config-schema__meta code,
+.config-schema__list code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: rgba(11, 36, 49, 0.05);
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+}
+
+.config-schema__list-wrap {
+  margin-top: 1rem;
+}
+
+.config-schema__list-title {
+  margin: 0 0 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--cfg-navy-mid);
+}
+
+.config-schema__toggle {
+  border: 0;
+  background: transparent;
+  color: var(--cfg-gold-soft);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.config-schema__toggle:hover {
+  text-decoration: underline;
+}
+
+.config-schema__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--cfg-navy-mid);
+  font-size: 0.84rem;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.config-schema__list li + li {
+  margin-top: 0.25rem;
+}
+
+.config-schema__error {
+  margin: 0.85rem 0 0;
+  font-size: 0.84rem;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
+.config-schema__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
 }
 
 .config-surface__body {

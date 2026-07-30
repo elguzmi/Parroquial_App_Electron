@@ -312,6 +312,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import ConfirmModal from "components/ConfirmModal.vue";
+import { loadCelebranteRows } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "ConfigUsers",
@@ -365,17 +366,7 @@ export default defineComponent({
         const e = await window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs");
         this.rows = Array.isArray(e?.[0]) ? e[0] : [];
         this.rows_Ministros = Array.isArray(e?.[1]) ? e[1] : [];
-
-        // Preferir [4] de Configs; fallback a [2] de Ministros
-        if (Array.isArray(e?.[4])) {
-          this.rows_Celebrantes = e[4];
-        } else {
-          const mins = await window.myAPI.executeSp_Ds(
-            "{}",
-            "BD_Get_Lists_Ministros"
-          );
-          this.rows_Celebrantes = Array.isArray(mins?.[2]) ? mins[2] : [];
-        }
+        this.rows_Celebrantes = await loadCelebranteRows(e);
       } catch (_) {
         this.rows = [];
         this.rows_Ministros = [];

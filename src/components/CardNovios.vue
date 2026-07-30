@@ -1,62 +1,100 @@
 <template>
-  <q-card flat bordered class="my-card rounded-borders">
+  <q-card flat class="sac-novio-card">
     <q-card-section>
-      <div class="text-h6 text-center">{{ title }}</div>
+      <h3 class="sac-novio-card__title">{{ title }}</h3>
     </q-card-section>
 
-    <q-card-section class="q-pt-none q-gutter-y-xs">
-      <q-input
-        v-model="dataCard.Nombre_"
-        type="text"
-        label="Nombre"
-        :dense="isDense"
-      />
-      <q-input
-        v-model="dataCard.Padres_"
-        type="text"
-        label="Padres"
-        :dense="isDense"
-      />
-      <q-input
-        v-model="dataCard.Parroquia_"
-        type="text"
-        label="Parroquia"
-        :dense="isDense"
-      />
-      <q-input
-        v-model="dataCard.Fecha_Bautismo_"
-        type="text"
-        label="Fecha Bautismo"
-        dense
-      />
+    <q-card-section class="q-pt-none q-gutter-y-sm">
+      <div class="sac-field">
+        <label class="sac-label" :for="uid('nombre')">Nombre</label>
+        <q-input
+          :id="uid('nombre')"
+          v-model="dataCard.Nombre_"
+          class="sac-input"
+          type="text"
+          dense
+          outlined
+          hide-bottom-space
+        />
+      </div>
+      <div class="sac-field">
+        <label class="sac-label" :for="uid('padres')">Padres</label>
+        <q-input
+          :id="uid('padres')"
+          v-model="dataCard.Padres_"
+          class="sac-input"
+          type="text"
+          dense
+          outlined
+          hide-bottom-space
+        />
+      </div>
+      <div class="sac-field">
+        <label class="sac-label" :for="uid('parroquia')">Parroquia</label>
+        <q-input
+          :id="uid('parroquia')"
+          v-model="dataCard.Parroquia_"
+          class="sac-input"
+          type="text"
+          dense
+          outlined
+          hide-bottom-space
+        />
+      </div>
+      <div class="sac-field">
+        <label class="sac-label" :for="uid('fecha')">Fecha de bautismo</label>
+        <q-input
+          :id="uid('fecha')"
+          v-model="dataCard.Fecha_Bautismo_"
+          class="sac-input"
+          type="text"
+          dense
+          outlined
+          hide-bottom-space
+        />
+      </div>
     </q-card-section>
 
-    <q-separator inset />
+    <q-separator />
 
-    <q-card-section class="full-width row no-wrap justify-around items-start">
-      <div class="col-3">
-        <q-input
-          v-model="dataCard.Lib_"
-          type="text"
-          label="Libro"
-          :dense="isDense"
-        />
-      </div>
-      <div class="col-3">
-        <q-input
-          v-model="dataCard.Fol_"
-          type="text"
-          label="Folio"
-          :dense="isDense"
-        />
-      </div>
-      <div class="col-3">
-        <q-input
-          v-model="dataCard.Numero_"
-          type="text"
-          label="Numero"
-          :dense="isDense"
-        />
+    <q-card-section>
+      <div class="sac-novio-card__grid">
+        <div class="sac-field">
+          <label class="sac-label" :for="uid('libro')">Libro</label>
+          <q-input
+            :id="uid('libro')"
+            v-model="dataCard.Lib_"
+            class="sac-input"
+            type="text"
+            dense
+            outlined
+            hide-bottom-space
+          />
+        </div>
+        <div class="sac-field">
+          <label class="sac-label" :for="uid('folio')">Folio</label>
+          <q-input
+            :id="uid('folio')"
+            v-model="dataCard.Fol_"
+            class="sac-input"
+            type="text"
+            dense
+            outlined
+            hide-bottom-space
+          />
+        </div>
+        <div class="sac-field">
+          <label class="sac-label" :for="uid('numero')">Número</label>
+          <q-input
+            :id="uid('numero')"
+            v-model="dataCard.Numero_"
+            class="sac-input"
+            type="text"
+            dense
+            outlined
+            hide-bottom-space
+          />
+        </div>
       </div>
     </q-card-section>
   </q-card>
@@ -73,7 +111,7 @@ export default defineComponent({
     dataForm: { type: Object },
     prefijo: { type: String },
   },
-  setup() {
+  setup(props) {
     return {
       isDense: true,
       dataCard: ref({
@@ -85,11 +123,11 @@ export default defineComponent({
         Folio_: ref(null),
         Numero_: ref(null),
       }),
+      uid(suffix) {
+        return `novio-${props.prefijo || "x"}-${suffix}`;
+      },
     };
   },
-
-  updated() {},
-  mounted() {},
   methods: {
     updateData() {
       this.dataCard.Nombre_ = this.dataForm["Novi" + this.prefijo];

@@ -1,210 +1,301 @@
 <template>
-  <q-page class="flex" padding>
-    <section style="width: 100%">
-      <div class="form">
+  <q-page class="sac-page">
+    <div class="sac-shell">
+      <header class="sac-header">
+        <h1 class="sac-header__title">Matrimonios</h1>
+        <div
+          class="sac-mode"
+          :class="{ 'sac-mode--edit': isEditing }"
+          role="status"
+        >
+          <q-icon :name="isEditing ? 'edit' : 'add_circle_outline'" size="16px" />
+          {{ isEditing ? "Editando registro" : "Nuevo registro" }}
+        </div>
+      </header>
+
+      <section class="sac-panel" aria-labelledby="matrimonios-form-title">
+        <h2 id="matrimonios-form-title" class="sr-only">
+          Formulario de matrimonio
+        </h2>
         <q-form
+          class="sac-form"
           @submit="insMatrimonio()"
           @reset="resetValues()"
-          class="q-gutter-md"
         >
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Codigo de Partida"
-                readonly
-                v-model="Codigo_Partida"
-                dense
-              />
+          <!-- Partida -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="menu_book" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Partida</h3>
             </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Libro"
-                v-model="Libro"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Folio"
-                v-model="Folio"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Numero"
-                v-model="Numero"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-6">
-              <!-- <q-select
-                v-model="dataMatrimonio.Presencio"
-                :options="[
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                ]"
-                label="Presencio"
-                filled
-                dense
-              /> -->
-              <q-select
-                filled
-                v-model="dataMatrimonio.Presencio"
-                :model-value="dataMatrimonio.Presencio"
-                use-input
-                label="Presencio"
-                hide-selected
-                fill-input
-                input-debounce="0"
-                :options="[
-                  'JAIRO ALBERTO AGUILAR GONZÁLEZ. Pbro.',	
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                ]"
-                @input-value="setModel"
-                dense
-              >
-              </q-select>
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataMatrimonio.Fecha_Matrimonio"
-                type="text"
-                label="Fecha Matrimonio"
-                :dense="isDense"
-              />
+            <div class="sac-grid sac-grid--partida">
+              <div class="sac-field">
+                <label class="sac-label" for="mat-codigo">Código de partida</label>
+                <q-input
+                  id="mat-codigo"
+                  v-model="Codigo_Partida"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  readonly
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-libro">Libro</label>
+                <q-input
+                  id="mat-libro"
+                  v-model="Libro"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-folio">Folio</label>
+                <q-input
+                  id="mat-folio"
+                  v-model="Folio"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-numero">Número</label>
+                <q-input
+                  id="mat-numero"
+                  v-model="Numero"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
             </div>
           </div>
 
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
+          <!-- Ceremonia -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="church" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Ceremonia</h3>
+            </div>
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field">
+                <label class="sac-label" for="mat-presencio">Presenció</label>
+                <q-select
+                  id="mat-presencio"
+                  v-model="dataMatrimonio.Presencio"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  hide-selected
+                  fill-input
+                  input-debounce="0"
+                  :options="ministroOptions"
+                  hide-bottom-space
+                  @input-value="setModel"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-fecha">Fecha de matrimonio</label>
+                <q-input
+                  id="mat-fecha"
+                  v-model="dataMatrimonio.Fecha_Matrimonio"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Novios -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="favorite" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Datos de los novios</h3>
+            </div>
+            <div class="sac-grid sac-grid--novios">
               <CardNovios
-                title="Información Novio"
+                title="Información del novio"
                 card="Novio"
                 :dataForm="dataMatrimonio"
                 ref="cards1"
                 prefijo="o"
                 @SetInfo="SetearInfoCards"
-              ></CardNovios>
-            </div>
-
-            <div class="col-5">
+              />
               <CardNovios
-                title="Información Novia"
+                title="Información de la novia"
                 card="Novia"
                 :dataForm="dataMatrimonio"
                 ref="cards"
                 prefijo="a"
                 @SetInfo="SetearInfoCards"
-              ></CardNovios>
+              />
             </div>
           </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-7">
-              <div class="q-pa-sm q-gutter-sm">
-                <label for="">Nota Marginal</label>
-                <q-editor
-                  v-model="dataMatrimonio.Nota_Marginal"
-                  min-height="5rem"
+
+          <!-- Firmas y testigos -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="draw" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Firmas y testigos</h3>
+            </div>
+            <div class="sac-field">
+              <label class="sac-label" for="mat-testigos">Testigos</label>
+              <q-input
+                id="mat-testigos"
+                v-model="dataMatrimonio.Testigos"
+                class="sac-input"
+                type="text"
+                dense
+                outlined
+                hide-bottom-space
+              />
+            </div>
+            <div class="sac-grid sac-grid--firma">
+              <div class="sac-field">
+                <label class="sac-label" for="mat-doyfe">Doy fe</label>
+                <q-select
+                  id="mat-doyfe"
+                  v-model="dataMatrimonio.Id_MinistroDoyFe"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="ListDoyFe"
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-firma">Firma del documento</label>
+                <q-select
+                  id="mat-firma"
+                  v-model="dataMatrimonio.Id_Ministro"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="[...ListMinistros, ...(ListMinistrosNoActive || [])]"
+                  hide-bottom-space
+                  @update:model-value="setCargoFirm()"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="mat-cargo">Cargo firmante</label>
+                <q-input
+                  id="mat-cargo"
+                  v-model="dataMatrimonio.Cargo"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  disable
+                  hide-bottom-space
                 />
               </div>
             </div>
-            <div class="col-4">
-              <q-input
-                v-model="dataMatrimonio.Testigos"
-                type="text"
-                label="Testigos"
-                dense
-              />
-              <q-select
-                v-model="dataMatrimonio.Id_MinistroDoyFe"
-                label="Doy Fe"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListDoyFe"
-                filled
-                dense
-              />
-              <q-select
-                v-model="dataMatrimonio.Id_Ministro"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListMinistros"
-                label="Firma Documento"
-                filled
-                dense
-                @update:model-value="setCargoFirm()"
-              >
-              </q-select>
-              <q-input
-                v-model="dataMatrimonio.Cargo"
-                type="text"
-                label="Cargo Firmante"
-                disable
-                dense
+          </div>
+
+          <!-- Nota -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="notes" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Nota marginal</h3>
+            </div>
+            <div class="sac-editor-wrap">
+              <label class="sac-label" for="mat-nota">Observaciones (opcional)</label>
+              <q-editor
+                id="mat-nota"
+                v-model="dataMatrimonio.Nota_Marginal"
+                class="sac-editor"
+                min-height="3rem"
+                :toolbar="[
+                  ['bold', 'italic', 'underline'],
+                  ['unordered', 'ordered'],
+                  ['undo', 'redo'],
+                ]"
               />
             </div>
           </div>
-          <div class="q-pa-sm">
-            <q-btn-group spread>
-              <q-btn
-                color="green"
-                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
-                type="submit"
-                icon="save"
-              />
-              <q-btn
-                color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
-                type="reset"
-                icon="restart_alt"
-              />
-            </q-btn-group>
+
+          <div class="sac-actions">
+            <q-btn
+              class="sac-btn sac-btn--ghost"
+              outline
+              no-caps
+              type="reset"
+              icon="restart_alt"
+              :label="isEditing ? 'Cancelar edición' : 'Limpiar formulario'"
+            />
+            <q-btn
+              class="sac-btn sac-btn--primary"
+              unelevated
+              no-caps
+              type="submit"
+              icon="save"
+              :label="isEditing ? 'Actualizar matrimonio' : 'Guardar matrimonio'"
+            />
           </div>
         </q-form>
-      </div>
-    </section>
-    <hr />
-    <section style="width: 100%">
-      <Table_Component
-        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
-        ref="tableComponent"
-        title="Matrimonios"
-        tablaDirectTo="fact_Matrimonios"
-        :columns="columns"
-        :rows="rows"
-        :visibleColumns="visibleColumns"
-        @eventedited="setrecord"
-        @eventinvt="invtrecord"
-        @loadingShow="showLoading"
-        @loadingHide="hideLoading"
-        @msjShow="showMessage"
-      ></Table_Component>
-    </section>
+      </section>
+
+      <section
+        v-if="perfil == 1 || perfil == 2"
+        class="sac-panel sac-registry"
+        aria-labelledby="matrimonios-registry-title"
+      >
+        <h2 id="matrimonios-registry-title" class="sr-only">
+          Listado de matrimonios
+        </h2>
+        <Table_Component
+          v-if="rows.length > 0"
+          ref="tableComponent"
+          title="Registros de matrimonios"
+          tablaDirectTo="fact_Matrimonios"
+          :columns="columns"
+          :rows="rows"
+          :visibleColumns="visibleColumns"
+          @eventedited="setrecord"
+          @eventinvt="invtrecord"
+          @loadingShow="showLoading"
+          @loadingHide="hideLoading"
+          @msjShow="showMessage"
+        />
+        <p v-else class="sac-registry__empty">
+          Aún no hay matrimonios cargados o está consultando el listado…
+        </p>
+      </section>
+    </div>
   </q-page>
 </template>
 
@@ -213,6 +304,7 @@ import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import CardNovios from "components/CardNovios.vue";
 import { useQuasar } from "quasar";
+import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Matrimonios",
@@ -228,6 +320,11 @@ export default defineComponent({
       if (this.perfil == 1 || this.perfil == 2) this.getMatrimonios();
       else this.hideLoading();
     });
+  },
+  computed: {
+    isEditing() {
+      return this.Id != null && this.Id !== "";
+    },
   },
   setup() {
     const $q = useQuasar();
@@ -271,6 +368,8 @@ export default defineComponent({
       Folio: ref(""),
       Numero: ref(""),
 
+      ministroOptions: ref([]),
+
       dataMatrimonio: ref({
         Fecha_Matrimonio: ref(null),
         Presencio: ref(null),
@@ -301,8 +400,9 @@ export default defineComponent({
       }),
 
       isDense: true,
-      ListDoyFe: ref(null),
-      ListMinistros: ref(null),
+      ListDoyFe: ref([]),
+      ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
       // *** data de la tabla
       rows: ref([]),
       columns: ref([]),
@@ -344,8 +444,11 @@ export default defineComponent({
           JSON.stringify({}),
           "BD_Get_Lists_Ministros"
         );
-        this.ListDoyFe = e[0];
-        this.ListMinistros = e[1];
+        this.ListDoyFe = e[0] || [];
+        this.ListMinistros = e[1] || [];
+        // [2] Celebrantes: el valor guardado en Presencio es el Nombre
+        this.ministroOptions = await loadCelebranteNombreOptions(e);
+        this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
         this.showMessage(error, "red", "danger");
@@ -372,7 +475,7 @@ export default defineComponent({
         if (e.indexOf("Error") >= 0) this.showMessage(e, "red", "error");
         this.showMessage(e, "positive", "check");
         this.resetValues();
-        this.$refs.tableComponent.cleanSelectedRow();
+        this.$refs.tableComponent?.cleanSelectedRow?.();
         this.getMatrimonios();
       } catch (error) {
         this.showMessage(error, "red", "danger");
@@ -406,13 +509,21 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
-
+      //this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
       for (const key in this.dataMatrimonio) {
         this.dataMatrimonio[key] = data[key];
       }
       this.$refs.cards.updateData();
       this.$refs.cards1.updateData();
+      this.setFirmanteFav();
       this.setCargoFirm();
+    },
+
+    addMinistroToList(id, name) {
+      const verify =
+        this.ListMinistros.some((e) => e.Id == id) ||
+        this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
     },
 
     SetearInfoCards(data, prefijo) {
@@ -438,10 +549,20 @@ export default defineComponent({
     },
 
     setCargoFirm() {
-      this.dataMatrimonio.Cargo = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataMatrimonio.Id_Ministro
       )?.Cargo;
+      if (cargo) this.dataMatrimonio.Cargo = cargo;
     },
+
+    setFirmanteFav() {
+      const selectDefault = this.ListMinistros.find((e) => e.isCurrent == 1);
+      if (selectDefault) {
+        this.dataMatrimonio.Id_Ministro = selectDefault.Id;
+        this.dataMatrimonio.Cargo = selectDefault.Cargo;
+      }
+    },
+
     setModel(val) {
       this.dataMatrimonio.Presencio = val;
     },
@@ -476,7 +597,9 @@ export default defineComponent({
       this.dataMatrimonio.Cargo = null;
       this.$refs.cards.cleanData();
       this.$refs.cards1.cleanData();
-      this.$refs.tableComponent.cleanSelectedRow();
+      this.$refs.tableComponent?.cleanSelectedRow?.();
+      this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
     },
   },
   watch: {

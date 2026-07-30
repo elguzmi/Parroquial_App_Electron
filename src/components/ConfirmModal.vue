@@ -14,9 +14,10 @@ export default defineComponent({
     function confirm() {
       return new Promise((res, rej) => {
         $q.dialog({
-          title: "Confirm",
-          message: "Esta seguro de eliminar el registro?",
-          cancel: true,
+          title: "Confirmar eliminación",
+          message: "¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.",
+          cancel: { label: "Cancelar", flat: true },
+          ok: { label: "Eliminar", color: "negative" },
           persistent: true,
         })
           .onOk(() => {

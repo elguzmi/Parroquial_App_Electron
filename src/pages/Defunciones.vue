@@ -1,212 +1,316 @@
 <template>
-  <q-page class="flex" padding>
-    <section style="width: 100%">
-      <div class="form">
+  <q-page class="sac-page">
+    <div class="sac-shell">
+      <header class="sac-header">
+        <h1 class="sac-header__title">Defunciones</h1>
+        <div
+          class="sac-mode"
+          :class="{ 'sac-mode--edit': isEditing }"
+          role="status"
+        >
+          <q-icon :name="isEditing ? 'edit' : 'add_circle_outline'" size="16px" />
+          {{ isEditing ? "Editando registro" : "Nuevo registro" }}
+        </div>
+      </header>
+
+      <section class="sac-panel" aria-labelledby="defunciones-form-title">
+        <h2 id="defunciones-form-title" class="sr-only">
+          Formulario de defunción
+        </h2>
         <q-form
+          class="sac-form"
           @submit="saveDefuncion()"
           @reset="resetValues()"
-          class="q-gutter-md"
         >
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Codigo de partida"
-                readonly
-                v-model="No_Defuncion"
-                :dense="isDense"
-              />
+          <!-- Partida -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="menu_book" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Partida</h3>
             </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Libro"
-                v-model="Libro"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Folio"
-                v-model="Folio"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Numero"
-                v-model="Numero"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataDefunciones.Nombre_Difunto"
-                type="text"
-                label="Nombre del difunto"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataDefunciones.Fecha_Sepelio"
-                type="text"
-                label="Fecha sepelio"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-4">
-              <q-input
-                v-model="dataDefunciones.Ciudad_Origen"
-                type="text"
-                label="Natural de"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-1">
-              <q-input
-                v-model="dataDefunciones.Edad"
-                type="text"
-                label="Edad"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-4">
-              <q-input
-                v-model="dataDefunciones.Padres"
-                type="text"
-                label="Hijo de"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataDefunciones.Estado_Civil"
-                type="text"
-                label="Estado civil"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataDefunciones.Ocacion_Muerte"
-                type="text"
-                label="Murio de"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-11">
-              <div class="q-pa-sm q-gutter-sm">
-                <label for="">Nota Marginal</label>
-                <q-editor
-                  v-model="dataDefunciones.NotaMarginal"
-                  min-height="5rem"
+            <div class="sac-grid sac-grid--partida">
+              <div class="sac-field">
+                <label class="sac-label" for="def-codigo">Nº de defunción</label>
+                <q-input
+                  id="def-codigo"
+                  v-model="No_Defuncion"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  readonly
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-libro">Libro</label>
+                <q-input
+                  id="def-libro"
+                  v-model="Libro"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-folio">Folio</label>
+                <q-input
+                  id="def-folio"
+                  v-model="Folio"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-numero">Número</label>
+                <q-input
+                  id="def-numero"
+                  v-model="Numero"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
                 />
               </div>
             </div>
           </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-4">
-              <q-select
-                v-model="dataDefunciones.Id_DoyFe"
-                label="Doy Fe"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListDoyFe"
-                filled
-                dense
-              />
+
+          <!-- Difunto -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="person" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Datos del difunto</h3>
             </div>
-            <div class="col-4">
-              <q-select
-                v-model="dataDefunciones.Id_Firmante"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListMinistros"
-                label="Firma Documento"
-                filled
-                dense
-                @update:model-value="setCargoFirm()"
-              />
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field">
+                <label class="sac-label" for="def-nombre">Nombre del difunto</label>
+                <q-input
+                  id="def-nombre"
+                  v-model="dataDefunciones.Nombre_Difunto"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-fecha-sepelio">Fecha de sepelio</label>
+                <q-input
+                  id="def-fecha-sepelio"
+                  v-model="dataDefunciones.Fecha_Sepelio"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-ciudad">Natural de</label>
+                <q-input
+                  id="def-ciudad"
+                  v-model="dataDefunciones.Ciudad_Origen"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-edad">Edad</label>
+                <q-input
+                  id="def-edad"
+                  v-model="dataDefunciones.Edad"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field sac-field--full">
+                <label class="sac-label" for="def-padres">Hijo de</label>
+                <q-input
+                  id="def-padres"
+                  v-model="dataDefunciones.Padres"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-estado-civil">Estado civil</label>
+                <q-input
+                  id="def-estado-civil"
+                  v-model="dataDefunciones.Estado_Civil"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-ocasion">Murió de</label>
+                <q-input
+                  id="def-ocasion"
+                  v-model="dataDefunciones.Ocacion_Muerte"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
             </div>
-            <div class="col-2">
-              <q-input
-                v-model="dataDefunciones.Cargo_Firmante"
-                type="text"
-                label="Cargo Firmante"
-                :dense="isDense"
-                disable
+          </div>
+
+          <!-- Firmas -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="draw" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Firmas del documento</h3>
+            </div>
+            <div class="sac-grid sac-grid--firma">
+              <div class="sac-field">
+                <label class="sac-label" for="def-doyfe">Doy fe</label>
+                <q-select
+                  id="def-doyfe"
+                  v-model="dataDefunciones.Id_DoyFe"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="ListDoyFe"
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-firma">Firma del documento</label>
+                <q-select
+                  id="def-firma"
+                  v-model="dataDefunciones.Id_Firmante"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="[...ListMinistros, ...(ListMinistrosNoActive || [])]"
+                  hide-bottom-space
+                  @update:model-value="setCargoFirm()"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="def-cargo">Cargo firmante</label>
+                <q-input
+                  id="def-cargo"
+                  v-model="dataDefunciones.Cargo_Firmante"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  disable
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Nota -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="notes" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Nota marginal</h3>
+            </div>
+            <div class="sac-editor-wrap">
+              <label class="sac-label" for="def-nota">Observaciones (opcional)</label>
+              <q-editor
+                id="def-nota"
+                v-model="dataDefunciones.NotaMarginal"
+                class="sac-editor"
+                min-height="3rem"
+                :toolbar="[
+                  ['bold', 'italic', 'underline'],
+                  ['unordered', 'ordered'],
+                  ['undo', 'redo'],
+                ]"
               />
             </div>
           </div>
-          <div class="q-pa-sm">
-            <q-btn-group spread>
-              <q-btn
-                color="green"
-                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
-                type="submit"
-                icon="save"
-              />
-              <q-btn
-                color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
-                type="reset"
-                icon="restart_alt"
-              />
-            </q-btn-group>
+
+          <div class="sac-actions">
+            <q-btn
+              class="sac-btn sac-btn--ghost"
+              outline
+              no-caps
+              type="reset"
+              icon="restart_alt"
+              :label="isEditing ? 'Cancelar edición' : 'Limpiar formulario'"
+            />
+            <q-btn
+              class="sac-btn sac-btn--primary"
+              unelevated
+              no-caps
+              type="submit"
+              icon="save"
+              :label="isEditing ? 'Actualizar defunción' : 'Guardar defunción'"
+            />
           </div>
         </q-form>
-      </div>
-    </section>
-    <section style="width: 100%">
-      <Table_Component
-        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
-        ref="tableComponent"
-        title="Defunciones"
-        tablaDirectTo="fact_Defunciones"
-        :columns="columns"
-        :rows="rows"
-        :visibleColumns="visibleColumns"
-        @eventedited="setrecord"
-        @eventinvt="invtrecord"
-        @loadingShow="showLoading"
-        @loadingHide="hideLoading"
-        @msjShow="showMessage"
-      ></Table_Component>
-    </section>
+      </section>
+
+      <section
+        v-if="perfil == 1 || perfil == 2"
+        class="sac-panel sac-registry"
+        aria-labelledby="defunciones-registry-title"
+      >
+        <h2 id="defunciones-registry-title" class="sr-only">
+          Listado de defunciones
+        </h2>
+        <Table_Component
+          v-if="rows.length > 0"
+          ref="tableComponent"
+          title="Registros de defunciones"
+          tablaDirectTo="fact_Defunciones"
+          :columns="columns"
+          :rows="rows"
+          :visibleColumns="visibleColumns"
+          @eventedited="setrecord"
+          @eventinvt="invtrecord"
+          @loadingShow="showLoading"
+          @loadingHide="hideLoading"
+          @msjShow="showMessage"
+        />
+        <p v-else class="sac-registry__empty">
+          Aún no hay defunciones cargadas o está consultando el listado…
+        </p>
+      </section>
+    </div>
   </q-page>
 </template>
 
@@ -229,23 +333,28 @@ export default defineComponent({
       else this.hideLoading();
     });
   },
+  computed: {
+    isEditing() {
+      return this.Id != null && this.Id !== "";
+    },
+  },
   setup() {
-    const $q = useQuasar();
+    const q = useQuasar();
 
     const getDataLogin = (cll) => {
-      if ($q.localStorage.has("SK"))
-        cll(true, JSON.parse($q.localStorage.getItem("SK")));
+      if (q.localStorage.has("SK"))
+        cll(true, JSON.parse(q.localStorage.getItem("SK")));
       else cll(false, {});
     };
 
     function showLoading(msj) {
-      $q.loading.show({
+      q.loading.show({
         message: msj,
       });
     }
     const showMessage = (msj, color, icon) => {
-      $q.loading.hide();
-      $q.notify({
+      q.loading.hide();
+      q.notify({
         progress: true,
         message: msj,
         icon: icon,
@@ -253,7 +362,7 @@ export default defineComponent({
         textColor: "white",
       });
     };
-    const hideLoading = () => $q.loading.hide();
+    const hideLoading = () => q.loading.hide();
     return {
       perfil: ref(null),
       getDataLogin,
@@ -288,8 +397,9 @@ export default defineComponent({
       rows: ref([]),
       columns: ref([]),
       visibleColumns: ref([]),
-      ListId_MinistroDoyFe: ref([]),
+      ListDoyFe: ref([]),
       ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
     };
   },
   methods: {
@@ -301,6 +411,7 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0];
         this.ListMinistros = e[1];
+        this.setFirmanteFav();
       } catch (error) {
         this.showMessage(error, "red", "danger");
       }
@@ -333,7 +444,7 @@ export default defineComponent({
         this.showMessage(error, "red", "danger");
       }
     },
-    saveDefuncion() {
+    async saveDefuncion() {
       try {
         const result = this.makeValidation();
         if (result != "OK") throw result;
@@ -342,7 +453,7 @@ export default defineComponent({
         DatosIns.Folio = this.Folio;
         DatosIns.Numero = this.Numero;
         if (this.Id != null && this.Id != "") DatosIns.Id = this.Id;
-        const e = window.myAPI.executeSp_St(
+        const e = await window.myAPI.executeSp_St(
           JSON.stringify(DatosIns),
           this.Id != null && this.Id != ""
             ? "BD_Upd_Defuncion"
@@ -351,7 +462,7 @@ export default defineComponent({
         if (e.toLowerCase().indexOf("error") >= 0) throw e;
         this.showMessage(e, "positive", "check");
         this.resetValues();
-        this.$refs.tableComponent.cleanSelectedRow();
+        this.$refs.tableComponent?.cleanSelectedRow?.();
         this.getDefunciones();
       } catch (error) {
         this.hideLoading();
@@ -359,7 +470,7 @@ export default defineComponent({
       }
     },
     makeValidation() {
-      let msj = "";
+      let msj = "OK";
       if (this.No_Defuncion != this.Libro + this.Folio + this.Numero)
         msj = "Error - El codigo de partida no coincide";
       Object.keys(this.dataDefunciones).map((elem) => {
@@ -381,16 +492,25 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
+      this.addMinistroToList(data.Id_Firmante, data.Nombre_Firmante);
       for (const key in this.dataDefunciones) {
         this.dataDefunciones[key] = data[key];
       }
+      this.setFirmanteFav();
       this.setCargoFirm();
     },
 
+    addMinistroToList(id, name) {
+      const verify =
+        this.ListMinistros.some((e) => e.Id == id) ||
+        this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
+    },
     setCargoFirm() {
-      this.dataDefunciones.Cargo_Firmante = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataDefunciones.Id_Firmante
       )?.Cargo;
+      if (cargo) this.dataDefunciones.Cargo_Firmante = cargo;
     },
     async invtrecord(Id) {
       this.showLoading("Realizando Eliminacion, Espera un momento...");
@@ -404,7 +524,7 @@ export default defineComponent({
     },
     resetValues() {
       this.Id = null;
-      this.Codigo_Partida = null;
+      this.No_Defuncion = null;
       this.Libro = "";
       this.Folio = "";
       this.Numero = "";
@@ -419,7 +539,16 @@ export default defineComponent({
       this.dataDefunciones.NotaMarginal = null;
       this.dataDefunciones.Id_Firmante = 0;
       this.dataDefunciones.Cargo_Firmante = null;
-      this.$refs.tableComponent.cleanSelectedRow();
+      this.$refs.tableComponent?.cleanSelectedRow?.();
+      this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
+    },
+    setFirmanteFav() {
+      const selectDefault = this.ListMinistros.find((e) => e.isCurrent == 1);
+      if (selectDefault) {
+        this.dataDefunciones.Id_Firmante = selectDefault.Id;
+        this.dataDefunciones.Cargo_Firmante = selectDefault.Cargo;
+      }
     },
   },
   watch: {

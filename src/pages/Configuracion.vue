@@ -5,7 +5,7 @@
         <p class="config-eyebrow">Administración</p>
         <h1 class="config-page__title">Configuración</h1>
         <p class="config-page__subtitle">
-          Gestione firmantes, plantillas y datos institucionales de la parroquia.
+          Gestione celebrantes, firmantes, plantillas y datos institucionales de la parroquia.
         </p>
       </header>
 
@@ -31,8 +31,8 @@
             <div>
               <h2 class="config-panel__title">Gestión de personal</h2>
               <p class="config-panel__desc">
-                Administre los sacerdotes, diáconos y personal autorizado para firmar
-                documentos oficiales.
+                Administre celebrantes de sacramentos, firmantes y quienes dan fe
+                en actas y certificados.
               </p>
             </div>
           </div>
@@ -263,6 +263,24 @@
               @keyup.enter="guardarConfig"
             />
           </template>
+
+          <template v-else-if="editedModl === 4">
+            <label class="cfg-field-label">Nombre del celebrante</label>
+            <q-input
+              v-model="newCelebrante.Nombre"
+              class="cfg-input"
+              dense
+              outlined
+              autofocus
+              placeholder="Ej. LUIS HERNANDO RÍOS ALDANA. PBRO."
+              hide-bottom-space
+              @keyup.enter="guardarConfig"
+            />
+            <p class="cfg-dialog__hint">
+              Este nombre aparecerá en Bautizos, Confirmaciones y Matrimonios
+              (Ministro / Presidió).
+            </p>
+          </template>
         </q-card-section>
 
         <q-card-actions class="cfg-dialog__actions" align="right">
@@ -345,6 +363,9 @@ export default defineComponent({
       newDoyFe: ref({
         Nombre_DoyFe: "",
       }),
+      newCelebrante: ref({
+        Nombre: "",
+      }),
       headerDocPdf: ref(""),
       footerDocPdf: ref(""),
       editorToolbar: [
@@ -360,6 +381,7 @@ export default defineComponent({
       if (this.editedModl === 1) return "Añadir ministro doy fe";
       if (this.editedModl === 2) return "Añadir ministro firmante";
       if (this.editedModl === 3) return "Añadir atajo";
+      if (this.editedModl === 4) return "Añadir ministro celebrante";
       return "Nuevo registro";
     },
     createSubtitle() {
@@ -372,6 +394,9 @@ export default defineComponent({
       if (this.editedModl === 3) {
         return "Se usará al generar plantillas Word.";
       }
+      if (this.editedModl === 4) {
+        return "Aparecerá en el selector Ministro / Presidió de los sacramentos.";
+      }
       return "";
     },
   },
@@ -380,6 +405,7 @@ export default defineComponent({
       this.newDoyFe = { Nombre_DoyFe: "" };
       this.newMinistro = { Nombre_Ministro: "", Cargo: "" };
       this.newShortCut = { ShortCut: "", Template: "" };
+      this.newCelebrante = { Nombre: "" };
     },
     closeCreateModal() {
       this.persistent = false;
@@ -405,6 +431,11 @@ export default defineComponent({
       } else if (this.editedModl === 3) {
         if (!String(this.newShortCut.ShortCut || "").trim()) {
           this.showMessage("El atajo es obligatorio", "warning", "warning");
+          return false;
+        }
+      } else if (this.editedModl === 4) {
+        if (!String(this.newCelebrante.Nombre || "").trim()) {
+          this.showMessage("El nombre es obligatorio", "warning", "warning");
           return false;
         }
       } else {
@@ -475,6 +506,11 @@ export default defineComponent({
         payload = {
           ShortCut: String(this.newShortCut.ShortCut).trim(),
           Template: String(this.newShortCut.Template || "").trim(),
+        };
+      } else if (this.editedModl === 4) {
+        sp = "BD_Ins_NewMinistroCelebrante";
+        payload = {
+          Nombre: String(this.newCelebrante.Nombre).trim(),
         };
       }
 
@@ -1027,6 +1063,13 @@ export default defineComponent({
 
 .cfg-dialog__actions {
   padding: 0 1rem 1rem;
+}
+
+.cfg-dialog__hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  color: var(--cfg-muted);
+  line-height: 1.4;
 }
 
 @media (max-width: 720px) {

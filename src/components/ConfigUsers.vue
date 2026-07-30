@@ -1,5 +1,79 @@
 <template>
   <div class="cfg-users">
+    <!-- Celebrantes (Ministro / Presidió) -->
+    <section class="cfg-users__section">
+      <div class="cfg-users__section-head">
+        <div>
+          <h3 class="cfg-users__section-title">Ministros celebrantes</h3>
+          <p class="cfg-users__section-desc">
+            Aparecen en Bautizos, Confirmaciones y Matrimonios (campo Ministro /
+            Presidió). En el registro se guarda el <strong>nombre</strong>.
+          </p>
+        </div>
+        <q-btn
+          class="cfg-btn cfg-btn--primary"
+          unelevated
+          no-caps
+          icon="person_add"
+          label="Añadir celebrante"
+          @click="addNew(4)"
+        />
+      </div>
+
+      <div class="cfg-card-grid">
+        <article
+          v-for="row in rows_Celebrantes"
+          :key="'c-' + row.Id"
+          class="cfg-person-card cfg-person-card--accent"
+        >
+          <div class="cfg-person-card__top">
+            <div class="cfg-person-card__avatar" aria-hidden="true">
+              <q-icon name="account_balance" size="22px" />
+            </div>
+            <div class="cfg-person-card__identity">
+              <div class="cfg-person-card__name">{{ row.Nombre }}</div>
+              <span class="cfg-badge cfg-badge--gold">Celebrante</span>
+            </div>
+            <div class="cfg-person-card__actions">
+              <q-btn
+                flat
+                dense
+                round
+                icon="edit"
+                color="grey-7"
+                aria-label="Editar celebrante"
+                @click="openEditCelebrante(row)"
+              />
+              <q-btn
+                flat
+                dense
+                round
+                icon="delete_outline"
+                color="negative"
+                aria-label="Eliminar celebrante"
+                @click="deleteRecord(row.Id, 'BD_Invt_MinistroCelebrante')"
+              />
+            </div>
+          </div>
+          <div class="cfg-person-card__meta">
+            <q-icon name="church" size="16px" />
+            <span>Usado en sacramentos · ID {{ row.Id }}</span>
+          </div>
+        </article>
+
+        <button
+          type="button"
+          class="cfg-person-card cfg-person-card--add"
+          @click="addNew(4)"
+        >
+          <span class="cfg-person-card__add-icon" aria-hidden="true">
+            <q-icon name="add" size="28px" />
+          </span>
+          <span>Añadir nuevo celebrante</span>
+        </button>
+      </div>
+    </section>
+
     <!-- Firmantes -->
     <section class="cfg-users__section">
       <div class="cfg-users__section-head">
@@ -158,7 +232,7 @@
         <q-card-section class="cfg-dialog__header">
           <div>
             <h2 class="cfg-dialog__title">{{ editTitle }}</h2>
-            <p class="cfg-dialog__subtitle">Los cambios se reflejan en nuevos documentos.</p>
+            <p class="cfg-dialog__subtitle">{{ editSubtitle }}</p>
           </div>
           <q-btn flat round dense icon="close" v-close-popup aria-label="Cerrar" />
         </q-card-section>
@@ -186,7 +260,7 @@
             />
           </template>
 
-          <template v-else>
+          <template v-else-if="editMode === 'doyfe'">
             <label class="cfg-field-label">Nombre</label>
             <q-input
               v-model="editForm.Nombre_DoyFe"
@@ -197,6 +271,23 @@
               :rules="[(v) => !!String(v || '').trim() || 'El nombre es obligatorio']"
               hide-bottom-space
             />
+          </template>
+
+          <template v-else>
+            <label class="cfg-field-label">Nombre del celebrante</label>
+            <q-input
+              v-model="editForm.Nombre"
+              class="cfg-input"
+              dense
+              outlined
+              placeholder="Ej. LUIS HERNANDO RÍOS ALDANA. PBRO."
+              :rules="[(v) => !!String(v || '').trim() || 'El nombre es obligatorio']"
+              hide-bottom-space
+              @keyup.enter="saveEdit"
+            />
+            <p class="cfg-dialog__hint">
+              Este texto es el que se guarda en los sacramentos (no el Id).
+            </p>
           </template>
         </q-card-section>
 
@@ -230,6 +321,7 @@ export default defineComponent({
     return {
       rows: ref([]),
       rows_Ministros: ref([]),
+      rows_Celebrantes: ref([]),
       editOpen: ref(false),
       editMode: ref("firmante"),
       saving: ref(false),
@@ -238,14 +330,21 @@ export default defineComponent({
         Nombre_Firmante: "",
         Cargo: "",
         Nombre_DoyFe: "",
+        Nombre: "",
       }),
     };
   },
   computed: {
     editTitle() {
-      return this.editMode === "firmante"
-        ? "Editar ministro firmante"
-        : "Editar ministro doy fe";
+      if (this.editMode === "firmante") return "Editar ministro firmante";
+      if (this.editMode === "doyfe") return "Editar ministro doy fe";
+      return "Editar ministro celebrante";
+    },
+    editSubtitle() {
+      if (this.editMode === "celebrante") {
+        return "El nombre actualizado se usará en nuevos registros sacramentales.";
+      }
+      return "Los cambios se reflejan en nuevos documentos.";
     },
   },
   mounted() {
@@ -261,11 +360,27 @@ export default defineComponent({
         ? "cfg-badge--gold"
         : "cfg-badge--blue";
     },
-    getListConfigs() {
-      window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs").then((e) => {
+    async getListConfigs() {
+      try {
+        const e = await window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs");
         this.rows = Array.isArray(e?.[0]) ? e[0] : [];
         this.rows_Ministros = Array.isArray(e?.[1]) ? e[1] : [];
-      });
+
+        // Preferir [4] de Configs; fallback a [2] de Ministros
+        if (Array.isArray(e?.[4])) {
+          this.rows_Celebrantes = e[4];
+        } else {
+          const mins = await window.myAPI.executeSp_Ds(
+            "{}",
+            "BD_Get_Lists_Ministros"
+          );
+          this.rows_Celebrantes = Array.isArray(mins?.[2]) ? mins[2] : [];
+        }
+      } catch (_) {
+        this.rows = [];
+        this.rows_Ministros = [];
+        this.rows_Celebrantes = [];
+      }
     },
     addNew(ev) {
       this.$emit("openModal", ev);
@@ -277,6 +392,7 @@ export default defineComponent({
         Nombre_Firmante: row.Nombre_Firmante || "",
         Cargo: row.Cargo || "",
         Nombre_DoyFe: "",
+        Nombre: "",
       };
       this.editOpen = true;
     },
@@ -287,6 +403,18 @@ export default defineComponent({
         Nombre_Firmante: "",
         Cargo: "",
         Nombre_DoyFe: row.Nombre_DoyFe || "",
+        Nombre: "",
+      };
+      this.editOpen = true;
+    },
+    openEditCelebrante(row) {
+      this.editMode = "celebrante";
+      this.editForm = {
+        Id: row.Id,
+        Nombre_Firmante: "",
+        Cargo: "",
+        Nombre_DoyFe: "",
+        Nombre: row.Nombre || "",
       };
       this.editOpen = true;
     },
@@ -296,27 +424,41 @@ export default defineComponent({
           this.$emit("mostrarMsj", "El nombre es obligatorio", "warning", "warning");
           return;
         }
-      } else if (!String(this.editForm.Nombre_DoyFe || "").trim()) {
+      } else if (this.editMode === "doyfe") {
+        if (!String(this.editForm.Nombre_DoyFe || "").trim()) {
+          this.$emit("mostrarMsj", "El nombre es obligatorio", "warning", "warning");
+          return;
+        }
+      } else if (!String(this.editForm.Nombre || "").trim()) {
         this.$emit("mostrarMsj", "El nombre es obligatorio", "warning", "warning");
         return;
       }
 
       this.saving = true;
       try {
-        const isFirmante = this.editMode === "firmante";
-        const sp = isFirmante
-          ? "BD_Upd_MinistroFirmante"
-          : "BD_Upd_MinistroDoyFe";
-        const payload = isFirmante
-          ? {
-              Id: this.editForm.Id,
-              Nombre_Firmante: String(this.editForm.Nombre_Firmante).trim(),
-              Cargo: String(this.editForm.Cargo || "").trim(),
-            }
-          : {
-              Id: this.editForm.Id,
-              Nombre_DoyFe: String(this.editForm.Nombre_DoyFe).trim(),
-            };
+        let sp = "";
+        let payload = {};
+
+        if (this.editMode === "firmante") {
+          sp = "BD_Upd_MinistroFirmante";
+          payload = {
+            Id: this.editForm.Id,
+            Nombre_Firmante: String(this.editForm.Nombre_Firmante).trim(),
+            Cargo: String(this.editForm.Cargo || "").trim(),
+          };
+        } else if (this.editMode === "doyfe") {
+          sp = "BD_Upd_MinistroDoyFe";
+          payload = {
+            Id: this.editForm.Id,
+            Nombre_DoyFe: String(this.editForm.Nombre_DoyFe).trim(),
+          };
+        } else {
+          sp = "BD_Upd_MinistroCelebrante";
+          payload = {
+            Id: this.editForm.Id,
+            Nombre: String(this.editForm.Nombre).trim(),
+          };
+        }
 
         const e = await window.myAPI.executeSp_St(JSON.stringify(payload), sp);
         if (String(e).includes("Error")) {
@@ -357,3 +499,12 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss">
+.cfg-dialog__hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  color: var(--cfg-muted, #5b7380);
+  line-height: 1.4;
+}
+</style>

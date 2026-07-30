@@ -312,16 +312,7 @@ export default defineComponent({
       Folio: ref(""),
       Numero: ref(""),
 
-      ministroOptions: [
-        "LUIS HERNANDO RÍOS ALDANA. PBRO.",
-        "LUIS FERNANDO LEÓN ROBAYO. PBRO",
-        "CÉSAR AUGUSTO ALMONACID RUBIO. PBRO",
-        "HUMBERTO RENGIFO. PBRO.",
-        "JOSÉ CARLOS MANZANO ASCANIO. PBRO.",
-        "JOSÉ AQUILINO SABOGAL MORA. PBRO.",
-        "OMAR JAVIER OJEDA TEUTA. PBRO.",
-        "YOEL GÓMEZ RAMÍREZ. PBRO.",
-      ],
+      ministroOptions: ref([]),
 
       dataBautizos: ref({
         Nombre: ref(null),
@@ -381,8 +372,12 @@ export default defineComponent({
           JSON.stringify({}),
           "BD_Get_Lists_Ministros"
         );
-        this.ListDoyFe = e[0];
-        this.ListMinistros = e[1];
+        this.ListDoyFe = e[0] || [];
+        this.ListMinistros = e[1] || [];
+        // [2] Celebrantes: el valor guardado en Ministro es el Nombre
+        this.ministroOptions = Array.isArray(e[2])
+          ? e[2].map((r) => r.Nombre).filter(Boolean)
+          : [];
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "id": 1,
+  "sql": {
+    "server": "HOST\\SQLEXPRESS",
+    "port": null,
+    "database": "NombreBaseDatos",
+    "user": "sa",
+    "password": "CAMBIAR",
+    "encrypt": false,
+    "trustServerCertificate": true
+  },
+  "parroquia": {
+    "nombre": "Nombre de la Parroquia",
+    "color": "#0f4c81",
+    "logo": "",
+    "fondo_login": "",
+    "logo_login": ""
+  },
+  "_comment_templates": "Las plantillas Word viven en %APPDATA%/parroquia_app/templates/ (TemplateBautismo.docx, etc.). Se copian desde resources/templates/default en el primer arranque y no se sobrescriben en actualizaciones."
+}

@@ -1,284 +1,419 @@
 <template>
-  <q-page class="flex" padding>
-    <section style="width: 100%">
-      <div class="form">
+  <q-page class="sac-page">
+    <div class="sac-shell">
+      <header class="sac-header">
+        <h1 class="sac-header__title">Confirmaciones</h1>
+        <div
+          class="sac-mode"
+          :class="{ 'sac-mode--edit': isEditing }"
+          role="status"
+        >
+          <q-icon :name="isEditing ? 'edit' : 'add_circle_outline'" size="16px" />
+          {{ isEditing ? "Editando registro" : "Nuevo registro" }}
+        </div>
+      </header>
+
+      <section class="sac-panel" aria-labelledby="confirmaciones-form-title">
+        <h2 id="confirmaciones-form-title" class="sr-only">
+          Formulario de confirmación
+        </h2>
         <q-form
+          class="sac-form"
           @submit="saveConfirmacion()"
           @reset="resetValues()"
-          class="q-gutter-md"
         >
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Codigo de partida"
-                readonly
-                v-model="Codigo_Partida"
-                :dense="isDense"
-              />
+          <!-- Partida -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="menu_book" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Partida</h3>
             </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Libro"
-                v-model="Libro"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Folio"
-                v-model="Folio"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Numero"
-                v-model="Numero"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-4">
-              <q-input
-                v-model="dataConfirmacion.Fecha_Confirmacion"
-                type="text"
-                label="Fecha_Confirmacion"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-6">
-              <q-input
-                v-model="dataConfirmacion.Nombre_Confirmado"
-                type="text"
-                label="Nombre Confirmado"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataConfirmacion.Lugar_Nacimiento"
-                type="text"
-                label="Lugar Nacimiento"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataConfirmacion.Fecha_Nacimiento"
-                type="text"
-                label="Fecha Nacimiento"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-11">
-              <q-input
-                v-model="dataConfirmacion.Nombre_Padres"
-                type="text"
-                label="Nombre Padres"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataConfirmacion.Diocesis"
-                type="text"
-                label="Diocesis"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-5">
-              <q-input
-                v-model="dataConfirmacion.Parroquia_Bautizo"
-                type="text"
-                label="Bautizado en la parroquia de"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-5">
-              <q-input
-                v-model="dataConfirmacion.Fecha_Bautismo"
-                type="text"
-                label="Fecha Bautismo"
-                :dense="isDense"
-              />
-            </div>
-
-            <div class="col-1">
-              <q-input
-                v-model="dataConfirmacion.Libro_B"
-                type="text"
-                label="Libro"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-1">
-              <q-input
-                v-model="dataConfirmacion.Folio_B"
-                type="text"
-                label="Folio"
-                :dense="isDense"
-              />
-            </div>
-            <div class="col-1">
-              <q-input
-                v-model="dataConfirmacion.Numero_B"
-                type="text"
-                label="Numero"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div class="full-width row no-wrap justify-around items-start">
-            <div class="col-11">
-              <q-input
-                type="text"
-                label="Padrino o Madrina"
-                v-model="dataConfirmacion.Padrinos"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div class="full-width row no-wrap justify-around items-start">
-            <div class="col-3">
-              <q-select
-                v-model="dataConfirmacion.Ministro"
-                label="Ministro"
-                filled
-                fill-input
-                hide-selected
-                input-debounce="0"
-                use-input
-                dense
-                :options="[
-                  'JAIRO ALBERTO AGUILAR GONZÁLEZ. Pbro.',	
-                  'YOEL GÓMEZ RAMÍREZ. Pbro.',
-                  'LORENZO ALZATE ARBOLEDA. Pbro',
-                  'MARIO DE JESÚS ACOSTA RAMÍREZ. Pbro.',
-                  'MONSEÑOR ENRIQUE SARMIENTO ANGULO',
-                  'MONSEÑOR JUAN VICENTE CÓRDOBA VILLOTA. SJ.',
-                ]"
-                @input-value="setModel"
-              />
-            </div>
-            <div class="col-3">
-              <q-select
-                v-model="dataConfirmacion.Id_MinistroDoyFe"
-                label="Doy Fe"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListId_MinistroDoyFe"
-                filled
-                dense
-              />
-            </div>
-            <div class="col-3">
-              <q-select
-                v-model="dataConfirmacion.Id_Ministro"
-                use-input
-                option-value="Id"
-                option-label="Nombre"
-                emit-value
-                map-options
-                :options="ListMinistros"
-                label="Firma Documento"
-                filled
-                dense
-                @update:model-value="setCargoFirm()"
-              />
-            </div>
-            <div class="col-2">
-              <q-input
-                type="text"
-                label="Cargo Id_Ministro"
-                v-model="dataConfirmacion.Cargo"
-                :disable="true"
-                :dense="isDense"
-              />
-            </div>
-          </div>
-          <div
-            class="full-width row no-wrap justify-around items-start content-around"
-          >
-            <div class="col-12">
-              <div class="q-pa-md q-gutter-sm">
-                <label for="">Nota Correciones</label>
-                <q-editor
-                  v-model="dataConfirmacion.Notas_Correcciones"
-                  min-height="5rem"
+            <div class="sac-grid sac-grid--partida">
+              <div class="sac-field">
+                <label class="sac-label" for="conf-codigo">Código de partida</label>
+                <q-input
+                  id="conf-codigo"
+                  v-model="Codigo_Partida"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  readonly
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-libro">Libro</label>
+                <q-input
+                  id="conf-libro"
+                  v-model="Libro"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-folio">Folio</label>
+                <q-input
+                  id="conf-folio"
+                  v-model="Folio"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-numero">Número</label>
+                <q-input
+                  id="conf-numero"
+                  v-model="Numero"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
                 />
               </div>
             </div>
           </div>
 
-          <div class="q-pa-sm">
-            <q-btn-group spread>
-              <q-btn
-                color="green"
-                :label="Id != null && Id != '' ? 'Guardar' : 'Guardar'"
-                type="submit"
-                icon="save"
+          <!-- Confirmado -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="person" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Datos del confirmado</h3>
+            </div>
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field">
+                <label class="sac-label" for="conf-fecha">Fecha de confirmación</label>
+                <q-input
+                  id="conf-fecha"
+                  v-model="dataConfirmacion.Fecha_Confirmacion"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-nombre">Nombre del confirmado</label>
+                <q-input
+                  id="conf-nombre"
+                  v-model="dataConfirmacion.Nombre_Confirmado"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-lugar-n">Lugar de nacimiento</label>
+                <q-input
+                  id="conf-lugar-n"
+                  v-model="dataConfirmacion.Lugar_Nacimiento"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-fecha-n">Fecha de nacimiento</label>
+                <q-input
+                  id="conf-fecha-n"
+                  v-model="dataConfirmacion.Fecha_Nacimiento"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field sac-field--full">
+                <label class="sac-label" for="conf-padres">Nombre de los padres</label>
+                <q-input
+                  id="conf-padres"
+                  v-model="dataConfirmacion.Nombre_Padres"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-diocesis">Diócesis</label>
+                <q-input
+                  id="conf-diocesis"
+                  v-model="dataConfirmacion.Diocesis"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-parroquia-b">
+                  Bautizado en la parroquia de
+                </label>
+                <q-input
+                  id="conf-parroquia-b"
+                  v-model="dataConfirmacion.Parroquia_Bautizo"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Referencia de bautismo -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="water_drop" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Referencia de bautismo</h3>
+            </div>
+            <div class="sac-grid sac-grid--bautismo-ref">
+              <div class="sac-field">
+                <label class="sac-label" for="conf-fecha-bautismo">Fecha de bautismo</label>
+                <q-input
+                  id="conf-fecha-bautismo"
+                  v-model="dataConfirmacion.Fecha_Bautismo"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-libro-b">Libro</label>
+                <q-input
+                  id="conf-libro-b"
+                  v-model="dataConfirmacion.Libro_B"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-folio-b">Folio</label>
+                <q-input
+                  id="conf-folio-b"
+                  v-model="dataConfirmacion.Folio_B"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-numero-b">Número</label>
+                <q-input
+                  id="conf-numero-b"
+                  v-model="dataConfirmacion.Numero_B"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Padrinos y ministro -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="family_restroom" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Padrinos y ministro</h3>
+            </div>
+            <div class="sac-grid sac-grid--2">
+              <div class="sac-field sac-field--full">
+                <label class="sac-label" for="conf-padrinos">Padrino o madrina</label>
+                <q-input
+                  id="conf-padrinos"
+                  v-model="dataConfirmacion.Padrinos"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-ministro">Ministro</label>
+                <q-select
+                  id="conf-ministro"
+                  v-model="dataConfirmacion.Ministro"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  hide-selected
+                  fill-input
+                  input-debounce="0"
+                  :options="ministroOptions"
+                  hide-bottom-space
+                  @input-value="setModel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Firmas -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="draw" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Firmas del documento</h3>
+            </div>
+            <div class="sac-grid sac-grid--firma">
+              <div class="sac-field">
+                <label class="sac-label" for="conf-doyfe">Doy fe</label>
+                <q-select
+                  id="conf-doyfe"
+                  v-model="dataConfirmacion.Id_MinistroDoyFe"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="ListId_MinistroDoyFe"
+                  hide-bottom-space
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-firma">Firma del documento</label>
+                <q-select
+                  id="conf-firma"
+                  v-model="dataConfirmacion.Id_Ministro"
+                  class="sac-select"
+                  dense
+                  outlined
+                  use-input
+                  option-value="Id"
+                  option-label="Nombre"
+                  emit-value
+                  map-options
+                  :options="[...ListMinistros, ...(ListMinistrosNoActive || [])]"
+                  hide-bottom-space
+                  @update:model-value="setCargoFirm()"
+                />
+              </div>
+              <div class="sac-field">
+                <label class="sac-label" for="conf-cargo">Cargo firmante</label>
+                <q-input
+                  id="conf-cargo"
+                  v-model="dataConfirmacion.Cargo"
+                  class="sac-input"
+                  type="text"
+                  dense
+                  outlined
+                  disable
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="sac-section">
+            <div class="sac-section__head">
+              <div class="sac-section__icon" aria-hidden="true">
+                <q-icon name="notes" size="16px" />
+              </div>
+              <h3 class="sac-section__title">Notas y correcciones</h3>
+            </div>
+            <div class="sac-editor-wrap">
+              <label class="sac-label" for="conf-notas">Notas y correcciones</label>
+              <q-editor
+                id="conf-notas"
+                v-model="dataConfirmacion.Notas_Correcciones"
+                class="sac-editor"
+                min-height="3rem"
+                :toolbar="[
+                  ['bold', 'italic', 'underline'],
+                  ['unordered', 'ordered'],
+                  ['undo', 'redo'],
+                ]"
               />
-              <q-btn
-                color="red"
-                :label="Id != null && Id != '' ? 'Cancelar' : 'Limpiar'"
-                type="reset"
-                icon="restart_alt"
-              />
-            </q-btn-group>
+            </div>
+          </div>
+
+          <div class="sac-actions">
+            <q-btn
+              class="sac-btn sac-btn--ghost"
+              outline
+              no-caps
+              type="reset"
+              icon="restart_alt"
+              :label="isEditing ? 'Cancelar edición' : 'Limpiar formulario'"
+            />
+            <q-btn
+              class="sac-btn sac-btn--primary"
+              unelevated
+              no-caps
+              type="submit"
+              icon="save"
+              :label="isEditing ? 'Actualizar confirmación' : 'Guardar confirmación'"
+            />
           </div>
         </q-form>
-      </div>
-    </section>
-    <hr />
-    <section style="width: 100%">
-      <Table_Component
-        v-if="rows.length > 0 && (perfil == 1 || perfil == 2)"
-        ref="tableComponent"
-        title="Confirmaciones"
-        tablaDirectTo="fact_Confirmaciones"
-        :columns="columns"
-        :rows="rows"
-        :visibleColumns="visibleColumns"
-        @eventedited="setrecord"
-        @eventinvt="invtrecord"
-        @loadingShow="showLoading"
-        @loadingHide="hideLoading"
-        @msjShow="showMessage"
-      ></Table_Component>
-    </section>
+      </section>
+
+      <section
+        v-if="perfil == 1 || perfil == 2"
+        class="sac-panel sac-registry"
+        aria-labelledby="confirmaciones-registry-title"
+      >
+        <h2 id="confirmaciones-registry-title" class="sr-only">
+          Listado de confirmaciones
+        </h2>
+        <Table_Component
+          v-if="rows.length > 0"
+          ref="tableComponent"
+          title="Registros de confirmaciones"
+          tablaDirectTo="fact_Confirmaciones"
+          :columns="columns"
+          :rows="rows"
+          :visibleColumns="visibleColumns"
+          @eventedited="setrecord"
+          @eventinvt="invtrecord"
+          @loadingShow="showLoading"
+          @loadingHide="hideLoading"
+          @msjShow="showMessage"
+        />
+        <p v-else class="sac-registry__empty">
+          Aún no hay confirmaciones cargadas o está consultando el listado…
+        </p>
+      </section>
+    </div>
   </q-page>
 </template>
 
@@ -286,9 +421,8 @@
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import Table_Component from "components/Table_Component.vue";
+import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
 
-//import { ipcRenderer } from "electron";
-//const { ipcRenderer } = require("electron");
 export default defineComponent({
   name: "Confirmaciones",
   components: {
@@ -307,6 +441,11 @@ export default defineComponent({
         this.showMessage(e, "red", "error");
       }
     });
+  },
+  computed: {
+    isEditing() {
+      return this.Id != null && this.Id !== "";
+    },
   },
   setup() {
     const $q = useQuasar();
@@ -351,6 +490,8 @@ export default defineComponent({
       Folio: ref(""),
       Numero: ref(""),
 
+      ministroOptions: ref([]),
+
       dataConfirmacion: ref({
         Fecha_Confirmacion: ref(null),
         Nombre_Confirmado: ref(null),
@@ -376,6 +517,7 @@ export default defineComponent({
       visibleColumns: ref([]),
       ListId_MinistroDoyFe: ref([]),
       ListMinistros: ref([]),
+      ListMinistrosNoActive: ref([]),
     };
   },
   methods: {
@@ -385,8 +527,11 @@ export default defineComponent({
           JSON.stringify({}),
           "BD_Get_Lists_Ministros"
         );
-        this.ListId_MinistroDoyFe = e[0];
-        this.ListMinistros = e[1];
+        this.ListId_MinistroDoyFe = e[0] || [];
+        this.ListMinistros = e[1] || [];
+        // [2] Celebrantes: el valor guardado en Ministro es el Nombre
+        this.ministroOptions = await loadCelebranteNombreOptions(e);
+        this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
         this.showMessage(error, "red", "error");
@@ -440,7 +585,7 @@ export default defineComponent({
         else {
           this.showMessage(e, "positive", "check");
           this.resetValues();
-          this.$refs.tableComponent.cleanSelectedRow();
+          this.$refs.tableComponent?.cleanSelectedRow?.();
           this.getConfirmaciones();
         }
       } catch (error) {
@@ -466,9 +611,10 @@ export default defineComponent({
       return msj;
     },
     setCargoFirm() {
-      this.dataConfirmacion.Cargo = this.ListMinistros.find(
+      const cargo = this.ListMinistros.find(
         (e) => e.Id == this.dataConfirmacion.Id_Ministro
       )?.Cargo;
+      if (cargo) this.dataConfirmacion.Cargo = cargo;
     },
 
     setrecord(data) {
@@ -476,10 +622,19 @@ export default defineComponent({
       this.Libro = data.Libro;
       this.Folio = data.Folio;
       this.Numero = data.Numero;
+      this.addMinistroToList(data.Id_Ministro, data.Nombre_Firmante);
       for (const key in this.dataConfirmacion) {
         this.dataConfirmacion[key] = data[key];
       }
+      this.setFirmanteFav();
       this.setCargoFirm();
+    },
+
+    addMinistroToList(id, name) {
+      const verify =
+        this.ListMinistros.some((e) => e.Id == id) ||
+        this.ListMinistrosNoActive.some((e) => e.Id == id);
+      if (!verify) this.ListMinistrosNoActive.push({ Id: id, Nombre: name });
     },
 
     async invtrecord(Id) {
@@ -520,8 +675,19 @@ export default defineComponent({
       this.dataConfirmacion.Notas_Correcciones = null;
       this.dataConfirmacion.Id_Ministro = 0;
       this.dataConfirmacion.Cargo = null;
-      this.$refs.tableComponent.cleanSelectedRow();
+      this.$refs.tableComponent?.cleanSelectedRow?.();
+      this.ListMinistrosNoActive = [];
+      this.setFirmanteFav();
     },
+
+    setFirmanteFav() {
+      const selectDefault = this.ListMinistros.find((e) => e.isCurrent == 1);
+      if (selectDefault) {
+        this.dataConfirmacion.Id_Ministro = selectDefault.Id;
+        this.dataConfirmacion.Cargo = selectDefault.Cargo;
+      }
+    },
+
     setModel(val) {
       this.dataConfirmacion.Ministro = val;
     },

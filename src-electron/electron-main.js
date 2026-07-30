@@ -1,42 +1,59 @@
 import {
   app,
   BrowserWindow,
-  nativeTheme,
+  dialog,
   ipcMain,
   shell,
-  autoUpdater,
 } from "electron";
 import path from "path";
 import os from "os";
 const sql = require("mssql");
 var fs = require("fs");
+import configParroquia from "./configParroquia";
 
-console.log(process.env.NODE_ENV);
-const dataBases = {
-  serverDev: { name: "CESARPC\\SQLEXPRESS01", selected: true },
-  //serverProd: { name: "DESKTOP-6BM9I17\\SQLEXPRESS", selected: false },
-  serverProd: { name: "192.168.20.27\\SQLEXPRESS", selected: false },
-};
-const sqlConfig = {
-  user: "sa",
-  password: "Minecraft123",
-  server: dataBases.serverProd.name,
-  database: "ParroquiaBackup",
-  options: {
-    encrypt: false,
-  },
-};
+// Nombre fijo para userData (evita caer en %APPDATA%\Electron)
+const APP_FOLDER_NAME = "parroquia_app";
+app.setName(APP_FOLDER_NAME);
+app.setPath("userData", path.join(app.getPath("appData"), APP_FOLDER_NAME));
 
+const configStore = require("./configStore");
+const templateStore = require("./templateStore");
+const dbMigrator = require("./db/dbMigrator");
+
+// Fallback legacy (dev) si aún no hay config.json en AppData
+const legacyConfig = configParroquia["parroquiaSalud"];
 const platform = process.platform || os.platform();
-
 let mainWindow;
+let pool = null;
+/** Último resultado de migraciones en esta sesión */
+let lastMigrationResult = null;
+let migrationsAttemptedForPool = false;
+
+function resolveRuntimeConfig() {
+  const stored = configStore.loadConfig();
+  if (stored) return stored;
+  return null;
+}
+
+function resolveWindowIcon() {
+  const stored = resolveRuntimeConfig();
+  if (stored?.parroquia?.logo) {
+    const assetPath = configStore.getAssetPath(stored.parroquia.logo);
+    if (assetPath) return assetPath;
+  }
+  if (legacyConfig?.logo) {
+    const legacyIcon = path.resolve(__dirname, `icons/${legacyConfig.logo}`);
+    if (fs.existsSync(legacyIcon)) return legacyIcon;
+  }
+  return path.resolve(__dirname, "icons/icon.ico");
+}
 
 function createWindow() {
   /* Initial window options*/
   mainWindow = new BrowserWindow({
-    icon: path.resolve(__dirname, "icons/icon.png"), // tray icon
+    icon: resolveWindowIcon(),
     width: 1300,
-    height: 660,
+    height: 760,
     useContentSize: true,
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -52,7 +69,6 @@ function createWindow() {
   });
 
   mainWindow.loadURL(process.env.APP_URL);
-
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
     mainWindow.webContents.openDevTools();
@@ -68,7 +84,15 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+const { setupAutoUpdater } = require("./autoUpdate");
+
+app.whenReady().then(() => {
+  console.log("[config] userData:", app.getPath("userData"));
+  const seed = templateStore.ensureTemplatesSeeded();
+  console.log("[templates]", seed);
+  createWindow();
+  setupAutoUpdater(() => mainWindow);
+});
 app.on("window-all-closed", () => {
   if (platform !== "darwin") {
     app.quit();
@@ -81,48 +105,320 @@ app.on("activate", () => {
   }
 });
 
+async function closePool() {
+  if (pool) {
+    try {
+      await pool.close();
+    } catch (err) {
+      console.error("closePool:", err);
+    }
+    pool = null;
+  }
+  migrationsAttemptedForPool = false;
+}
+
+function resolveAppVersionForMigrations() {
+  try {
+    if (app.isPackaged) return app.getVersion();
+    const pkgPath = path.join(process.cwd(), "package.json");
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+      if (pkg?.version) return String(pkg.version);
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return app.getVersion();
+}
+
+/**
+ * Aplica migraciones pendientes una vez por ciclo de pool/conexión.
+ */
+async function ensureDatabaseMigrations(force = false) {
+  const activePool = await getConnection({ skipMigrations: true });
+  if (!force && migrationsAttemptedForPool && lastMigrationResult) {
+    return lastMigrationResult;
+  }
+  const result = await dbMigrator.runMigrations(activePool, {
+    appVersion: resolveAppVersionForMigrations(),
+  });
+  lastMigrationResult = result;
+  migrationsAttemptedForPool = true;
+  if (result.ok) {
+    if (result.newlyApplied?.length) {
+      console.log(
+        "[db-migrations] Aplicadas:",
+        result.newlyApplied.join(", ")
+      );
+    } else {
+      console.log("[db-migrations] Esquema al día");
+    }
+  } else {
+    console.error("[db-migrations] Error:", result.error);
+  }
+  return result;
+}
+
+async function getConnection(options = {}) {
+  const skipMigrations = Boolean(options.skipMigrations);
+  if (!pool) {
+    const stored = resolveRuntimeConfig();
+    const sqlConfig = stored
+      ? configStore.toSqlConfig(stored.sql)
+      : legacyConfig.sqlConfig;
+    if (!sqlConfig) {
+      throw new Error("La aplicación aún no está configurada.");
+    }
+    pool = await sql.connect(sqlConfig);
+    migrationsAttemptedForPool = false;
+  }
+
+  if (!skipMigrations && !migrationsAttemptedForPool) {
+    await ensureDatabaseMigrations(false);
+  }
+
+  return pool;
+}
+
+//#region Setup / Config runtime
+
+ipcMain.handle("ApiSetup:isConfigured", async () => {
+  try {
+    return { success: true, configured: configStore.isConfigured() };
+  } catch (err) {
+    return { success: false, configured: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getPublicConfig", async () => {
+  try {
+    const stored = configStore.getPublicConfig();
+    if (stored) return { success: true, data: stored };
+    // compat: branding legacy sin exponer sql
+    const { sqlConfig, ...publicLegacy } = legacyConfig;
+    return { success: true, data: { ...publicLegacy, configured: false } };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:testConnection", async (_ev, sqlInput) => {
+  let testPool = null;
+  try {
+    const sqlConfig = configStore.toSqlConfig(sqlInput);
+    testPool = await new sql.ConnectionPool(sqlConfig).connect();
+    await testPool.request().query("SELECT 1 AS ok");
+    return { success: true, message: "Conexión exitosa" };
+  } catch (err) {
+    return { success: false, message: err.message || String(err) };
+  } finally {
+    if (testPool) {
+      try {
+        await testPool.close();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  }
+});
+
+ipcMain.handle("ApiSetup:pickImage", async (_ev, kind) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Seleccionar imagen",
+      properties: ["openFile"],
+      filters: [
+        { name: "Imágenes", extensions: ["png", "jpg", "jpeg", "webp", "gif"] },
+      ],
+    });
+    if (result.canceled || !result.filePaths?.length) {
+      return { success: false, canceled: true };
+    }
+    const sourcePath = result.filePaths[0];
+    const targetName = kind || `asset_${Date.now()}`;
+    const savedName = configStore.saveAssetFromPath(sourcePath, targetName);
+    const dataUrl = configStore.getAssetDataUrl(savedName);
+    return { success: true, filename: savedName, dataUrl };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getAssetDataUrl", async (_ev, filename) => {
+  try {
+    const dataUrl = configStore.getAssetDataUrl(filename);
+    return { success: Boolean(dataUrl), dataUrl };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:saveConfig", async (_ev, payload) => {
+  try {
+    if (!payload?.sql || !payload?.parroquia) {
+      return { success: false, message: "Configuración incompleta" };
+    }
+    const config = {
+      version: 1,
+      id: payload.id || 1,
+      sql: {
+        server: payload.sql.server,
+        port: payload.sql.port || null,
+        database: payload.sql.database,
+        user: payload.sql.user,
+        password: payload.sql.password,
+        encrypt: Boolean(payload.sql.encrypt),
+        trustServerCertificate: payload.sql.trustServerCertificate !== false,
+      },
+      parroquia: {
+        nombre: payload.parroquia.nombre,
+        color: payload.parroquia.color || "#0f4c81",
+        logo: payload.parroquia.logo || "",
+        fondo_login: payload.parroquia.fondo_login || "",
+        logo_login: payload.parroquia.logo_login || "",
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    configStore.saveConfig(config);
+    // Asegura plantillas en AppData al completar el setup de la parroquia
+    templateStore.ensureTemplatesSeeded();
+    await closePool();
+
+    // Primera conexión post-setup: aplica migraciones de esquema
+    let migrations = null;
+    try {
+      migrations = await ensureDatabaseMigrations(true);
+    } catch (migErr) {
+      migrations = {
+        ok: false,
+        error: migErr?.message || String(migErr),
+      };
+    }
+
+    return {
+      success: true,
+      data: configStore.getPublicConfig(config),
+      migrations,
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("ApiSetup:getTemplatesStatus", async () => {
+  try {
+    return { success: true, data: templateStore.getTemplatesStatus() };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+
+//#endregion
+
+//#region Api DB migrations
+
+ipcMain.handle("ApiDb:ensureMigrations", async () => {
+  try {
+    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+      return {
+        success: false,
+        skipped: true,
+        message: "La aplicación aún no está configurada.",
+      };
+    }
+    const result = await ensureDatabaseMigrations(true);
+    return { success: result.ok, ...result };
+  } catch (err) {
+    return {
+      success: false,
+      ok: false,
+      error: err?.message || String(err),
+    };
+  }
+});
+
+ipcMain.handle("ApiDb:getMigrationStatus", async () => {
+  try {
+    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+      return {
+        success: false,
+        message: "La aplicación aún no está configurada.",
+      };
+    }
+    const activePool = await getConnection({ skipMigrations: true });
+    const status = await dbMigrator.getMigrationStatus(activePool);
+    return {
+      success: status.ok,
+      ...status,
+      lastRun: lastMigrationResult,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      ok: false,
+      error: err?.message || String(err),
+    };
+  }
+});
+
+//#endregion
+
 //#region Api login
 
 // ********** API DE LOGIN
-ipcMain.handle("ApiLogin:change_Database", async (ev, arg) => {
+ipcMain.handle("ApiLogin:getConfigParroquia", async () => {
   try {
-    sqlConfig.server = dataBases[arg].name;
-    return "OK";
+    const stored = configStore.getPublicConfig();
+    if (stored) return stored;
+    const { sqlConfig, ...publicLegacy } = legacyConfig;
+    return publicLegacy;
   } catch (err) {
-    return "Error -" + err;
+    return { isError: true, errorMessage: "getConfigParroquia " + err };
   }
 });
 
 // ********** API DE LOGIN
+
 ipcMain.handle("ApiLogin:login", async (ev, arg) => {
   try {
-    let { user, clave } = arg;
-    let data = await sql.connect(sqlConfig);
-    if (data.connected) {
-      let request = new sql.Request();
-      request.input("Usuario", sql.VARCHAR(50), user);
-      request.input("Clave", sql.VARCHAR(50), clave);
-      let exec = await request.execute("BD_Get_Login");
-      await data.close();
-      return exec.recordsets[0];
-    }
+    const { user, clave } = arg;
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Usuario", sql.VarChar(50), user);
+    request.input("Clave", sql.VarChar(50), clave);
+    const result = await request.execute("BD_Get_Login");
+    return {
+      success: true,
+      data: result.recordset,
+      migrations: lastMigrationResult,
+    };
   } catch (err) {
-    return { isError: true, errorMessage: "Apilogin " + err };
+    console.error("Login error:", err);
+    return {
+      success: false,
+      message: err.message,
+      migrations: lastMigrationResult,
+    };
   }
 });
 
+
 ipcMain.handle("ApiLogin:Load_Modules", async (ev, IdPerfil) => {
   try {
-    let data = await sql.connect(sqlConfig);
-    if (data.connected == true) {
-      let request = new sql.Request();
-      request.input("IdPerfil", sql.Int, IdPerfil);
-      let exec = await request.execute("BD_Get_ModulosPerfil");
-      await await data.close();
-      return exec.recordsets[0];
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("IdPerfil", sql.Int, IdPerfil);
+    let exec = await request.execute("BD_Get_ModulosPerfil");
+    return {
+      success: true,
+      data: exec.recordsets[0]
+    };
+    
   } catch (err) {
-    return "Load_Modules " + err;
+    return {
+      success: false,
+      message: err.message
+    };
   }
 });
 
@@ -134,9 +430,8 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
+    const pool = await getConnection();
+    const request = pool.request();
       parametersIn.map((e) => {
         request.input(
           e["ParameterN"],
@@ -144,10 +439,8 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
           arg[e["ParameterN"]]
         );
       });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordset[0][""];
-    }
+    const result = await request.execute(sp);
+    return result.recordset[0][""];
   } catch (err) {
     return "Error - executeSp_St " + err;
   }
@@ -159,9 +452,8 @@ ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
+    const pool = await getConnection();
+    const request = pool.request();
       parametersIn.map((e) => {
         request.input(
           e["ParameterN"],
@@ -169,10 +461,9 @@ ipcMain.handle("myAPI:executeSp_Dt", async (ev, data, sp) => {
           arg[e["ParameterN"]]
         );
       });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordset[0];
-    }
+    const result = await request.execute(sp);
+    return result.recordset[0];
+    
   } catch (ex) {
     return "Error - executeSp_St " + err;
   }
@@ -184,20 +475,18 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
     let parametersIn = null;
     parametersIn = await getParametersSp(sp);
     let arg = JSON.parse(data);
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      parametersIn.map((e) => {
-        request.input(
-          e["ParameterN"],
-          getTypeData(e["Type"], e["max_length"]),
-          arg[e["ParameterN"]]
-        );
-      });
-      let exec = await request.execute(sp);
-      await conn.close();
-      return exec.recordsets;
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    parametersIn.map((e) => {
+      request.input(
+        e["ParameterN"],
+        getTypeData(e["Type"], e["max_length"]),
+        arg[e["ParameterN"]]
+      );
+    });
+    const result = await request.execute(sp);
+    return result.recordsets;
+    
   } catch (ex) {
     return { isError: true, errorMessage: "executeSp_Ds " + ex };
   }
@@ -206,38 +495,44 @@ ipcMain.handle("myAPI:executeSp_Ds", async (ev, data, sp) => {
 ipcMain.handle("myAPI:Export_Data", async (ev, tabla) => {
   try {
     if (!tabla) return "Error - No Data to search";
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Tabla", sql.VarChar(20), tabla);
-      let exec = await request.execute("BD_GetData_FromTable");
-      await conn.close();
-      let datos = exec.recordsets[0];
-      let headers = Object.keys(datos[0]);
-      let msj = await exportData(headers, datos, tabla);
-      return msj;
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Tabla", sql.VarChar(20), tabla);
+    const result = await request.execute("BD_GetData_FromTable");
+    const datos = result.recordsets[0];
+    const headers = Object.keys(datos[0]);
+    const msj = await exportData(headers, datos, tabla);
+    return msj;
   } catch (err) {
     return { isError: true, errorMessage: "Fn_Export_Data " + err };
   }
 });
 
-ipcMain.handle("myAPI:openFilesTemplates", async (ev, tabla) => {
+ipcMain.handle("myAPI:openFilesTemplates", async () => {
   try {
-    //shell.showItemInFolder
-    const rutaFiles =
-      process.env.NODE_ENV == "development"
-        ? __dirname
-        : path.dirname(__dirname);
+    const status = templateStore.getTemplatesStatus();
+    const templatesDir = status.templatesDir;
+    const sample =
+      status.files?.[0] ||
+      templateStore.REQUIRED_TEMPLATES[0];
+    const samplePath = path.join(templatesDir, sample);
 
-    shell.showItemInFolder(
-      path.resolve(rutaFiles, "TemplateConfirmacion.docx")
-    );
-    return rutaFiles, "TemplateConfirmacion.docx";
+    if (fs.existsSync(samplePath)) {
+      shell.showItemInFolder(samplePath);
+    } else {
+      await shell.openPath(templatesDir);
+    }
+
+    return {
+      isError: false,
+      templatesDir,
+      files: status.files,
+    };
   } catch (err) {
     return { isError: true, errorMessage: "openFilesTemplates " + err };
   }
 });
+
 ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
   const HTMLtoDOCX = require("html-to-docx");
   try {
@@ -268,12 +563,10 @@ ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
       },
       Html_Footer_Docx_Node
     );
-    const currentDirectory = app.getAppPath();
-    let route = os.homedir() + "/desktop";
-    //let route = __dirname + "/" + nombre;
-    fs.writeFileSync(route + "/docWordExport.docx", data);
-    shell.openPath(route + "/docWordExport.docx");
-    return route + "/docWordExport.docx";
+    const route = templateStore.resolveExportPath("docWordExport.docx");
+    fs.writeFileSync(route, data);
+    shell.openPath(route);
+    return route;
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx " + err };
   }
@@ -284,60 +577,43 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
   const Docxtemplater = require("docxtemplater");
   const cheerio = require("cheerio");
 
-  const rutaFiles =
-    process.env.NODE_ENV == "development" ? __dirname : path.dirname(__dirname);
   try {
     let obj = JSON.parse(data);
-    const content = fs.readFileSync(
-      path.resolve(rutaFiles, obj["Nombre_Archivo"]),
-      "binary"
-    );
-    // Unzip the content of the file
+    const templateName = obj["Nombre_Archivo"];
+    const templatePath = templateStore.resolveTemplatePath(templateName);
+    const content = fs.readFileSync(templatePath, "binary");
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
     });
 
-    // Cargar el contenido HTML en Cheerio
-    // si es confirmaciones
-    if (obj["Nombre_Archivo"] == "TemplateConfirmacion.docx") {
-      const textoEnCheer = cheerio.load(obj["Notas_Correcciones"]);
-      const plainText = textoEnCheer.text();
-      obj["Notas_Correcciones"] = plainText;
-    } else if (obj["Nombre_Archivo"] == "TemplateDefuncion.docx") {
-      const textoEnCheer = cheerio.load(obj["NotaMarginal"]);
-      const plainText = textoEnCheer.text();
-      obj["NotaMarginal"] = plainText;
+    if (templateName == "TemplateConfirmacion.docx") {
+      const textoEnCheer = cheerio.load(obj["Notas_Correcciones"] ?? "");
+      obj["Notas_Correcciones"] = textoEnCheer.text();
+    } else if (templateName == "TemplateDefuncion.docx") {
+      const textoEnCheer = cheerio.load(obj["NotaMarginal"] ?? "");
+      obj["NotaMarginal"] = textoEnCheer.text();
     } else {
-      const textoEnCheer = cheerio.load(obj["Nota_Marginal"]);
-      const plainText = textoEnCheer.text();
-      obj["Nota_Marginal"] = plainText;
+      const textoEnCheer = cheerio.load(obj["Nota_Marginal"] ?? "");
+      obj["Nota_Marginal"] = textoEnCheer.text();
     }
-    // Obtener el texto sin etiquetas
+
     doc.render(obj);
-    // Get the zip document and generate it as a nodebuffer
     const buf = doc.getZip().generate({
       type: "nodebuffer",
-      // compression: DEFLATE adds a compression step.
-      // For a 50MB output document, expect 500ms additional CPU time
       compression: "DEFLATE",
     });
 
-    // buf is a nodejs Buffer, you can either write it to a
-    // file or res.send it with express for example.
-    fs.writeFileSync(
-      path.resolve(rutaFiles, "output_" + obj["Nombre_Archivo"]),
-      buf
+    const outputPath = templateStore.resolveExportPath(
+      "output_" + templateName
     );
+    fs.writeFileSync(outputPath, buf);
+    shell.openPath(outputPath);
 
-    shell.openPath(
-      path.resolve(path.join(rutaFiles, "output_" + obj["Nombre_Archivo"]))
-    );
-
-    return { isError: false, data: "OK" };
+    return { isError: false, data: "OK", path: outputPath };
   } catch (err) {
-    return { isError: true, errorMessage: "convertTo_Docx_Zip" + err };
+    return { isError: true, errorMessage: "convertTo_Docx_Zip " + err };
   }
 });
 
@@ -372,14 +648,11 @@ function exportData(headers, datos, tabla) {
 
 function getParametersSp(Sp) {
   return new Promise(async (resolve) => {
-    let conn = await sql.connect(sqlConfig);
-    if (conn.connected == true) {
-      let request = new sql.Request();
-      request.input("Sp", sql.VarChar(50), Sp);
-      let exec = await request.execute("BD_Get_Lists_Parameters");
-      await conn.close();
-      resolve(exec.recordset);
-    }
+    const pool = await getConnection();
+    const request = pool.request();
+    request.input("Sp", sql.VarChar(50), Sp);
+    const result = await request.execute("BD_Get_Lists_Parameters");
+    resolve(result.recordset);
   });
 }
 

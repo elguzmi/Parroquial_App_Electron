@@ -22,7 +22,7 @@ module.exports = configure(function (ctx) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/boot-files
-    boot: ["axios"],
+    boot: ["axios", "updater"],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
     css: ["app.scss"],
@@ -196,7 +196,8 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
-      bundler: "packager", // 'packager' or 'builder'
+      //bundler: "packager", // 'packager' or 'builder'
+      bundler: "builder", // 'packager' or 'builder'
 
       // should you wish to change default files
       sourceFiles: {
@@ -212,16 +213,51 @@ module.exports = configure(function (ctx) {
         // protocol: 'myapp://path',
         // Windows only
         // win32metadata: { ... }
+         icon: "src-electron/icons/icon.ico"
       },
 
       builder: {
         // https://www.electron.build/configuration/configuration
 
         appId: "parroquia_app",
+        productName: "Parroquia App",
+        win: {
+          target: "nsis",
+          icon: "src-electron/icons/icon.ico"
+        },
+        nsis: {
+          oneClick: false,
+          perMachine: false,
+          allowToChangeInstallationDirectory: true
+        },
+        // Plantillas Word fuera del asar (resources/templates/…)
+        // Migraciones SQL fuera del asar (resources/db/migrations/…)
+        extraResources: [
+          {
+            from: "src-electron/templates",
+            to: "templates",
+            filter: ["**/*.docx", "!**/output_*.docx"],
+          },
+          {
+            from: "src-electron/db/migrations",
+            to: "db/migrations",
+            filter: ["**/*.sql"],
+          },
+        ],
+        // Auto-update: publica artefactos en GitHub Releases
+        publish: {
+          provider: "github",
+          owner: "elguzmi",
+          repo: "Parroquial_App_Electron",
+          releaseType: "release",
+        },
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
       chainWebpackMain(chain) {
+        chain.externals({
+          "electron-updater": "commonjs electron-updater",
+        });
         chain
           .plugin("eslint-webpack-plugin")
           .use(ESLintPlugin, [{ extensions: ["js"] }]);
@@ -233,22 +269,6 @@ module.exports = configure(function (ctx) {
           .plugin("eslint-webpack-plugin")
           .use(ESLintPlugin, [{ extensions: ["js"] }]);
       },
-      // extendWebpack(cfg) {
-      //   // Copiar archivos Word al directorio resources
-      //   cfg.plugins.push(
-      //     new CopyWebpackPlugin({
-      //       patterns: [
-      //         {
-      //           from: path.resolve(__dirname, "src/assets/word-files/*.docx"),
-      //           to: path.resolve(
-      //             __dirname,
-      //             "dist/electron/parroquia_app-win32-x64/resources/"
-      //           ),
-      //         },
-      //       ],
-      //     })
-      //   );
-      // },
     },
   };
 });

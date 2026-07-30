@@ -1,163 +1,226 @@
 <template>
-  <q-card-section>
-    <div class="text-h6">ShortCuts</div>
-    <div>
+  <div class="cfg-shortcuts">
+    <div class="cfg-panel-head">
+      <div>
+        <h3 class="cfg-panel-title">Atajos de plantilla</h3>
+        <p class="cfg-panel-desc">
+          Tokens cortos que el sistema reemplaza al generar documentos Word.
+        </p>
+      </div>
       <q-btn
-        color="primary"
-        icon="check"
-        label="Agregar Shortcut"
+        class="cfg-btn cfg-btn--primary"
+        unelevated
+        no-caps
+        icon="add"
+        label="Añadir atajo"
         @click="addNew(3)"
       />
     </div>
-  </q-card-section>
 
-  <q-table
-    flat
-    bordered
-    :rows="rows"
-    :columns="columns"
-    row-key="Id"
-    binary-state-sort
-    :visible-columns="['Shortcut', 'Template', 'Accion']"
-  >
-    <template v-slot:body="props">
-      <q-tr :props="props">
-        <q-td key="Id" :props="props">
-          {{ props.row.Id }}
-        </q-td>
-        <q-td key="Shortcut" :props="props">
-          <div class="text-pre-wrap">{{ props.row.Shortcut }}</div>
-          <q-popup-edit
-            v-model="props.row.Shortcut"
-            v-slot="scope"
-            buttons
-            @save="saveRecord(props.row, 'BD_Upd_ShortCuts')"
-          >
-            <q-input
-              type="text"
-              v-model="scope.value"
+    <q-table
+      class="cfg-table"
+      flat
+      :rows="rows"
+      :columns="columns"
+      row-key="Id"
+      binary-state-sort
+      :loading="loading"
+      :pagination="{ rowsPerPage: 8 }"
+      no-data-label="No hay atajos configurados"
+    >
+      <template #body="props">
+        <q-tr :props="props" class="cfg-table__row">
+          <q-td key="Shortcut" :props="props">
+            <code class="cfg-code">{{ props.row.Shortcut }}</code>
+          </q-td>
+          <q-td key="Template" :props="props">
+            <span class="cfg-table__muted">{{ props.row.Template }}</span>
+          </q-td>
+          <q-td key="Accion" :props="props" auto-width>
+            <q-btn
+              flat
               dense
-              autofocus
-              hint="Ingresa el Nombre"
+              round
+              icon="edit"
+              color="grey-7"
+              aria-label="Editar atajo"
+              @click="openEdit(props.row)"
             />
-          </q-popup-edit>
-        </q-td>
-        <q-td key="Template" :props="props">
-          <div class="text-pre-wrap">{{ props.row.Template }}</div>
-          <q-popup-edit
-            v-model="props.row.Template"
-            v-slot="scope"
-            buttons
-            @save="saveRecord(props.row, 'BD_Upd_ShortCuts')"
-          >
-            <q-input
-              type="text"
-              v-model="scope.value"
+            <q-btn
+              flat
               dense
-              autofocus
-              hint="Ingresa el Nombre"
+              round
+              icon="delete_outline"
+              color="negative"
+              aria-label="Eliminar atajo"
+              @click="deleteRecord(props.row.Id, 'BD_Invt_ShortCut')"
             />
-          </q-popup-edit>
-        </q-td>
-        <q-td key="Accion" :props="props">
-          <q-btn
-            color="negative"
-            icon="delete"
-            @click="deleteRecord(props.key, 'BD_Invt_ShortCut')"
+          </q-td>
+        </q-tr>
+      </template>
+    </q-table>
+
+    <q-dialog v-model="editOpen" persistent>
+      <q-card class="cfg-dialog">
+        <q-card-section class="cfg-dialog__header">
+          <div>
+            <h2 class="cfg-dialog__title">Editar atajo</h2>
+            <p class="cfg-dialog__subtitle">
+              Mantenga el mismo formato que usan las plantillas.
+            </p>
+          </div>
+          <q-btn flat round dense icon="close" v-close-popup aria-label="Cerrar" />
+        </q-card-section>
+        <q-card-section class="cfg-dialog__body">
+          <label class="cfg-field-label">Atajo</label>
+          <q-input
+            v-model="editForm.Shortcut"
+            class="cfg-input"
+            dense
+            outlined
+            hide-bottom-space
           />
-        </q-td>
-      </q-tr>
-    </template>
-  </q-table>
-  <ConfirmModal ref="confirmModal"></ConfirmModal>
+          <label class="cfg-field-label q-mt-md">Plantilla / valor</label>
+          <q-input
+            v-model="editForm.Template"
+            class="cfg-input"
+            dense
+            outlined
+            hide-bottom-space
+          />
+        </q-card-section>
+        <q-card-actions class="cfg-dialog__actions" align="right">
+          <q-btn flat no-caps label="Cancelar" v-close-popup />
+          <q-btn
+            class="cfg-btn cfg-btn--primary"
+            unelevated
+            no-caps
+            label="Guardar"
+            :loading="saving"
+            @click="saveEdit"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <ConfirmModal ref="confirmModal" />
+  </div>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
 import ConfirmModal from "components/ConfirmModal.vue";
+
 const columns = [
   {
-    name: "Id",
-    label: "Id",
-    align: "center",
-    field: (row) => row.Id,
-    sortable: true,
-  },
-  {
     name: "Shortcut",
-    align: "center",
-    label: "Shotcut",
+    align: "left",
+    label: "Atajo",
     field: "Shortcut",
     sortable: true,
   },
   {
     name: "Template",
-    align: "center",
-    label: "Template",
+    align: "left",
+    label: "Valor / plantilla",
     field: "Template",
     sortable: true,
   },
   {
     name: "Accion",
-    align: "center",
-    label: "Accion",
+    align: "right",
+    label: "Acciones",
     field: "Accion",
   },
 ];
 
 export default defineComponent({
   name: "ConfigShortCuts",
-  components: {
-    ConfirmModal,
-  },
-  props: {
-    title: { type: String },
-  },
+  components: { ConfirmModal },
+  emits: ["mostrarMsj", "openModal"],
   setup() {
     return {
       columns,
       rows: ref([]),
+      loading: ref(false),
+      editOpen: ref(false),
+      saving: ref(false),
+      editForm: ref({ Id: null, Shortcut: "", Template: "" }),
     };
   },
-
   mounted() {
     this.getListConfigs();
   },
   methods: {
-    saveRecord(row, Sp) {
-      try {
-        setTimeout(() => {
-          let ObjBuilt = {
-            Id: row.Id,
-            Shortcut: row.Shortcut,
-            Template: row.Template,
-          };
-          window.myAPI.executeSp_St(JSON.stringify(ObjBuilt), Sp).then((e) => {
-            this.$emit("mostrarMsj", e, "positive", "check");
-          });
-        }, 500);
-      } catch (error) {
-        this.getListConfigs();
-      }
-    },
     getListConfigs() {
-      window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs").then((e) => {
-        this.rows = e[2];
-      });
+      this.loading = true;
+      window.myAPI
+        .executeSp_Ds("{}", "BD_Get_Lists_Configs")
+        .then((e) => {
+          this.rows = Array.isArray(e?.[2]) ? e[2] : [];
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
     addNew(ev) {
       this.$emit("openModal", ev);
     },
-
+    openEdit(row) {
+      this.editForm = {
+        Id: row.Id,
+        Shortcut: row.Shortcut || "",
+        Template: row.Template || "",
+      };
+      this.editOpen = true;
+    },
+    async saveEdit() {
+      if (!String(this.editForm.Shortcut || "").trim()) {
+        this.$emit("mostrarMsj", "El atajo es obligatorio", "warning", "warning");
+        return;
+      }
+      this.saving = true;
+      try {
+        const payload = {
+          Id: this.editForm.Id,
+          Shortcut: String(this.editForm.Shortcut).trim(),
+          Template: String(this.editForm.Template || "").trim(),
+        };
+        const e = await window.myAPI.executeSp_St(
+          JSON.stringify(payload),
+          "BD_Upd_ShortCuts"
+        );
+        if (String(e).includes("Error")) {
+          this.$emit("mostrarMsj", e, "negative", "error");
+        } else {
+          this.$emit("mostrarMsj", e, "positive", "check");
+          this.editOpen = false;
+          this.getListConfigs();
+        }
+      } catch (err) {
+        this.$emit(
+          "mostrarMsj",
+          err?.message || "No se pudo guardar el atajo",
+          "negative",
+          "error"
+        );
+      } finally {
+        this.saving = false;
+      }
+    },
     async deleteRecord(Id, Sp) {
       try {
         await this.$refs.confirmModal.confirm();
-        window.myAPI.executeSp_St(JSON.stringify({ Id: Id }), Sp).then((e) => {
-          if (e.includes("Error")) this.$emit("mostrarMsj", e, "red", "danger");
-          else this.$emit("mostrarMsj", e, "positive", "check");
-          this.getListConfigs();
-        });
-      } catch (err) {}
+        const e = await window.myAPI.executeSp_St(JSON.stringify({ Id }), Sp);
+        if (String(e).includes("Error")) {
+          this.$emit("mostrarMsj", e, "negative", "error");
+        } else {
+          this.$emit("mostrarMsj", e, "positive", "check");
+        }
+        this.getListConfigs();
+      } catch (_) {
+        // cancelado
+      }
     },
   },
 });

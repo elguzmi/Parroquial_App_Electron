@@ -1,4 +1,3 @@
-//window.Electron = require("electron");
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("myAPI", {
   //Sp General ejecucion ST
@@ -29,4 +28,34 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   loadLogin: (datosUser) => ipcRenderer.invoke("ApiLogin:login", datosUser),
   loadModules: (perfil) => ipcRenderer.invoke("ApiLogin:Load_Modules", perfil),
   changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
+  getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
+});
+
+contextBridge.exposeInMainWorld("ApiSetup", {
+  isConfigured: () => ipcRenderer.invoke("ApiSetup:isConfigured"),
+  getPublicConfig: () => ipcRenderer.invoke("ApiSetup:getPublicConfig"),
+  testConnection: (sqlConfig) =>
+    ipcRenderer.invoke("ApiSetup:testConnection", sqlConfig),
+  pickImage: (kind) => ipcRenderer.invoke("ApiSetup:pickImage", kind),
+  getAssetDataUrl: (filename) =>
+    ipcRenderer.invoke("ApiSetup:getAssetDataUrl", filename),
+  saveConfig: (payload) => ipcRenderer.invoke("ApiSetup:saveConfig", payload),
+  getTemplatesStatus: () =>
+    ipcRenderer.invoke("ApiSetup:getTemplatesStatus"),
+});
+
+contextBridge.exposeInMainWorld("ApiDb", {
+  ensureMigrations: () => ipcRenderer.invoke("ApiDb:ensureMigrations"),
+  getMigrationStatus: () => ipcRenderer.invoke("ApiDb:getMigrationStatus"),
+});
+
+contextBridge.exposeInMainWorld("ApiUpdate", {
+  getVersion: () => ipcRenderer.invoke("ApiUpdate:getVersion"),
+  check: () => ipcRenderer.invoke("ApiUpdate:check"),
+  install: () => ipcRenderer.invoke("ApiUpdate:install"),
+  onStatus: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("ApiUpdate:status", listener);
+    return () => ipcRenderer.removeListener("ApiUpdate:status", listener);
+  },
 });

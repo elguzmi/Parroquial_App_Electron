@@ -153,6 +153,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useQuasar } from "quasar";
 import { useStore } from "vuex";
 import { useRouter, useRoute } from "vue-router";
+import { dialogBtnCancel, dialogBtnPrimary } from "src/utils/appDialog";
 
 export default {
   name: "MainLayout",
@@ -371,8 +372,8 @@ export default {
         .dialog({
           title: "Cerrar sesión",
           message: "¿Desea salir de la aplicación?",
-          cancel: { label: "Cancelar", flat: true },
-          ok: { label: "Salir", color: "negative" },
+          cancel: dialogBtnCancel(),
+          ok: dialogBtnPrimary("Salir"),
           persistent: true,
         })
         .onOk(() => {

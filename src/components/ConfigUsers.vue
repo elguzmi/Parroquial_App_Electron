@@ -292,7 +292,13 @@
         </q-card-section>
 
         <q-card-actions class="cfg-dialog__actions" align="right">
-          <q-btn flat no-caps label="Cancelar" v-close-popup />
+          <q-btn
+            flat
+            no-caps
+            class="cfg-dialog__cancel"
+            label="Cancelar"
+            v-close-popup
+          />
           <q-btn
             class="cfg-btn cfg-btn--primary"
             unelevated

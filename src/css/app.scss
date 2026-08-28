@@ -1,2 +1,108 @@
 // app global css in SCSS form
 @import "sacrament.scss";
+
+/* ── Quasar Dialog plugin (Dialog.create / $q.dialog) ── */
+.q-dialog-plugin {
+  --app-dlg-navy: #0b2431;
+  --app-dlg-navy-mid: #16303c;
+  --app-dlg-muted: #5b7380;
+  --app-dlg-danger: #b42318;
+  --app-dlg-line: rgba(11, 36, 49, 0.1);
+
+  width: min(420px, 94vw) !important;
+  max-width: 94vw;
+  border-radius: 16px !important;
+  font-family: "Outfit", sans-serif;
+  color: var(--app-dlg-navy-mid);
+  box-shadow: 0 20px 48px rgba(11, 36, 49, 0.16) !important;
+  overflow: hidden;
+}
+
+.q-dialog-plugin > .q-card__section {
+  padding: 1.2rem 1.25rem 0.55rem;
+}
+
+.q-dialog-plugin .q-dialog__title {
+  font-family: "Fraunces", serif;
+  font-size: 1.2rem;
+  font-weight: 650;
+  color: var(--app-dlg-navy);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.q-dialog-plugin .q-dialog__message {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--app-dlg-navy-mid);
+  padding-top: 0.4rem;
+}
+
+.q-dialog-plugin > .q-card__actions {
+  padding: 0.55rem 1rem 1.05rem;
+  gap: 0.35rem;
+}
+
+.q-dialog-plugin > .q-card__actions .q-btn {
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 10px !important;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: none !important;
+}
+
+/* Cancel / flat — navy muted, never Quasar gold primary */
+.q-dialog-plugin > .q-card__actions .q-btn--flat,
+.q-dialog-plugin .app-dialog__btn--cancel {
+  color: var(--app-dlg-navy-mid) !important;
+  background: transparent !important;
+}
+
+.q-dialog-plugin > .q-card__actions .q-btn--flat:hover,
+.q-dialog-plugin .app-dialog__btn--cancel:hover {
+  background: rgba(11, 36, 49, 0.06) !important;
+}
+
+/* Danger confirm */
+.q-dialog-plugin .app-dialog__btn--danger,
+.q-dialog-plugin > .q-card__actions .q-btn.bg-negative {
+  background: var(--app-dlg-danger) !important;
+  color: #fff !important;
+}
+
+.q-dialog-plugin .app-dialog__btn--danger:hover,
+.q-dialog-plugin > .q-card__actions .q-btn.bg-negative:hover {
+  background: #912018 !important;
+}
+
+/* Primary confirm — navy (app brand), not gold $primary */
+.q-dialog-plugin .app-dialog__btn--primary,
+.q-dialog-plugin > .q-card__actions .q-btn.bg-primary {
+  background: var(--app-dlg-navy) !important;
+  color: #fff !important;
+}
+
+.q-dialog-plugin .app-dialog__btn--primary:hover,
+.q-dialog-plugin > .q-card__actions .q-btn.bg-primary:hover {
+  background: #16303c !important;
+}
+
+/* ── Shared Cancelar in cfg / about dialogs ── */
+.cfg-dialog__actions > .q-btn--flat,
+.cfg-dialog__cancel,
+.about-dialog__actions > .q-btn--flat {
+  color: #16303c !important;
+  font-weight: 600;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 1rem;
+}
+
+.cfg-dialog__actions > .q-btn--flat:hover,
+.cfg-dialog__cancel:hover,
+.about-dialog__actions > .q-btn--flat:hover {
+  background: rgba(11, 36, 49, 0.06) !important;
+}

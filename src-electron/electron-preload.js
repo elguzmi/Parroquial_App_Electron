@@ -12,11 +12,10 @@ contextBridge.exposeInMainWorld("myAPI", {
   executeSp_Ds: (data, sp) =>
     ipcRenderer.invoke("myAPI:executeSp_Ds", data, sp),
 
-  convertToDocx: (dataDoc) =>
-    ipcRenderer.invoke("myAPI:convertTo_Docx", dataDoc),
-
   convertToDocxZip: (dataDoc) =>
     ipcRenderer.invoke("myAPI:convertTo_Docx_Zip", dataDoc),
+
+  printToPdf: (payload) => ipcRenderer.invoke("myAPI:printToPdf", payload),
 
   // metodo para exportar la data de la tabla en un excel
   ExportData: (dataDoc) => ipcRenderer.invoke("myAPI:Export_Data", dataDoc),

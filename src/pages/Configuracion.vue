@@ -49,7 +49,8 @@
             <div>
               <h2 class="config-panel__title">Plantillas y documentos</h2>
               <p class="config-panel__desc">
-                Edite plantillas Word, atajos de reemplazo y el pie de página PDF.
+                Edite plantillas Word, atajos de reemplazo y la plantilla PDF
+                (encabezado institucional y pie de página).
               </p>
             </div>
           </div>
@@ -103,17 +104,49 @@
                 <q-icon name="picture_as_pdf" size="22px" />
               </div>
               <div class="config-surface__body full-width">
-                <h3 class="config-surface__title">Pie de página PDF</h3>
+                <h3 class="config-surface__title">Plantilla PDF</h3>
                 <p class="config-surface__text">
-                  Contenido del pie exclusivo para exportación en formato PDF.
+                  El certificado PDF se arma con el encabezado institucional, el
+                  cuerpo del sacramento y este pie. Puede cambiar el pie aquí;
+                  el encabezado toma los datos de
+                  <strong>Datos de la parroquia</strong>.
                 </p>
+
+                <div class="config-pdf-preview" aria-label="Encabezado actual">
+                  <p class="config-pdf-preview__label">Encabezado actual</p>
+                  <div
+                    v-if="headerDocPdf"
+                    class="config-pdf-preview__html"
+                    v-html="headerDocPdf"
+                  />
+                  <p v-else class="config-surface__hint">
+                    Aún no hay encabezado cargado. Revise las variables
+                    institucionales en la pestaña Datos de la parroquia.
+                  </p>
+                </div>
+
+                <p class="config-pdf-preview__label q-mt-md">Pie de página</p>
                 <q-editor
                   v-model="footerDocPdf"
                   class="config-editor"
                   min-height="140px"
                   :toolbar="editorToolbar"
                 />
-                <div class="q-mt-md">
+                <p class="config-surface__hint">
+                  Use negrita, alineación y saltos de línea. Guarde para que los
+                  certificados usen este pie. La vista previa muestra el
+                  contenido actual del editor, aunque aún no lo haya guardado.
+                </p>
+                <div class="config-pdf-actions">
+                  <q-btn
+                    class="cfg-btn cfg-btn--ghost"
+                    outline
+                    no-caps
+                    icon="visibility"
+                    label="Vista previa PDF"
+                    :loading="previewingPdf"
+                    @click="previewPdfTemplate"
+                  />
                   <q-btn
                     class="cfg-btn cfg-btn--primary"
                     unelevated
@@ -135,8 +168,8 @@
             <div>
               <h2 class="config-panel__title">Datos institucionales</h2>
               <p class="config-panel__desc">
-                Variables del encabezado PDF, exportación y estado del esquema
-                SQL de esta parroquia.
+                Variables del encabezado PDF (nombre, dirección, ciudad),
+                exportación y estado del esquema SQL de esta parroquia.
               </p>
             </div>
           </div>
@@ -396,7 +429,13 @@
         </q-card-section>
 
         <q-card-actions class="cfg-dialog__actions" align="right">
-          <q-btn flat no-caps label="Cancelar" @click="closeCreateModal" />
+          <q-btn
+            flat
+            no-caps
+            class="cfg-dialog__cancel"
+            label="Cancelar"
+            @click="closeCreateModal"
+          />
           <q-btn
             class="cfg-btn cfg-btn--primary"
             unelevated
@@ -417,6 +456,7 @@ import { useQuasar } from "quasar";
 import ConfigUsers from "components/ConfigUsers.vue";
 import ConfigShortCurts from "components/ConfigShortCurts.vue";
 import ConfigVariablesGlobales from "components/ConfigVariablesGlobales.vue";
+import { printPdf } from "src/utils/printPdf";
 
 export default defineComponent({
   name: "Configuracion",
@@ -463,6 +503,7 @@ export default defineComponent({
       editedModl: ref(0),
       savingCreate: ref(false),
       savingFooter: ref(false),
+      previewingPdf: ref(false),
       exporting: ref(false),
       openingTemplates: ref(false),
       loadingSchemaStatus: ref(false),
@@ -492,9 +533,10 @@ export default defineComponent({
       headerDocPdf: ref(""),
       footerDocPdf: ref(""),
       editorToolbar: [
+        ["left", "center", "right"],
         ["bold", "italic", "underline"],
+        ["hr", "link"],
         ["unordered", "ordered"],
-        ["link"],
         ["undo", "redo"],
       ],
     };
@@ -751,6 +793,43 @@ export default defineComponent({
         );
       } finally {
         this.savingCreate = false;
+      }
+    },
+    async previewPdfTemplate() {
+      this.previewingPdf = true;
+      try {
+        const res = await printPdf({
+          headerHtml: this.headerDocPdf || "",
+          bodyHtml: `
+            <div style="text-align:center;margin-top:56px;font-family:Arial,Helvetica,sans-serif">
+              <p style="font-size:22px;font-weight:700;margin:0 0 10px">VISTA PREVIA DE CERTIFICADO</p>
+              <p style="font-size:15px;margin:0 0 28px">Este documento muestra el encabezado y el pie actuales de la parroquia.</p>
+              <p style="font-size:13px;color:#444;margin:0">Al exportar un registro, aquí aparecerán los datos del sacramento.</p>
+            </div>
+          `,
+          footerHtml: this.footerDocPdf || "",
+          title: "Vista previa de certificado",
+          fileName: "VistaPrevia_Certificado.pdf",
+        });
+        if (res?.isError) {
+          this.showMessage(res.errorMessage, "negative", "error");
+        } else if (res?.warning) {
+          this.showMessage(res.warning, "warning", "warning");
+        } else {
+          this.showMessage(
+            "Vista previa generada. Recuerde guardar el pie si desea usarlo en los certificados.",
+            "positive",
+            "check"
+          );
+        }
+      } catch (err) {
+        this.showMessage(
+          err?.message || "No se pudo generar la vista previa",
+          "negative",
+          "error"
+        );
+      } finally {
+        this.previewingPdf = false;
       }
     },
     async saveFooterPdf() {
@@ -1125,6 +1204,36 @@ export default defineComponent({
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
+}
+
+.config-pdf-preview {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--cfg-line);
+  border-radius: 12px;
+  background: #f8fafb;
+}
+
+.config-pdf-preview__label {
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cfg-muted);
+}
+
+.config-pdf-preview__html {
+  color: var(--cfg-navy);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.config-pdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
 }
 
 .config-export__row {

@@ -22,7 +22,8 @@ UserData en el PC de la parroquia:
   config.json
   assets/
   templates/     ← personalizadas; no se pisan en update
-  exports/
+
+%LOCALAPPDATA%/parroquia_app/exports/   ← Word/PDF de trabajo (no Escritorio)
 ```
 
 ## Alta de una parroquia nueva

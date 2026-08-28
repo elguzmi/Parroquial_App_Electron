@@ -32,7 +32,7 @@ src-electron/pdfExport.js
   4. Lo guarda y lo abre en el visor del sistema
 ```
 
-El botón **PDF** de bautizos, confirmaciones, matrimonios y defunciones sigue igual: seleccione un registro y el certificado se abre. Ya no se usa una URL temporal del navegador; el archivo queda en el Escritorio (o en `AppData/exports` si no hay Escritorio), igual que Word.
+El botón **PDF** de bautizos, confirmaciones, matrimonios y defunciones sigue igual: seleccione un registro y el certificado se abre. El archivo se escribe en una carpeta de trabajo oculta (`%LOCALAPPDATA%\parroquia_app\exports`, con fallback a temp o `userData/exports`) y se abre en el visor del sistema. No se deja en el Escritorio. Igual que Word.
 
 Nombre típico: `Certificado_fact_bautismos_123.pdf`.
 
@@ -78,4 +78,4 @@ El HTML de encabezado y cuerpo **no se reescribe**: se respeta el que ya genera 
 - Cambiar una variable del encabezado y comprobar que el PDF nuevo la refleja.
 - Editar el pie, generar vista previa, guardar y exportar un registro.
 - Comprobar que Word sigue abriéndose como antes.
-- Verificar que el archivo PDF aparece en el Escritorio y se puede imprimir en hoja oficio.
+- Verificar que el PDF se abre en el visor del sistema y se puede imprimir en hoja oficio (el archivo no aparece en el Escritorio).

@@ -5,7 +5,7 @@
       <section class="dash-hero">
         <div class="dash-hero__copy">
           <p class="dash-hero__eyebrow">Centro de gestión</p>
-          <h1 class="dash-hero__title">Bienvenido al Centro de Gestión kami</h1>
+          <h1 class="dash-hero__title">Bienvenido al Centro de Gestión de Partidas</h1>
           <p class="dash-hero__subtitle">
             {{ greetingLine }}
           </p>

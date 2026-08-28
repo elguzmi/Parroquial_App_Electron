@@ -16,5 +16,6 @@ Se eligió **Markdown en el repositorio** (no un Word suelto) porque:
 | [configuracion.md](configuracion.md) | Catálogos, plantillas, variables |
 | [despliegue-y-release.md](despliegue-y-release.md) | Build, update, nueva parroquia |
 | [manual-operativo.md](manual-operativo.md) | Guía de uso / soporte (exportable a Word) |
+| [exportacion-pdf.md](exportacion-pdf.md) | Motor Chromium y plantilla PDF por parroquia |
 
 Volver al [README principal](../README.md).

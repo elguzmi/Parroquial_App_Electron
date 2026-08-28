@@ -19,6 +19,7 @@ app.setPath("userData", path.join(app.getPath("appData"), APP_FOLDER_NAME));
 const configStore = require("./configStore");
 const templateStore = require("./templateStore");
 const dbMigrator = require("./db/dbMigrator");
+const pdfExport = require("./pdfExport");
 
 // Fallback legacy (dev) si aún no hay config.json en AppData
 const legacyConfig = configParroquia["parroquiaSalud"];
@@ -614,6 +615,19 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
     return { isError: false, data: "OK", path: outputPath };
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx_Zip " + err };
+  }
+});
+
+ipcMain.handle("myAPI:printToPdf", async (_ev, payload) => {
+  try {
+    console.log("[pdf] solicitud recibida");
+    return await pdfExport.printHtmlToPdf(payload || {});
+  } catch (err) {
+    console.error("[pdf] handler:", err);
+    return {
+      isError: true,
+      errorMessage: "printToPdf " + (err?.message || err),
+    };
   }
 });
 

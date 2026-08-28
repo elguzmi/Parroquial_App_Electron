@@ -88,9 +88,8 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-import { jsPDF } from "jspdf";
 import { useQuasar } from "quasar";
-
+import { printPdf } from "src/utils/printPdf";
 export default defineComponent({
   name: "Previsualizacion",
   props: {
@@ -149,41 +148,35 @@ export default defineComponent({
         this.hideLoading();
       });
     },
-    goToPdf() {
-      this.showLoading("Cargando Documento ...");
-      const doc = new jsPDF({
-        format: "legal",
-        unit: "px",
-        orientation: "portrait",
-      });
-      const pageSize = doc.internal.pageSize;
-      const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
-      const pageHeight = pageSize.height
-        ? pageSize.height
-        : pageSize.getHeight();
-
-      const footer = this.CurrentData.Html_Footer_Docx.replace("<br>", "\n")
-        .replaceAll("<br />", "\n")
-        .replace("<center>", "")
-        .replace("</center>", "");
-
-      doc.setFontSize(12);
-      doc.text(footer, 600 - doc.getTextWidth(footer) / 2, pageHeight - 30, {
-        baseline: "bottom",
-        align: "center",
-      });
-
-      doc.html(this.CurrentData.Html_Header + this.CurrentData.Html_Body, {
-        callback: (doc) => {
-          doc.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
-          window.open(doc.output("bloburl"));
-          this.hideLoading();
-        },
-        x: 15,
-        y: 15,
-        width: pageWidth - 20,
-        windowWidth: 750,
-      });
+    async goToPdf() {
+      this.showLoading("Generando Pdf");
+      try {
+        const res = await printPdf({
+          headerHtml: this.CurrentData?.Html_Header || "",
+          bodyHtml: this.CurrentData?.Html_Body || "",
+          footerHtml:
+            this.CurrentData?.Html_Footer_Docx ||
+            this.CurrentData?.Html_Footer ||
+            "",
+          title: this.title || "Certificado parroquial",
+          fileName: `Certificado_${this.tabla || "documento"}_${
+            this.id || "preview"
+          }.pdf`,
+        });
+        if (res?.isError) {
+          this.showMessage(res.errorMessage, "negative", "error");
+        } else if (res?.warning) {
+          this.showMessage(res.warning, "warning", "warning");
+        }
+      } catch (err) {
+        this.showMessage(
+          err?.message || "No se pudo generar el PDF",
+          "negative",
+          "error"
+        );
+      } finally {
+        this.hideLoading();
+      }
     },
 
     goToWord() {

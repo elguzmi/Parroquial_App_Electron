@@ -25,6 +25,7 @@ La documentación vive en Markdown dentro del repo (se versiona con el código).
 | [docs/configuracion.md](docs/configuracion.md) | Desarrollo / admin | Módulo Configuración y catálogos |
 | [docs/despliegue-y-release.md](docs/despliegue-y-release.md) | Desarrollo | Build, update y alta de parroquia |
 | [docs/manual-operativo.md](docs/manual-operativo.md) | Parroquia / soporte | Guía usable (apto para Word) |
+| [docs/exportacion-pdf.md](docs/exportacion-pdf.md) | Desarrollo / soporte | Motor Chromium y plantilla PDF por parroquia |
 
 ---
 

@@ -18,8 +18,5 @@ export default defineComponent({
       LoadingAction,
     };
   },
-  methods: {
-    pruebaFn() {},
-  },
 });
 </script>

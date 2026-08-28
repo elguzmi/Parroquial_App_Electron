@@ -19,6 +19,7 @@ const configStore = require("./configStore");
 const templateStore = require("./templateStore");
 const dbMigrator = require("./db/dbMigrator");
 const pdfExport = require("./pdfExport");
+const auditLog = require("./auditLog");
 
 const platform = process.platform || os.platform();
 let mainWindow;
@@ -109,6 +110,7 @@ async function closePool() {
     pool = null;
   }
   migrationsAttemptedForPool = false;
+  auditLog.resetCatalogCache();
 }
 
 function resolveAppVersionForMigrations() {
@@ -376,19 +378,31 @@ ipcMain.handle("ApiLogin:login", async (ev, arg) => {
     request.input("Usuario", sql.VarChar(50), user);
     request.input("Clave", sql.VarChar(50), clave);
     const result = await request.execute("BD_Get_Login");
+    const rows = result.recordset || [];
+    if (rows.length) {
+      auditLog.setSession(rows[0], user);
+    } else {
+      auditLog.clearSession();
+    }
     return {
       success: true,
-      data: result.recordset,
+      data: rows,
       migrations: lastMigrationResult,
     };
   } catch (err) {
     console.error("Login error:", err);
+    auditLog.clearSession();
     return {
       success: false,
       message: err.message,
       migrations: lastMigrationResult,
     };
   }
+});
+
+ipcMain.handle("ApiLogin:logout", async () => {
+  auditLog.clearSession();
+  return { success: true };
 });
 
 
@@ -429,7 +443,11 @@ ipcMain.handle("myAPI:executeSp_St", async (ev, data, sp) => {
         );
       });
     const result = await request.execute(sp);
-    return result.recordset[0][""];
+    const message = result.recordset[0][""];
+    if (!auditLog.isErrorMessage(message)) {
+      await auditLog.recordSpAudit(getConnection, sp, arg, message);
+    }
+    return message;
   } catch (err) {
     return "Error - executeSp_St " + err;
   }
@@ -561,6 +579,8 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
     fs.writeFileSync(outputPath, buf);
     shell.openPath(outputPath);
 
+    await auditLog.recordDocumentAudit(getConnection, "WORD", obj);
+
     return { isError: false, data: "OK", path: outputPath };
   } catch (err) {
     return { isError: true, errorMessage: "convertTo_Docx_Zip " + err };
@@ -570,7 +590,11 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
 ipcMain.handle("myAPI:printToPdf", async (_ev, payload) => {
   try {
     console.log("[pdf] solicitud recibida");
-    return await pdfExport.printHtmlToPdf(payload || {});
+    const result = await pdfExport.printHtmlToPdf(payload || {});
+    if (!result?.isError) {
+      await auditLog.recordDocumentAudit(getConnection, "PDF", payload || {});
+    }
+    return result;
   } catch (err) {
     console.error("[pdf] handler:", err);
     return {

@@ -69,7 +69,7 @@ El HTML de encabezado y cuerpo **no se reescribe**: se respeta el que ya genera 
 - **Funcionalidad:** se mantiene “seleccionar registro → PDF → abrir documento”.
 - **Calidad:** texto nítido, tablas y estilos del HTML de cada sacramento.
 - **Multiparroquia:** cada instalación sigue usando su SQL y sus variables; el pie se edita en Configuración sin tocar código.
-- **Dependencias:** `jspdf` deja de usarse en la UI. Se puede retirar del `package.json` en un release posterior.
+- **Dependencias:** el PDF ya no usa `jspdf`; se genera con el motor de impresión de Chromium.
 - **Riesgo bajo:** no hay migración SQL. Si `BD_Get_Documento` o `BD_Get_Setting_Pdf` fallan, el comportamiento es el mismo: se muestra el error y no se genera archivo.
 - **Compatibilidad:** requiere Electron (ya es el runtime de la app). No aplica en un build web puro.
 

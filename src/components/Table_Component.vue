@@ -81,7 +81,7 @@
 <script>
 import { defineComponent, ref, computed } from "vue";
 import { useQuasar } from "quasar";
-import { jsPDF } from "jspdf";
+import { printPdf } from "src/utils/printPdf";
 
 export default defineComponent({
   name: "Table_Component",
@@ -146,6 +146,10 @@ export default defineComponent({
       this.$emit("loadingShow", "Generando Word");
       this.IdSelected = this.selected[0].Id;
       const datosDoc = await this.searchDoc("word");
+      if (!datosDoc) {
+        this.$emit("loadingHide", null);
+        return;
+      }
       const res = await window.myAPI.convertToDocxZip(JSON.stringify(datosDoc));
       if (!res.isError) {
         setTimeout(this.$emit, 2000, "loadingHide", null);
@@ -160,56 +164,58 @@ export default defineComponent({
       try {
         this.IdSelected = this.selected[0].Id;
         const datosPdf = await this.searchDoc("pdf");
-        const doc = new jsPDF({
-          format: "legal",
-          unit: "px",
-          orientation: "portrait",
-        });
-        const pageSize = doc.internal.pageSize;
-        const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
-        const pageHeight = pageSize.height
-          ? pageSize.height
-          : pageSize.getHeight();
+        if (!datosPdf) {
+          throw new Error("No se pudo obtener el documento para el PDF");
+        }
 
-        const footer = datosPdf.Html_Footer_Docx.replaceAll("<br>", "\n")
-          .replaceAll("<br />", "\n")
-          .replaceAll("<center>", "")
-          .replaceAll("</center>", "");
+        const res = await printPdf({
+          headerHtml: datosPdf.Html_Header || "",
+          bodyHtml: datosPdf.Html_Body || "",
+          footerHtml:
+            datosPdf.Html_Footer_Docx || datosPdf.Html_Footer || "",
+          title: this.title || "Certificado parroquial",
+          fileName: `Certificado_${this.tablaDirectTo || "documento"}_${
+            this.IdSelected
+          }.pdf`,
+        });
 
-        doc.setFontSize(12);
-        doc.text(footer, 600 / 2, pageHeight - 30, {
-          baseline: "bottom",
-          align: "center",
-        });
-        doc.html(datosPdf.Html_Header + datosPdf.Html_Body, {
-          callback: (docPdf) => {
-            docPdf.line(30, pageHeight - 45, pageWidth - 30, pageHeight - 45);
-            window.open(docPdf.output("bloburl"));
-            this.$emit("loadingHide", null);
-          },
-          x: 15,
-          y: 15,
-          width: pageWidth - 20,
-          windowWidth: 750,
-        });
+        if (res?.isError) {
+          this.$emit("msjShow", res.errorMessage, "negative", "error");
+        } else if (res?.warning) {
+          this.$emit("msjShow", res.warning, "warning", "warning");
+        }
       } catch (error) {
-        this.$emit("loadingHide", null);
         console.error("Error", error);
-        this.$emit("msjShow", error.message, "negative", "error");
+        this.$emit(
+          "msjShow",
+          error?.message || "No se pudo generar el PDF",
+          "negative",
+          "error"
+        );
+      } finally {
+        this.$emit("loadingHide", null);
       }
     },
     async searchDoc(type) {
       try {
         const Tabla = this.tablaDirectTo;
         const Id = this.IdSelected;
-        if (!Tabla || !Id) throw "Error - No tabla detected";
+        if (!Tabla || !Id) {
+          throw new Error("No hay un registro o tabla seleccionada");
+        }
         const e = await window.myAPI.executeSp_Ds(
           JSON.stringify({ Id, Tabla }),
           "BD_Get_Documento"
         );
         return type == "word" ? e[1][0] : e[0][0];
       } catch (err) {
-        this.$emit("msjShow", err, "negative", "error");
+        this.$emit(
+          "msjShow",
+          err?.message || err,
+          "negative",
+          "error"
+        );
+        return null;
       }
     },
   },

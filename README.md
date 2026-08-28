@@ -39,3 +39,7 @@ See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
 # Parroquial_App_Electron
 
 Software Parroquial, se realizo migración a la nueva tecnologia de Electron desktop.
+
+## Documentación interna
+
+- [Exportación PDF de certificados](docs/exportacion-pdf.md): motor Chromium, personalización por parroquia e impacto del cambio.

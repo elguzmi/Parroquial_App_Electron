@@ -1,5 +1,5 @@
 <template>
-  <div class="responsive q-pa-md">
+  <div class="preview">
     <q-dialog
       v-model="dialog"
       persistent
@@ -7,68 +7,79 @@
       transition-show="slide-up"
       transition-hide="slide-down"
     >
-      <q-card class="bg-white text-dark">
-        <q-bar>
-          <div class="cursor-pointer non-selectable">
-            <q-item clickable @click="goToWordZip()">
-              <q-item-section>Word</q-item-section>
-            </q-item>
-          </div>
-          <div class="cursor-pointer non-selectable">
-            <q-item clickable @click="goToPdf()">
-              <q-item-section>Pdf</q-item-section>
-            </q-item>
-          </div>
-          <div>
-            <q-item clickable v-close-popup="2">
-              <q-item-section>Salir</q-item-section>
-            </q-item>
+      <q-card class="preview-dialog">
+        <header class="preview-dialog__toolbar">
+          <div class="preview-dialog__actions" role="group" aria-label="Exportar">
+            <q-btn
+              class="preview-dialog__btn"
+              unelevated
+              no-caps
+              icon="description"
+              label="Word"
+              @click="goToWordZip()"
+            />
+            <q-btn
+              class="preview-dialog__btn preview-dialog__btn--ghost"
+              outline
+              no-caps
+              icon="picture_as_pdf"
+              label="PDF"
+              @click="goToPdf()"
+            />
           </div>
           <q-space />
-          <q-btn
-            dense
-            flat
-            icon="minimize"
-            @click="maximizedToggle = false"
-            :disable="!maximizedToggle"
-          >
-            <q-tooltip v-if="maximizedToggle" class="bg-white text-primary"
-              >Minimize</q-tooltip
+          <div class="preview-dialog__window">
+            <q-btn
+              flat
+              dense
+              round
+              icon="minimize"
+              aria-label="Minimizar"
+              :disable="!maximizedToggle"
+              @click="maximizedToggle = false"
             >
-          </q-btn>
-          <q-btn
-            dense
-            flat
-            icon="crop_square"
-            @click="maximizedToggle = true"
-            :disable="maximizedToggle"
-          >
-            <q-tooltip v-if="!maximizedToggle" class="bg-white text-primary"
-              >Maximize</q-tooltip
+              <q-tooltip>Minimizar</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              round
+              icon="crop_square"
+              aria-label="Maximizar"
+              :disable="maximizedToggle"
+              @click="maximizedToggle = true"
             >
-          </q-btn>
-          <q-btn dense flat icon="close" v-close-popup>
-            <q-tooltip class="bg-white text-primary">Close</q-tooltip>
-          </q-btn>
-        </q-bar>
+              <q-tooltip>Maximizar</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              round
+              icon="close"
+              aria-label="Cerrar"
+              v-close-popup
+            >
+              <q-tooltip>Cerrar</q-tooltip>
+            </q-btn>
+          </div>
+        </header>
+
         <form
+          class="preview-dialog__body"
           autocorrect="on"
           autocapitalize="on"
           autocomplete="on"
           spellcheck="false"
         >
-          <q-banner dense class="bg-dark text-white text-center">
-            Cabezal
-          </q-banner>
-          <q-editor v-model="CurrentData.Html_Header" />
-          <q-banner dense class="bg-dark text-white text-center">
-            Cuerpo
-          </q-banner>
-          <q-editor v-model="CurrentData.Html_Body" />
-          <q-banner dense class="bg-dark text-white text-center">
-            Pie
-          </q-banner>
-          <q-editor v-model="CurrentData.Html_Footer_Docx" />
+          <div class="preview-dialog__section-label">Cabezal</div>
+          <q-editor v-model="CurrentData.Html_Header" class="preview-dialog__editor" />
+          <div class="preview-dialog__section-label">Cuerpo</div>
+          <q-editor v-model="CurrentData.Html_Body" class="preview-dialog__editor" />
+          <div class="preview-dialog__section-label">Pie</div>
+          <q-editor
+            v-model="CurrentData.Html_Footer_Docx"
+            class="preview-dialog__editor"
+          />
         </form>
       </q-card>
     </q-dialog>
@@ -77,11 +88,9 @@
 
 <script>
 import { defineComponent, ref } from "vue";
-// import * as htmlDocx from "html-docx-js/dist/html-docx";
 import { jsPDF } from "jspdf";
-//var HtmlDocx = require("html-docx-js");
-// import { saveAs } from "file-saver";
 import { useQuasar } from "quasar";
+
 export default defineComponent({
   name: "Previsualizacion",
   props: {
@@ -133,9 +142,6 @@ export default defineComponent({
       let id = this.id;
       if (!tabla || !id) return;
       window.myAPI.GetDocumentoHtml(tabla, id).then((e) => {
-        //e.Html_Footer =
-        //  "Autenticación en la curia Diocesana de Fontibón, Carrera 98 # 17 A - 81 Fontibón - Centro. <br> Tel (601) 4181036, Horario de atención, Lunes a Viernes de 9:00 a 1:00 P.M (Validez a 3 Meses)";
-
         this.FirtData = e[0][0];
         this.CurrentData = e[0][0];
         this.datosDoc = e[1][0];
@@ -149,7 +155,6 @@ export default defineComponent({
         format: "legal",
         unit: "px",
         orientation: "portrait",
-        //compress: true,
       });
       const pageSize = doc.internal.pageSize;
       const pageWidth = pageSize.width ? pageSize.width : pageSize.getWidth();
@@ -162,7 +167,6 @@ export default defineComponent({
         .replace("<center>", "")
         .replace("</center>", "");
 
-      // // Footer
       doc.setFontSize(12);
       doc.text(footer, 600 - doc.getTextWidth(footer) / 2, pageHeight - 30, {
         baseline: "bottom",
@@ -177,45 +181,16 @@ export default defineComponent({
         },
         x: 15,
         y: 15,
-        width: pageWidth - 20, //target width in the PDF document
-        windowWidth: 750, //window width in CSS pixels
+        width: pageWidth - 20,
+        windowWidth: 750,
       });
     },
 
     goToWord() {
       this.showLoading("Creando Documento ...");
-      window.myAPI.convertToDocx(JSON.stringify(this.CurrentData)).then((e) => {
+      window.myAPI.convertToDocx(JSON.stringify(this.CurrentData)).then(() => {
         this.hideLoading();
       });
-      //   return;
-      //   let { Html_Body_Docx, Html_Header_Docx, Html_Footer, Html_Footer_Docx } =
-      //     this.CurrentData;
-
-      //   const footer = Html_Footer_Docx.replace("<center>", "").replace(
-      //     "</center>",
-      //     ""
-      //   );
-
-      //   let htmlDoc =
-      //     '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8" /><title></title>';
-      //   htmlDoc =
-      //     htmlDoc +
-      //     "</head><body>" +
-      //     Html_Header_Docx +
-      //     '<div style="width: 100%;>' +
-      //     Html_Body_Docx +
-      //     "</div>" +
-      //     '<div style="text-align: center;border-top:1px solid black">' +
-      //     footer +
-      //     "</div>" +
-      //     "</body></html>";
-
-      //   htmlDocx;
-      //   let converted = htmlDocx.asBlob(htmlDoc, {
-      //     orientation: "portrait",
-      //     margins: { top: 300, right: 1000, left: 1000, bottom: 20, footer: 0 },
-      //   });
-      //   saveAs(converted, this.title + "_document");
     },
 
     goToWordZip() {
@@ -227,13 +202,13 @@ export default defineComponent({
           setTimeout(this.hideLoading, 2000);
         } else {
           this.hideLoading();
-          this.showMessage(e.errorMessage, "red", "error");
+          this.showMessage(e.errorMessage, "negative", "error");
         }
       });
     },
   },
   watch: {
-    dialog(news, old) {
+    dialog(news) {
       if (news == false) {
         this.$parent.IdSelected = null;
       }
@@ -241,3 +216,82 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss">
+.preview-dialog {
+  --preview-navy: #0b2431;
+  --preview-navy-mid: #16303c;
+  --preview-muted: #5b7380;
+  --preview-line: rgba(11, 36, 49, 0.1);
+  --preview-fog: #f3f5f7;
+
+  width: 100%;
+  max-width: 100%;
+  font-family: "Outfit", sans-serif;
+  color: var(--preview-navy-mid);
+  background: #fff;
+}
+
+.preview-dialog__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--preview-line);
+  background: var(--preview-fog);
+}
+
+.preview-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.preview-dialog__btn {
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.84rem;
+  background: var(--preview-navy) !important;
+  color: #fff !important;
+}
+
+.preview-dialog__btn--ghost {
+  background: transparent !important;
+  color: var(--preview-navy) !important;
+  border-color: rgba(11, 36, 49, 0.28) !important;
+}
+
+.preview-dialog__window .q-btn {
+  color: var(--preview-navy-mid) !important;
+}
+
+.preview-dialog__body {
+  padding: 0.75rem 0.85rem 1rem;
+  background: #fff;
+}
+
+.preview-dialog__section-label {
+  margin: 0.65rem 0 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--preview-muted);
+  background: rgba(11, 36, 49, 0.05);
+}
+
+.preview-dialog__section-label:first-child {
+  margin-top: 0;
+}
+
+.preview-dialog__editor {
+  border: 1px solid var(--preview-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+</style>

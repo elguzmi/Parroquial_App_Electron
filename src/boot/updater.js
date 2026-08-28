@@ -1,5 +1,9 @@
 import { boot } from "quasar/wrappers";
 import { Notify, Dialog } from "quasar";
+import {
+  dialogBtnCancel,
+  dialogBtnPrimary,
+} from "src/utils/appDialog";
 
 export default boot(() => {
   if (typeof window === "undefined" || !window.ApiUpdate) {
@@ -47,8 +51,8 @@ export default boot(() => {
           ? `La versión ${version} se descargó correctamente. ¿Reiniciar ahora para instalarla?`
           : "La actualización se descargó correctamente. ¿Reiniciar ahora para instalarla?",
         persistent: true,
-        ok: { label: "Reiniciar ahora", color: "primary" },
-        cancel: { label: "Más tarde", flat: true },
+        ok: dialogBtnPrimary("Reiniciar ahora"),
+        cancel: dialogBtnCancel("Más tarde"),
       })
         .onOk(() => {
           window.ApiUpdate.install();

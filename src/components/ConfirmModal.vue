@@ -2,8 +2,9 @@
   <div></div>
 </template>
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { useQuasar } from "quasar";
+import { dialogBtnCancel, dialogBtnDanger } from "src/utils/appDialog";
 
 export default defineComponent({
   name: "ConfirmModal",
@@ -15,9 +16,10 @@ export default defineComponent({
       return new Promise((res, rej) => {
         $q.dialog({
           title: "Confirmar eliminación",
-          message: "¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.",
-          cancel: { label: "Cancelar", flat: true },
-          ok: { label: "Eliminar", color: "negative" },
+          message:
+            "¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.",
+          cancel: dialogBtnCancel(),
+          ok: dialogBtnDanger("Eliminar"),
           persistent: true,
         })
           .onOk(() => {

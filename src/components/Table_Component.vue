@@ -82,6 +82,7 @@
 import { defineComponent, ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import { jsPDF } from "jspdf";
+import { dialogBtnCancel, dialogBtnDanger } from "src/utils/appDialog";
 
 export default defineComponent({
   name: "Table_Component",
@@ -129,8 +130,8 @@ export default defineComponent({
           title: "Confirmar eliminación",
           message:
             "¿Está seguro de eliminar este registro? Esta acción no se puede deshacer.",
-          cancel: { label: "Cancelar", flat: true },
-          ok: { label: "Eliminar", color: "negative" },
+          cancel: dialogBtnCancel(),
+          ok: dialogBtnDanger("Eliminar"),
           persistent: true,
         })
         .onOk(() => {

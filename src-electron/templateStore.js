@@ -1,9 +1,13 @@
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { app } = require("electron");
 
 const TEMPLATES_DIR = "templates";
 const EXPORTS_DIR = "exports";
+const APP_FOLDER_NAME = "parroquia_app";
+const EXPORT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+const EXPORT_EXTENSIONS = new Set([".docx", ".pdf"]);
 const REQUIRED_TEMPLATES = [
   "TemplateBautismo.docx",
   "TemplateConfirmacion.docx",
@@ -140,29 +144,93 @@ function resolveTemplatePath(filename) {
   return full;
 }
 
-function getDesktopDir() {
+function ensureWritableDir(dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+/**
+ * Carpeta de trabajo para certificados que se abren e imprimen.
+ * No usa Escritorio ni Documentos: el usuario no necesita archivarlos.
+ *
+ * Orden: LocalAppData (Windows, no roaming) → temp del SO → userData/exports.
+ * LocalAppData evita que actas con datos personales viajen en perfiles roaming
+ * y reduce Protected View de Word frente a %TEMP% puro.
+ */
+function getScratchExportsDir() {
+  const candidates = [];
+
+  if (process.platform === "win32" && process.env.LOCALAPPDATA) {
+    candidates.push(
+      path.join(process.env.LOCALAPPDATA, APP_FOLDER_NAME, EXPORTS_DIR)
+    );
+  }
+
   try {
-    return app.getPath("desktop");
+    candidates.push(path.join(app.getPath("temp"), APP_FOLDER_NAME, EXPORTS_DIR));
   } catch (_) {
-    return path.join(require("os").homedir(), "Desktop");
+    candidates.push(path.join(os.tmpdir(), APP_FOLDER_NAME, EXPORTS_DIR));
+  }
+
+  try {
+    candidates.push(path.join(app.getPath("userData"), EXPORTS_DIR));
+  } catch (_) {
+    /* app aún no listo: se cubre con temp */
+  }
+
+  for (const dir of candidates) {
+    try {
+      return ensureWritableDir(dir);
+    } catch (_) {
+      /* probar siguiente */
+    }
+  }
+
+  return ensureWritableDir(path.join(os.tmpdir(), APP_FOLDER_NAME, EXPORTS_DIR));
+}
+
+function uniqueExportName(filename) {
+  const safeName = path.basename(String(filename || "documento"));
+  const ext = path.extname(safeName);
+  const stem =
+    (ext ? safeName.slice(0, -ext.length) : safeName).trim() || "documento";
+  const stamp = `${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 6)}`;
+  return `${stem}_${stamp}${ext}`;
+}
+
+function pruneOldExports(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch (_) {
+    return;
+  }
+
+  const now = Date.now();
+  for (const name of names) {
+    const ext = path.extname(name).toLowerCase();
+    if (!EXPORT_EXTENSIONS.has(ext)) continue;
+    const full = path.join(dir, name);
+    try {
+      const st = fs.statSync(full);
+      if (st.isFile() && now - st.mtimeMs > EXPORT_MAX_AGE_MS) {
+        fs.unlinkSync(full);
+      }
+    } catch (_) {
+      /* archivo abierto en Word/visor o ya eliminado */
+    }
   }
 }
 
 /**
- * Ruta de salida editable (fuera del instalador / asar).
- * Preferencia: Escritorio; fallback: AppData/exports.
+ * Destino de Word/PDF: carpeta de trabajo oculta, nombre único, limpieza 48 h.
  */
 function resolveExportPath(filename) {
-  const safeName = path.basename(filename);
-  const desktop = getDesktopDir();
-  try {
-    if (fs.existsSync(desktop)) {
-      return path.join(desktop, safeName);
-    }
-  } catch (_) {
-    /* ignore */
-  }
-  return path.join(getExportsDir(), safeName);
+  const dir = getScratchExportsDir();
+  pruneOldExports(dir);
+  return path.join(dir, uniqueExportName(filename));
 }
 
 function getTemplatesStatus() {
@@ -179,6 +247,7 @@ module.exports = {
   getBundledTemplatesDir,
   getTemplatesDir,
   getExportsDir,
+  getScratchExportsDir,
   ensureTemplatesSeeded,
   resolveTemplatePath,
   resolveExportPath,

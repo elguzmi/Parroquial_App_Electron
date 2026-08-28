@@ -33,6 +33,9 @@ La crea automáticamente el migrator (`ensureMigrationsTable` en `dbMigrator.js`
 | `20260730_001_dim_ministros_celebrantes.sql` | Tabla + seed de celebrantes |
 | `20260730_002_sp_crud_ministros_celebrantes.sql` | Alta / edición / baja lógica |
 | `20260730_003_sp_get_ministros_celebrantes.sql` | Listado `BD_Get_MinistrosCelebrantes` |
+| `20260828_001_sp_get_dashboard.sql` | Catálogo KPI + `BD_Get_Dashboard` (totales + auditoría) |
+| `20260828_002_fact_auditoria.sql` | `Fact_Auditoria`, catálogo de eventos, `BD_Ins_Auditoria` |
+| `20260828_003_dashboard_fecha_local.sql` | Hora de actividad en hora local (`MinutosAtras`) |
 
 Los scripts en `sql/` son **referencia manual**. El flujo oficial es solo `src-electron/db/migrations/`.
 

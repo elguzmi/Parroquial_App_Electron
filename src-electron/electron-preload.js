@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld("ApiLogin", {
   loadModules: (perfil) => ipcRenderer.invoke("ApiLogin:Load_Modules", perfil),
   changeDatabase: (db) => ipcRenderer.invoke("ApiLogin:change_Database", db),
   getConfigParroquia: () => ipcRenderer.invoke("ApiLogin:getConfigParroquia"),
+  logout: () => ipcRenderer.invoke("ApiLogin:logout"),
 });
 
 contextBridge.exposeInMainWorld("ApiSetup", {

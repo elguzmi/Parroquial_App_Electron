@@ -151,6 +151,8 @@ export default defineComponent({
         this.$emit("loadingHide", null);
         return;
       }
+      datosDoc.Id = datosDoc.Id || this.IdSelected;
+      datosDoc.tabla = this.tablaDirectTo;
       const res = await window.myAPI.convertToDocxZip(JSON.stringify(datosDoc));
       if (!res.isError) {
         setTimeout(this.$emit, 2000, "loadingHide", null);
@@ -178,6 +180,8 @@ export default defineComponent({
           fileName: `Certificado_${this.tablaDirectTo || "documento"}_${
             this.IdSelected
           }.pdf`,
+          tabla: this.tablaDirectTo,
+          idRegistro: this.IdSelected,
         });
 
         if (res?.isError) {

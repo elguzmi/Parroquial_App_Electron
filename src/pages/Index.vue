@@ -36,7 +36,10 @@
             </span>
           </div>
           <div class="dash-kpi__label">{{ kpi.label }}</div>
-          <div class="dash-kpi__value">{{ formatNumber(kpi.value) }}</div>
+          <div class="dash-kpi__value">
+            <q-spinner v-if="kpi.loading" size="28px" color="primary" />
+            <template v-else>{{ formatNumber(kpi.value) }}</template>
+          </div>
           <div class="dash-kpi__hint">{{ kpi.hint }}</div>
         </article>
       </section>
@@ -50,10 +53,16 @@
               <q-icon name="schedule" size="18px" />
               <h2 class="dash-panel__title">Actividad reciente</h2>
             </div>
-            <span class="dash-panel__chip">Datos de demostración</span>
+            <span v-if="recentActivity.length" class="dash-panel__chip">
+              Últimos movimientos
+            </span>
           </header>
 
-          <ul class="dash-activity__list">
+          <p v-if="activityLoading" class="dash-empty">
+            Cargando actividad reciente…
+          </p>
+
+          <ul v-else-if="recentActivity.length" class="dash-activity__list">
             <li
               v-for="item in recentActivity"
               :key="item.id"
@@ -76,8 +85,9 @@
             </li>
           </ul>
 
-          <p class="dash-activity__note">
-            La auditoría real se conectará cuando exista el SP de actividad.
+          <p v-else class="dash-empty dash-activity__empty">
+            Aún no hay actividad reciente. Los movimientos de partidas y
+            certificados aparecerán aquí.
           </p>
         </article>
 
@@ -156,121 +166,10 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import { useStore } from "vuex";
-
-/** Mock KPIs — reemplazar con SP de totales por módulo */
-const MOCK_KPI_BY_MODULE = {
-  Bautismos: {
-    key: "bautismos",
-    label: "Total de bautizos",
-    value: 1284,
-    badge: "Archivo",
-    badgeTone: "blue",
-    hint: "Registros históricos simulados",
-    icon: "opacity",
-    tone: "blue",
-  },
-  Confirmaciones: {
-    key: "confirmaciones",
-    label: "Total de confirmaciones",
-    value: 742,
-    badge: "+8%",
-    badgeTone: "gold",
-    hint: "Variación ilustrativa del mes",
-    icon: "verified_user",
-    tone: "teal",
-  },
-  Matrimonios: {
-    key: "matrimonios",
-    label: "Total de matrimonios",
-    value: 318,
-    badge: "Activo",
-    badgeTone: "gold",
-    hint: "Expedientes en libro parroquial",
-    icon: "favorite",
-    tone: "gold",
-  },
-  Defunciones: {
-    key: "defunciones",
-    label: "Total de defunciones",
-    value: 456,
-    badge: "Archivo",
-    badgeTone: "slate",
-    hint: "Partidas registradas (mock)",
-    icon: "nights_stay",
-    tone: "slate",
-  },
-};
-
-/** Mock de actividad — reemplazar con SP de auditoría */
-const MOCK_RECENT_ACTIVITY = [
-  {
-    id: 1,
-    title: "Bautizo registrado: Sofía V. Méndez",
-    meta: "Padres: Roberto Méndez y Ana Lucía V.",
-    time: "hace 15 min",
-    icon: "opacity",
-    tone: "blue",
-  },
-  {
-    id: 2,
-    title: "Matrimonio actualizado: Carlos R. y María L.",
-    meta: "Expediente Nº 214 · Ministro: Pbro. Juan Pérez",
-    time: "hace 1 h",
-    icon: "favorite",
-    tone: "gold",
-  },
-  {
-    id: 3,
-    title: "Confirmación registrada: Andrés P. Ruiz",
-    meta: "Grupo pastoral · Libro III, folio 42",
-    time: "Ayer",
-    icon: "verified_user",
-    tone: "teal",
-  },
-  {
-    id: 4,
-    title: "Acta de defunción emitida: Elena G. Soto",
-    meta: "Documento Word generado desde plantilla",
-    time: "Ayer",
-    icon: "description",
-    tone: "slate",
-  },
-  {
-    id: 5,
-    title: "Plantilla Word abierta desde Configuración",
-    meta: "TemplateBautismo.docx · carpeta AppData",
-    time: "hace 2 días",
-    icon: "settings",
-    tone: "navy",
-  },
-];
-
-const MOCK_MONTH_GLANCE = [
-  {
-    id: 1,
-    month: "AGO",
-    day: "03",
-    title: "Jornada de bautizos",
-    detail: "Preparación documental · 10:00 a.m.",
-  },
-  {
-    id: 2,
-    month: "AGO",
-    day: "12",
-    title: "Retiro de confirmación",
-    detail: "Grupo juvenil · salón parroquial",
-  },
-  {
-    id: 3,
-    month: "AGO",
-    day: "24",
-    title: "Matrimonios comunitarios",
-    detail: "Revisión de expedientes pendientes",
-  },
-];
+import { buildKpiCards, fetchDashboard } from "src/utils/dashboard";
 
 const SHORTCUT_META = {
   Bautismos: {
@@ -317,9 +216,12 @@ export default defineComponent({
       store,
       getKeyModules,
       modulesCards: ref([]),
-      recentActivity: MOCK_RECENT_ACTIVITY,
-      monthGlance: MOCK_MONTH_GLANCE,
-      showMonthGlance: false, // oculto hasta tener datos reales de agenda
+      kpiRows: ref([]),
+      kpiLoading: ref(true),
+      recentActivity: ref([]),
+      activityLoading: ref(true),
+      monthGlance: ref([]),
+      showMonthGlance: false,
     };
   },
   computed: {
@@ -367,32 +269,7 @@ export default defineComponent({
       }
     },
     kpiCards() {
-      const sacramental = ["Bautismos", "Confirmaciones", "Matrimonios", "Defunciones"];
-      const fromModules = sacramental
-        .map((mod) => {
-          const hasAccess = this.allModulesSafe.some((m) => m.Modulo === mod);
-          const mock = MOCK_KPI_BY_MODULE[mod];
-          if (!mock) return null;
-          return {
-            ...mock,
-            route: mod,
-            // Mostrar KPI aunque el módulo no esté en inicio; si no hay acceso, igual mock visual
-            disabled: !hasAccess && this.allModulesSafe.length > 0,
-          };
-        })
-        .filter(Boolean);
-
-      // Si no hay módulos cargados aún, mostrar los 4 mock
-      return fromModules.length ? fromModules : Object.values(MOCK_KPI_BY_MODULE).map((m) => ({
-        ...m,
-        route: m.key === "bautismos"
-          ? "Bautismos"
-          : m.key === "confirmaciones"
-            ? "Confirmaciones"
-            : m.key === "matrimonios"
-              ? "Matrimonios"
-              : "Defunciones",
-      }));
+      return buildKpiCards(this.kpiRows, { loading: this.kpiLoading });
     },
     shortcutActions() {
       const preferred = [
@@ -425,8 +302,31 @@ export default defineComponent({
   },
   mounted() {
     this.loadModuleCards();
+    this.loadDashboard();
   },
   methods: {
+    async loadDashboard() {
+      this.kpiLoading = true;
+      this.activityLoading = true;
+      try {
+        const { kpis, activity } = await fetchDashboard();
+        this.kpiRows = kpis;
+        this.recentActivity = activity;
+      } catch (err) {
+        this.kpiRows = [];
+        this.recentActivity = [];
+        this.$q.notify({
+          progress: true,
+          message: err?.message || "No se pudieron cargar los indicadores",
+          icon: "error",
+          color: "negative",
+          textColor: "white",
+        });
+      } finally {
+        this.kpiLoading = false;
+        this.activityLoading = false;
+      }
+    },
     loadModuleCards() {
       try {
         const dataModule = JSON.parse(this.getKeyModules() || "[]");
@@ -628,6 +528,9 @@ export default defineComponent({
 
 .dash-kpi__value {
   margin-top: 0.25rem;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
   font-family: "Fraunces", serif;
   font-size: clamp(1.7rem, 3vw, 2.1rem);
   font-weight: 700;
@@ -753,6 +656,10 @@ export default defineComponent({
   color: var(--dash-muted);
   white-space: nowrap;
   padding-top: 0.15rem;
+}
+
+.dash-activity__empty {
+  padding: 0.6rem 0 0.15rem;
 }
 
 .dash-activity__note {

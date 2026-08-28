@@ -377,6 +377,9 @@ export default {
           persistent: true,
         })
         .onOk(() => {
+          if (window.ApiLogin?.logout) {
+            window.ApiLogin.logout();
+          }
           this.removeLocal();
           this.$router.push("/");
         });

@@ -24,7 +24,6 @@ No hay un servidor central de datos. Cada instalación apunta a **su** SQL:
 
 - Credenciales y branding en `%APPDATA%/parroquia_app/config.json`
 - Wizard de setup si aún no hay config
-- Fallback legacy de desarrollo: `src-electron/configParroquia.js` (solo si no hay `config.json`)
 
 ## Capas relevantes
 

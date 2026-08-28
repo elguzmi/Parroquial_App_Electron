@@ -9,7 +9,6 @@
 /* eslint-env node */
 const ESLintPlugin = require("eslint-webpack-plugin");
 const { configure } = require("quasar/wrappers");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = configure(function (ctx) {
   return {

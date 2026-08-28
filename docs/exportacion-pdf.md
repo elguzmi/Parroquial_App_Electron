@@ -59,7 +59,6 @@ La vista previa usa el texto que está en el editor, aunque aún no lo haya guar
 - `src-electron/pdfExport.js`: ensambla el HTML y llama a `printToPDF` (página oficio, márgenes por CSS `@page`).
 - `src-electron/electron-main.js` / `electron-preload.js`: IPC `myAPI.printToPdf`.
 - `src/components/Table_Component.vue`: botón PDF de los listados.
-- `src/components/Previsualizacion.vue`: misma API si se reutiliza la previsualización.
 - `src/pages/Configuracion.vue`: editor de pie, vista del encabezado y vista previa.
 
 El HTML de encabezado y cuerpo **no se reescribe**: se respeta el que ya genera la base de datos. El motor solo añade una hoja de estilos de impresión (tipografía Arial, pie al pie de página, colores exactos al imprimir). El `line-height: 8px` que existía en algunos cabezales (ajuste para jsPDF) se normaliza para que el texto no se solape.

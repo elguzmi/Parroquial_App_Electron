@@ -9,7 +9,6 @@ import path from "path";
 import os from "os";
 const sql = require("mssql");
 var fs = require("fs");
-import configParroquia from "./configParroquia";
 
 // Nombre fijo para userData (evita caer en %APPDATA%\Electron)
 const APP_FOLDER_NAME = "parroquia_app";
@@ -21,8 +20,6 @@ const templateStore = require("./templateStore");
 const dbMigrator = require("./db/dbMigrator");
 const pdfExport = require("./pdfExport");
 
-// Fallback legacy (dev) si aún no hay config.json en AppData
-const legacyConfig = configParroquia["parroquiaSalud"];
 const platform = process.platform || os.platform();
 let mainWindow;
 let pool = null;
@@ -41,10 +38,6 @@ function resolveWindowIcon() {
   if (stored?.parroquia?.logo) {
     const assetPath = configStore.getAssetPath(stored.parroquia.logo);
     if (assetPath) return assetPath;
-  }
-  if (legacyConfig?.logo) {
-    const legacyIcon = path.resolve(__dirname, `icons/${legacyConfig.logo}`);
-    if (fs.existsSync(legacyIcon)) return legacyIcon;
   }
   return path.resolve(__dirname, "icons/icon.ico");
 }
@@ -164,9 +157,7 @@ async function getConnection(options = {}) {
   const skipMigrations = Boolean(options.skipMigrations);
   if (!pool) {
     const stored = resolveRuntimeConfig();
-    const sqlConfig = stored
-      ? configStore.toSqlConfig(stored.sql)
-      : legacyConfig.sqlConfig;
+    const sqlConfig = stored ? configStore.toSqlConfig(stored.sql) : null;
     if (!sqlConfig) {
       throw new Error("La aplicación aún no está configurada.");
     }
@@ -195,9 +186,7 @@ ipcMain.handle("ApiSetup:getPublicConfig", async () => {
   try {
     const stored = configStore.getPublicConfig();
     if (stored) return { success: true, data: stored };
-    // compat: branding legacy sin exponer sql
-    const { sqlConfig, ...publicLegacy } = legacyConfig;
-    return { success: true, data: { ...publicLegacy, configured: false } };
+    return { success: true, data: { configured: false } };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -320,7 +309,7 @@ ipcMain.handle("ApiSetup:getTemplatesStatus", async () => {
 
 ipcMain.handle("ApiDb:ensureMigrations", async () => {
   try {
-    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+    if (!configStore.isConfigured()) {
       return {
         success: false,
         skipped: true,
@@ -340,7 +329,7 @@ ipcMain.handle("ApiDb:ensureMigrations", async () => {
 
 ipcMain.handle("ApiDb:getMigrationStatus", async () => {
   try {
-    if (!configStore.isConfigured() && !legacyConfig?.sqlConfig) {
+    if (!configStore.isConfigured()) {
       return {
         success: false,
         message: "La aplicación aún no está configurada.",
@@ -371,8 +360,7 @@ ipcMain.handle("ApiLogin:getConfigParroquia", async () => {
   try {
     const stored = configStore.getPublicConfig();
     if (stored) return stored;
-    const { sqlConfig, ...publicLegacy } = legacyConfig;
-    return publicLegacy;
+    return { configured: false };
   } catch (err) {
     return { isError: true, errorMessage: "getConfigParroquia " + err };
   }
@@ -531,45 +519,6 @@ ipcMain.handle("myAPI:openFilesTemplates", async () => {
     };
   } catch (err) {
     return { isError: true, errorMessage: "openFilesTemplates " + err };
-  }
-});
-
-ipcMain.handle("myAPI:convertTo_Docx", async (ev, dataHtml) => {
-  const HTMLtoDOCX = require("html-to-docx");
-  try {
-    let { Html_Body_Docx_Node, Html_Footer_Docx_Node, Html_Header_Docx_Node } =
-      JSON.parse(dataHtml);
-
-    let data = await HTMLtoDOCX(
-      Html_Body_Docx_Node,
-      Html_Header_Docx_Node,
-      {
-        orientation: "portrait",
-        header: true,
-        footer: true,
-        table: { row: { cantSplit: false } },
-        pageSize: { width: "210mm", height: "329mm" },
-        font: "Arial",
-        margins: {
-          top: "0mm",
-          right: "16mm",
-          bottom: "0mm",
-          left: "20mm",
-          header: "10mm",
-          footer: "5mm",
-          gutter: "0mm",
-        },
-        title: "Parroquia_Doc",
-        lang: "es-co",
-      },
-      Html_Footer_Docx_Node
-    );
-    const route = templateStore.resolveExportPath("docWordExport.docx");
-    fs.writeFileSync(route, data);
-    shell.openPath(route);
-    return route;
-  } catch (err) {
-    return { isError: true, errorMessage: "convertTo_Docx " + err };
   }
 });
 

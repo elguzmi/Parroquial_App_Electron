@@ -25,9 +25,6 @@ function getBundledTemplatesDir() {
     path.join(__dirname, "templates", "default"),
     path.join(process.cwd(), "src-electron", "templates", "default"),
     path.join(app.getAppPath(), "src-electron", "templates", "default"),
-    // compat: plantillas sueltas en src-electron (legacy)
-    path.join(process.cwd(), "src-electron"),
-    path.join(__dirname),
   ];
 
   for (const dir of candidates) {

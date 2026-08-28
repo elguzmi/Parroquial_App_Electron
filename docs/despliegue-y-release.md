@@ -55,7 +55,7 @@ Checklist de release con cambio de DB:
 
 - `config.json` contiene usuario/clave SQL en claro en AppData (modelo actual desktop local).
 - No commitear `config.json` real ni contraseñas de parroquias.
-- `configParroquia.js` con credenciales de lab es solo para desarrollo; producción debe usar el wizard.
+- En desarrollo y producción, la conexión SQL sale del wizard (`config.example.json` es solo una plantilla).
 
 ## Soporte post-instalación
 

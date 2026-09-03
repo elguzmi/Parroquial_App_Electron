@@ -118,18 +118,36 @@
             Asistencia dedicada para instalación, configuración de parroquia,
             recuperación de accesos y acompañamiento en el uso del sistema.
           </p>
-          <ul class="about-contacts">
-            <li>
-              <q-icon name="mail_outline" size="18px" />
-              <a href="mailto:kapritecnology@gmail.com">
-                kapritecnology@gmail.com
-              </a>
-            </li>
-            <li>
-              <q-icon name="phone" size="18px" />
-              <a href="tel:+573204102229">320 410 2229</a>
-            </li>
-          </ul>
+          <div class="about-support-people">
+            <article class="about-support-person">
+              <h3 class="about-support-person__name">Kamilo Andres Prieto</h3>
+              <p class="about-support-person__role">Ingeniero de software</p>
+              <ul class="about-contacts">
+                <li>
+                  <q-icon name="mail_outline" size="18px" />
+                  <a href="mailto:kapritecnology@gmail.com">
+                    kapritecnology@gmail.com
+                  </a>
+                </li>
+                <li>
+                  <q-icon name="phone" size="18px" />
+                  <a href="tel:+573204102229">320 410 2229</a>
+                </li>
+              </ul>
+            </article>
+            <article class="about-support-person">
+              <h3 class="about-support-person__name">
+                Cesar Santiago Guzman Prada
+              </h3>
+              <p class="about-support-person__role">Ingeniero de software</p>
+              <ul class="about-contacts">
+                <li>
+                  <q-icon name="phone" size="18px" />
+                  <a href="tel:+573002104683">300 210 4683</a>
+                </li>
+              </ul>
+            </article>
+          </div>
         </article>
       </section>
 
@@ -480,19 +498,19 @@ export default defineComponent({
 }
 
 .about-brand-card__logo {
-  width: 88px;
-  height: 88px;
-  border-radius: 18px;
+  width: 100%;
+  max-width: 260px;
+  border-radius: 10px;
   overflow: hidden;
-  background: var(--about-navy);
+  background: #000;
   box-shadow: 0 10px 24px rgba(11, 36, 49, 0.18);
   margin-bottom: 0.55rem;
 }
 
 .about-brand-card__logo img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 
@@ -613,13 +631,45 @@ export default defineComponent({
   box-shadow: 0 0 0 3px rgba(6, 118, 71, 0.15);
 }
 
+.about-support-people {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.15rem;
+}
+
+.about-support-person {
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--about-line);
+}
+
+.about-support-person:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.about-support-person__name {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--about-navy);
+  line-height: 1.3;
+}
+
+.about-support-person__role {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--about-muted);
+}
+
 .about-contacts {
   list-style: none;
-  margin: 0.35rem 0 0;
+  margin: 0.45rem 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
 }
 
 .about-contacts li {

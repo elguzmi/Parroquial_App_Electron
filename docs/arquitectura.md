@@ -36,7 +36,8 @@ No hay un servidor central de datos. Cada instalación apunta a **su** SQL:
 | Main | `src-electron/electron-main.js` | Conexión SQL, SPs, setup, migraciones |
 | Config local | `src-electron/configStore.js` | Leer/escribir `config.json` y assets |
 | Plantillas | `src-electron/templateStore.js` | Seed de `Template*.docx` en AppData |
-| Migraciones | `src-electron/db/` | Versionamiento de esquema |
+| Migraciones | `src-electron/db/migrations` | Cambios de esquema de un solo disparo |
+| SP de producto | `src-electron/db/repeatable` | `R__*.sql` con `CREATE OR ALTER`; se reaplican si cambia el archivo |
 | Auto-update | `src-electron/autoUpdate.js` | `electron-updater` + versión de app |
 
 ## Ejecución de procedimientos

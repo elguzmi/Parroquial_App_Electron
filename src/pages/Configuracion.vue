@@ -259,7 +259,18 @@
                     <dt>Pendientes</dt>
                     <dd>{{ migrationStatus.pending.length }}</dd>
                   </div>
+                  <div>
+                    <dt>SP en disco</dt>
+                    <dd>{{ migrationStatus.repeatableCount ?? "—" }}</dd>
+                  </div>
                 </dl>
+                <p
+                  v-if="migrationStatus.repeatableDir"
+                  class="config-schema__path"
+                >
+                  Carpeta SP:
+                  <code>{{ migrationStatus.repeatableDir }}</code>
+                </p>
 
                 <div
                   v-if="migrationStatus.pending.length"
@@ -514,6 +525,8 @@ export default defineComponent({
         pending: [],
         available: [],
         lastMigrationId: null,
+        repeatableDir: "",
+        repeatableCount: 0,
         error: null,
       }),
       newShortCut: ref({
@@ -598,6 +611,8 @@ export default defineComponent({
           pending: [],
           available: [],
           lastMigrationId: null,
+          repeatableDir: "",
+          repeatableCount: 0,
           error: "API de migraciones no disponible (modo Electron requerido).",
         };
         return;
@@ -610,6 +625,8 @@ export default defineComponent({
           pending: Array.isArray(status?.pending) ? status.pending : [],
           available: Array.isArray(status?.available) ? status.available : [],
           lastMigrationId: status?.lastMigrationId || null,
+          repeatableDir: status?.repeatableDir || "",
+          repeatableCount: status?.repeatableCount || 0,
           error:
             status?.ok === false || status?.success === false
               ? status.error || status.message || "No se pudo leer el esquema"
@@ -621,6 +638,8 @@ export default defineComponent({
           pending: [],
           available: [],
           lastMigrationId: null,
+          repeatableDir: "",
+          repeatableCount: 0,
           error: err?.message || String(err),
         };
       } finally {
@@ -638,19 +657,30 @@ export default defineComponent({
       }
       this.runningMigrations = true;
       try {
-        const result = await window.ApiDb.ensureMigrations();
+        const result = await window.ApiDb.ensureMigrations({
+          forceRepeatables: true,
+        });
         await this.loadMigrationStatus();
+        const appliedCount = result?.newlyApplied?.length || 0;
         if (result?.ok === false || result?.success === false) {
+          const failedIds = (result.failed || [])
+            .map((item) => item.migrationId)
+            .filter(Boolean)
+            .join(", ");
           this.showMessage(
-            result.error || result.message || "Falló la actualización del esquema",
+            appliedCount
+              ? `Se aplicaron ${appliedCount}, pero falló: ${
+                  failedIds || result.error || "revisar esquema"
+                }`
+              : result.error || result.message || "Falló la actualización del esquema",
             "negative",
             "error"
           );
           return;
         }
-        if (result?.newlyApplied?.length) {
+        if (appliedCount) {
           this.showMessage(
-            `Esquema actualizado (${result.newlyApplied.length} migración(es)).`,
+            `Esquema actualizado (${appliedCount} migración(es)).`,
             "positive",
             "check"
           );
@@ -1088,6 +1118,13 @@ export default defineComponent({
   font-size: 0.9rem;
   font-weight: 600;
   word-break: break-word;
+}
+
+.config-schema__path {
+  margin: 0.75rem 0 0;
+  color: #5c6b73;
+  font-size: 0.8rem;
+  word-break: break-all;
 }
 
 .config-schema__meta code,

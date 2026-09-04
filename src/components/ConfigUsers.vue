@@ -80,7 +80,8 @@
         <div>
           <h3 class="cfg-users__section-title">Ministros firmantes</h3>
           <p class="cfg-users__section-desc">
-            Sacerdotes, diáconos y personal autorizado para firmar documentos.
+            Quien tenga la marca vigente es el que aparece como
+            {Firmante} en Word y PDF.
           </p>
         </div>
         <q-btn
@@ -98,7 +99,9 @@
           v-for="row in rows_Ministros"
           :key="'f-' + row.Id"
           class="cfg-person-card"
-          :class="{ 'cfg-person-card--accent': isPrimaryCargo(row.Cargo) }"
+          :class="{
+            'cfg-person-card--accent': isPrimaryCargo(row.Cargo) || isFirmanteVigente(row),
+          }"
         >
           <div class="cfg-person-card__top">
             <div class="cfg-person-card__avatar" aria-hidden="true">
@@ -112,8 +115,31 @@
               >
                 {{ row.Cargo || "Sin cargo" }}
               </span>
+              <span
+                v-if="isFirmanteVigente(row)"
+                class="cfg-badge cfg-badge--gold"
+              >
+                Vigente en certificados
+              </span>
             </div>
             <div class="cfg-person-card__actions">
+              <q-btn
+                flat
+                dense
+                round
+                icon="verified"
+                :color="isFirmanteVigente(row) ? 'amber-8' : 'grey-6'"
+                :aria-label="isFirmanteVigente(row) ? 'Firmante vigente' : 'Usar en certificados'"
+                @click="setFirmanteVigente(row)"
+              >
+                <q-tooltip>
+                  {{
+                    isFirmanteVigente(row)
+                      ? "Este firmante sale en Word y PDF"
+                      : "Usar este firmante en Word y PDF"
+                  }}
+                </q-tooltip>
+              </q-btn>
               <q-btn
                 flat
                 dense
@@ -366,6 +392,37 @@ export default defineComponent({
       return this.isPrimaryCargo(cargo)
         ? "cfg-badge--gold"
         : "cfg-badge--blue";
+    },
+    isFirmanteVigente(row) {
+      const current = row?.isCurrent;
+      return (
+        current === true ||
+        current === 1 ||
+        current === "1" ||
+        Number(current) === 1
+      );
+    },
+    async setFirmanteVigente(row) {
+      if (!row?.Id || this.isFirmanteVigente(row)) return;
+      try {
+        const e = await window.myAPI.executeSp_St(
+          JSON.stringify({ Id: row.Id }),
+          "BD_Set_FirmanteVigente"
+        );
+        if (String(e).includes("Error")) {
+          this.$emit("mostrarMsj", e, "negative", "error");
+        } else {
+          this.$emit("mostrarMsj", e, "positive", "check");
+          this.getListConfigs();
+        }
+      } catch (err) {
+        this.$emit(
+          "mostrarMsj",
+          err?.message || "No se pudo marcar el firmante vigente",
+          "negative",
+          "error"
+        );
+      }
     },
     async getListConfigs() {
       try {

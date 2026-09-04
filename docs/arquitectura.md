@@ -36,7 +36,8 @@ No hay un servidor central de datos. Cada instalación apunta a **su** SQL:
 | Main | `src-electron/electron-main.js` | Conexión SQL, SPs, setup, migraciones |
 | Config local | `src-electron/configStore.js` | Leer/escribir `config.json` y assets |
 | Plantillas | `src-electron/templateStore.js` | Seed de `Template*.docx` en AppData |
-| Migraciones | `src-electron/db/` | Versionamiento de esquema |
+| Migraciones | `src-electron/db/migrations` | Cambios de esquema de un solo disparo |
+| SP de producto | `src-electron/db/repeatable` | `R__*.sql` con `CREATE OR ALTER`; se reaplican si cambia el archivo |
 | Auto-update | `src-electron/autoUpdate.js` | `electron-updater` + versión de app |
 
 ## Ejecución de procedimientos
@@ -59,6 +60,8 @@ En bautizos, confirmaciones y matrimonios, el campo **Ministro / Presidió** gua
 2. SP `BD_Get_MinistrosCelebrantes` (creado por migración automática)
 
 Helper FE: `src/utils/celebrantes.js`.
+
+El **firmante** del certificado (`{Firmante}` / `@Firmante`) no es el celebrante del acto. Al exportar Word o PDF, `BD_Get_Documento` resuelve nombre y cargo con `Fn_Get_Firmante_Documento`: primero el ministro con `IsCurrent = 1`; si no hay vigente, el `Id_Firmante` guardado en el sacramento. Los cuatro módulos (bautizos, confirmaciones, matrimonios, defunciones) pasan por el mismo SP.
 
 ## Branding / UX
 

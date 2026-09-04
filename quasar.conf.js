@@ -231,6 +231,7 @@ module.exports = configure(function (ctx) {
         },
         // Plantillas Word fuera del asar (resources/templates/…)
         // Migraciones SQL fuera del asar (resources/db/migrations/…)
+        // SP de producto (CREATE OR ALTER) fuera del asar (resources/db/repeatable/…)
         extraResources: [
           {
             from: "src-electron/templates",
@@ -241,6 +242,11 @@ module.exports = configure(function (ctx) {
             from: "src-electron/db/migrations",
             to: "db/migrations",
             filter: ["**/*.sql"],
+          },
+          {
+            from: "src-electron/db/repeatable",
+            to: "db/repeatable",
+            filter: ["R__*.sql", "README.md"],
           },
         ],
         // Auto-update: publica artefactos en GitHub Releases

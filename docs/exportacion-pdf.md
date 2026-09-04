@@ -21,6 +21,7 @@ Registro seleccionado
         ▼
 BD_Get_Documento          ← header, cuerpo y pie ya resueltos
         │                   (@NombreLocal, @Parroquia, datos del sacramento…)
+        │                   Firmante/Cargo: IsCurrent = 1, o el del registro
         ▼
 myAPI.printToPdf
         │

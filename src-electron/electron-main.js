@@ -20,6 +20,7 @@ const templateStore = require("./templateStore");
 const dbMigrator = require("./db/dbMigrator");
 const pdfExport = require("./pdfExport");
 const auditLog = require("./auditLog");
+const firmanteVigente = require("./firmanteVigente");
 
 const platform = process.platform || os.platform();
 let mainWindow;
@@ -130,13 +131,14 @@ function resolveAppVersionForMigrations() {
 /**
  * Aplica migraciones pendientes una vez por ciclo de pool/conexión.
  */
-async function ensureDatabaseMigrations(force = false) {
+async function ensureDatabaseMigrations(force = false, options = {}) {
   const activePool = await getConnection({ skipMigrations: true });
   if (!force && migrationsAttemptedForPool && lastMigrationResult) {
     return lastMigrationResult;
   }
   const result = await dbMigrator.runMigrations(activePool, {
     appVersion: resolveAppVersionForMigrations(),
+    forceRepeatables: Boolean(options.forceRepeatables),
   });
   lastMigrationResult = result;
   migrationsAttemptedForPool = true;
@@ -309,7 +311,7 @@ ipcMain.handle("ApiSetup:getTemplatesStatus", async () => {
 
 //#region Api DB migrations
 
-ipcMain.handle("ApiDb:ensureMigrations", async () => {
+ipcMain.handle("ApiDb:ensureMigrations", async (_ev, options = {}) => {
   try {
     if (!configStore.isConfigured()) {
       return {
@@ -318,7 +320,7 @@ ipcMain.handle("ApiDb:ensureMigrations", async () => {
         message: "La aplicación aún no está configurada.",
       };
     }
-    const result = await ensureDatabaseMigrations(true);
+    const result = await ensureDatabaseMigrations(true, options || {});
     return { success: result.ok, ...result };
   } catch (err) {
     return {
@@ -567,6 +569,13 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
       obj["Nota_Marginal"] = textoEnCheer.text();
     }
 
+    try {
+      const vigente = await firmanteVigente.getFirmanteVigente(getConnection);
+      firmanteVigente.applyFirmanteToWordData(obj, vigente);
+    } catch (firmanteErr) {
+      console.warn("[firmante] no se pudo resolver el vigente:", firmanteErr.message);
+    }
+
     doc.render(obj);
     const buf = doc.getZip().generate({
       type: "nodebuffer",
@@ -590,7 +599,21 @@ ipcMain.handle("myAPI:convertTo_Docx_Zip", async (ev, data) => {
 ipcMain.handle("myAPI:printToPdf", async (_ev, payload) => {
   try {
     console.log("[pdf] solicitud recibida");
-    const result = await pdfExport.printHtmlToPdf(payload || {});
+    const data = payload || {};
+    try {
+      const vigente = await firmanteVigente.getFirmanteVigente(getConnection);
+      data.bodyHtml = firmanteVigente.applyFirmanteToHtml(
+        data.bodyHtml,
+        vigente,
+        {
+          Firmante: data.firmanteRegistro,
+          Cargo: data.cargoRegistro,
+        }
+      );
+    } catch (firmanteErr) {
+      console.warn("[firmante] no se pudo resolver el vigente:", firmanteErr.message);
+    }
+    const result = await pdfExport.printHtmlToPdf(data);
     if (!result?.isError) {
       await auditLog.recordDocumentAudit(getConnection, "PDF", payload || {});
     }

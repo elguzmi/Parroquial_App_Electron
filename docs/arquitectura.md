@@ -61,6 +61,8 @@ En bautizos, confirmaciones y matrimonios, el campo **Ministro / Presidió** gua
 
 Helper FE: `src/utils/celebrantes.js`.
 
+El **firmante** del certificado (`{Firmante}` / `@Firmante`) no es el celebrante del acto. Al exportar Word o PDF, `BD_Get_Documento` resuelve nombre y cargo con `Fn_Get_Firmante_Documento`: primero el ministro con `IsCurrent = 1`; si no hay vigente, el `Id_Firmante` guardado en el sacramento. Los cuatro módulos (bautizos, confirmaciones, matrimonios, defunciones) pasan por el mismo SP.
+
 ## Branding / UX
 
 Dirección visual institucional (navy/gold, Fraunces + Outfit) aplicada en login, acerca de, configuración, layout y módulos sacramentales. La idea es producto comercial multi-parroquia con la misma base de código.

@@ -5,18 +5,32 @@ const { app } = require("electron");
 
 const MIGRATIONS_TABLE = "dbo.__DbMigrations";
 
+function countSqlFiles(dir, nameFilter) {
+  try {
+    if (!dir || !fs.existsSync(dir)) return 0;
+    return fs.readdirSync(dir).filter((name) => nameFilter.test(name)).length;
+  } catch (_) {
+    return 0;
+  }
+}
+
 function resolveDbSubdir(subdir, fallbackRelative) {
+  const nameFilter =
+    subdir === "repeatable" ? /^R__.+\.sql$/i : /^\d{8}_\d{3}_.+\.sql$/i;
+
   try {
     if (app && app.isPackaged) {
-      return path.join(process.resourcesPath, "db", subdir);
+      const packaged = path.join(process.resourcesPath, "db", subdir);
+      if (countSqlFiles(packaged, nameFilter) > 0) return packaged;
     }
   } catch (_) {
     /* fuera de Electron o app no lista */
   }
 
   const candidates = [
-    path.join(__dirname, subdir),
     path.join(process.cwd(), "src-electron", "db", subdir),
+    path.join(__dirname, "db", subdir),
+    path.join(__dirname, subdir),
   ];
 
   try {
@@ -29,10 +43,16 @@ function resolveDbSubdir(subdir, fallbackRelative) {
     /* ignore */
   }
 
+  let best = fallbackRelative || candidates[0];
+  let bestCount = -1;
   for (const dir of candidates) {
-    if (fs.existsSync(dir)) return dir;
+    const count = countSqlFiles(dir, nameFilter);
+    if (count > bestCount) {
+      best = dir;
+      bestCount = count;
+    }
   }
-  return fallbackRelative || candidates[0];
+  return best;
 }
 
 /**
@@ -235,6 +255,7 @@ function pendingRepeatables(files, appliedRows) {
  */
 async function runMigrations(pool, options = {}) {
   const appVersion = options.appVersion || null;
+  const forceRepeatables = Boolean(options.forceRepeatables);
   const migrationsDir = getMigrationsDir();
   const repeatableDir = getRepeatableDir();
   const files = listMigrationFiles(migrationsDir);
@@ -244,9 +265,11 @@ async function runMigrations(pool, options = {}) {
     ok: true,
     migrationsDir,
     repeatableDir,
+    repeatableCount: repeatableFiles.length,
     applied: [],
     pendingBefore: [],
     newlyApplied: [],
+    failed: [],
     lastMigrationId: null,
     error: null,
     skipped: false,
@@ -268,7 +291,9 @@ async function runMigrations(pool, options = {}) {
       : null;
 
     const pendingIncremental = files.filter((f) => !appliedSet.has(f.migrationId));
-    const pendingRepeatable = pendingRepeatables(repeatableFiles, appliedRows);
+    const pendingRepeatable = forceRepeatables
+      ? repeatableFiles
+      : pendingRepeatables(repeatableFiles, appliedRows);
     result.pendingBefore = [
       ...pendingIncremental.map((p) => p.migrationId),
       ...pendingRepeatable.map((p) => p.migrationId),
@@ -289,12 +314,26 @@ async function runMigrations(pool, options = {}) {
 
     for (const migration of pendingRepeatable) {
       migration.appVersion = appVersion;
-      await applyRepeatable(pool, migration);
-      result.newlyApplied.push(migration.migrationId);
-      if (!result.applied.includes(migration.migrationId)) {
-        result.applied.push(migration.migrationId);
+      try {
+        await applyRepeatable(pool, migration);
+        result.newlyApplied.push(migration.migrationId);
+        if (!result.applied.includes(migration.migrationId)) {
+          result.applied.push(migration.migrationId);
+        }
+        result.lastMigrationId = migration.migrationId;
+      } catch (repeatableErr) {
+        result.failed.push({
+          migrationId: migration.migrationId,
+          error: repeatableErr?.message || String(repeatableErr),
+        });
       }
-      result.lastMigrationId = migration.migrationId;
+    }
+
+    if (result.failed.length) {
+      result.ok = false;
+      result.error = result.failed
+        .map((item) => `${item.migrationId}: ${item.error}`)
+        .join(" | ");
     }
 
     result.applied = [...new Set(result.applied)].sort();
@@ -317,6 +356,7 @@ async function getMigrationStatus(pool) {
     migrationsDir,
     repeatableDir,
     available: allFiles.map((f) => f.migrationId),
+    repeatableCount: repeatableFiles.length,
     applied: [],
     pending: [],
     lastMigrationId: null,

@@ -26,6 +26,7 @@ BEGIN
 		DECLARE @Query nvarchar(max), @NombreArchivo varchar(30)
 
 		-------- Se extrae el registro que se va a mostrar ** ----
+		-- Firmante del registro (fallback). El vigente se pisa después.
 
 		set @Query = '
 			SELECT A.*, ISNULL(B.Nombre_DoyFe,'''') as DoyFe, ISNULL(C.Nombre_Firmante,'''') as Firmante, ISNULL(C.Cargo ,'''') as Cargo
@@ -40,6 +41,39 @@ BEGIN
 		exec sp_executesql @Query
 
 		select * into #tmp_Record from ##Tmp_table;
+
+		-------- Firmante vigente: isCurrent = 1, aunque Id_Firmante sea NULL ----
+		DECLARE @NombreVigente varchar(200), @CargoVigente varchar(200)
+		DECLARE @ColCurrent SYSNAME = (
+			SELECT TOP (1) name
+			FROM sys.columns
+			WHERE object_id = OBJECT_ID(N'dbo.Dim_Ministros_Firmantes', N'U')
+			  AND LOWER(REPLACE(name, N'_', N'')) = N'iscurrent'
+			ORDER BY CASE WHEN LOWER(name) = N'iscurrent' THEN 0 ELSE 1 END
+		)
+
+		IF @ColCurrent IS NOT NULL
+		BEGIN
+			DECLARE @SqlVigente nvarchar(max) = N'
+				SELECT TOP (1)
+					@NombreOut = F.Nombre_Firmante,
+					@CargoOut = F.Cargo
+				FROM dbo.Dim_Ministros_Firmantes AS F
+				WHERE ISNULL(F.' + QUOTENAME(@ColCurrent) + N', 0) = 1
+				ORDER BY CASE WHEN ISNULL(F.Is_Active, 1) = 1 THEN 0 ELSE 1 END, F.Id_Ministro
+			'
+			EXEC sp_executesql @SqlVigente,
+				N'@NombreOut varchar(200) OUTPUT, @CargoOut varchar(200) OUTPUT',
+				@NombreOut = @NombreVigente OUTPUT,
+				@CargoOut = @CargoVigente OUTPUT
+		END
+
+		IF @NombreVigente IS NOT NULL AND LTRIM(RTRIM(@NombreVigente)) <> ''
+		BEGIN
+			UPDATE #tmp_Record
+			SET Firmante = @NombreVigente,
+				Cargo = COALESCE(NULLIF(LTRIM(RTRIM(@CargoVigente)), ''), Cargo)
+		END
 
 		----------**
 

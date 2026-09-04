@@ -45,7 +45,8 @@ contextBridge.exposeInMainWorld("ApiSetup", {
 });
 
 contextBridge.exposeInMainWorld("ApiDb", {
-  ensureMigrations: () => ipcRenderer.invoke("ApiDb:ensureMigrations"),
+  ensureMigrations: (options) =>
+    ipcRenderer.invoke("ApiDb:ensureMigrations", options || {}),
   getMigrationStatus: () => ipcRenderer.invoke("ApiDb:getMigrationStatus"),
 });
 

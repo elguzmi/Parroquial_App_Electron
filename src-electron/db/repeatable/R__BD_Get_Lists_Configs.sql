@@ -28,6 +28,7 @@ BEGIN
 		Id_Ministro as Id
 		,Nombre_Firmante
 		,Cargo
+		,isCurrent
 		from Dim_Ministros_Firmantes
 		WHERE Is_Active = 1
 

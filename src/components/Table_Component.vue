@@ -83,6 +83,11 @@ import { defineComponent, ref, computed } from "vue";
 import { useQuasar } from "quasar";
 import { dialogBtnCancel, dialogBtnDanger } from "src/utils/appDialog";
 import { printPdf } from "src/utils/printPdf";
+import {
+  applyFirmanteVigente,
+  applyFirmanteVigenteToHtml,
+  loadFirmanteVigente,
+} from "src/utils/firmanteVigente";
 
 export default defineComponent({
   name: "Table_Component",
@@ -182,6 +187,8 @@ export default defineComponent({
           }.pdf`,
           tabla: this.tablaDirectTo,
           idRegistro: this.IdSelected,
+          firmanteRegistro: datosPdf.firmanteRegistro || "",
+          cargoRegistro: datosPdf.cargoRegistro || "",
         });
 
         if (res?.isError) {
@@ -212,7 +219,20 @@ export default defineComponent({
           JSON.stringify({ Id, Tabla }),
           "BD_Get_Documento"
         );
-        return type == "word" ? e[1][0] : e[0][0];
+        const record = e?.[1]?.[0] || {};
+        const vigente = await loadFirmanteVigente();
+        if (type == "word") {
+          return applyFirmanteVigente({ ...record }, vigente);
+        }
+        const doc = e?.[0]?.[0] || {};
+        doc.Html_Body = applyFirmanteVigenteToHtml(doc.Html_Body, vigente);
+        doc.Html_Body_Docx_Node = applyFirmanteVigenteToHtml(
+          doc.Html_Body_Docx_Node,
+          vigente
+        );
+        doc.firmanteRegistro = record.Firmante || "";
+        doc.cargoRegistro = record.Cargo || "";
+        return doc;
       } catch (err) {
         this.$emit(
           "msjShow",

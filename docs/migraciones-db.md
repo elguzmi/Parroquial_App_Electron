@@ -50,6 +50,7 @@ La crea automáticamente el migrator (`ensureMigrationsTable` en `dbMigrator.js`
 | `20260828_001_sp_get_dashboard.sql` | Catálogo KPI + `BD_Get_Dashboard` (totales + auditoría) |
 | `20260828_002_fact_auditoria.sql` | `Fact_Auditoria`, catálogo de eventos, `BD_Ins_Auditoria` |
 | `20260828_003_dashboard_fecha_local.sql` | Hora de actividad en hora local (`MinutosAtras`) |
+| `20260903_001_fn_firmante_documento.sql` | `Fn_Get_Firmante_Documento`: firmante vigente (`IsCurrent`) para Word/PDF |
 
 Los SP de negocio (`BD_*`) están en `src-electron/db/repeatable/R__*.sql` (44 archivos extraídos del dump de SSMS). No están en el dump: `BD_Get_Dashboard`, `BD_Ins_Auditoria`, `BD_Get_AuditoriaAcciones` (siguen en migraciones incrementales).
 

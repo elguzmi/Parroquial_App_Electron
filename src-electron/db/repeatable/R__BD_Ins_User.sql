@@ -32,7 +32,7 @@ BEGIN
 			return
 		end
 
-		IF( @UserType not in (select Id_Tipo from Dim_TiposUsuarios))begin
+		IF( @UserType not in (select Id_Perfil from Dim_Perfiles))begin
 			select 'Selecciona un valor adecuado al tipo de usuario'
 			return
 		end
@@ -40,7 +40,7 @@ BEGIN
 		INSERT INTO Dim_Usuarios(
 		UserName
 		,Clave
-		,User_Type
+		,Id_Perfil
 		)
 		VALUES(@UserName,@Clave,@UserType)
 

@@ -13,7 +13,8 @@ Configuración de publish: `quasar.conf.js` → `electron.builder.publish` (repo
 ## Qué viaja en el instalador (extraResources)
 
 - `templates/` — plantillas Word por defecto
-- `db/migrations/` — scripts de esquema
+- `db/migrations/` — scripts de esquema (una sola vez)
+- `db/repeatable/` — SP de producto (`R__*.sql`, se reaplican si cambia el archivo)
 
 UserData en el PC de la parroquia:
 
@@ -46,11 +47,12 @@ No hace falta recrear todo el esquema histórico con migraciones: el baseline as
 
 Checklist de release con cambio de DB:
 
-- [ ] Nuevo archivo en `src-electron/db/migrations/` (nombre correcto, idempotente)
+- [ ] Incremental: nuevo archivo en `src-electron/db/migrations/` (nombre correcto, idempotente)
+- [ ] SP: archivo en `src-electron/db/repeatable/R__NombreDelSp.sql` (`CREATE OR ALTER`, cuerpo completo)
 - [ ] Probar en DB limpia de migraciones y en DB que ya tenía el cambio a mano
 - [ ] Bump de versión app
 - [ ] Build/release
-- [ ] Verificar en Configuración → Esquema DB que aparece aplicada
+- [ ] Verificar en Configuración → Esquema DB que aparece aplicada (o reaplica el `R__…`)
 
 ## Credenciales y seguridad
 

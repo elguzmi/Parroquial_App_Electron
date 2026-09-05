@@ -1,10 +1,6 @@
 {
   "name": "parroquia_app",
-<<<<<<< HEAD
-  "version": "2.0.1",
-=======
-  "version": "2.1.0",
->>>>>>> 9a7c0a623c9730f940643ba23bfb2bd4ad9be70e
+  "version": "2.0.2",
   "description": "Desktop software developed by kapritechnology based on the necesities of Jesus Eucaristia Parroquia",
   "productName": "parroquia_app",
   "author": "Santiago Guzman",

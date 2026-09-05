@@ -432,9 +432,21 @@
               hide-bottom-space
               @keyup.enter="guardarConfig"
             />
+            <label class="cfg-field-label q-mt-md">Visible en sacramentos</label>
+            <div class="cfg-sacrament-checks">
+              <q-checkbox
+                v-for="opt in sacramentoCheckOptions"
+                :key="opt.value"
+                v-model="newCelebrante.Codigos"
+                :val="opt.value"
+                :label="opt.label"
+                dense
+                color="primary"
+              />
+            </div>
             <p class="cfg-dialog__hint">
-              Este nombre aparecerá en Bautizos, Confirmaciones y Matrimonios
-              (Ministro / Presidió).
+              El nombre se guarda en el acta. Use las casillas para decidir en
+              qué módulos aparece el selector.
             </p>
           </template>
         </q-card-section>
@@ -468,6 +480,12 @@ import ConfigUsers from "components/ConfigUsers.vue";
 import ConfigShortCurts from "components/ConfigShortCurts.vue";
 import ConfigVariablesGlobales from "components/ConfigVariablesGlobales.vue";
 import { printPdf } from "src/utils/printPdf";
+import {
+  allSacramentoCodigos,
+  joinCodigosSacramento,
+  loadSacramentosCatalog,
+  sacramentoCheckboxOptions,
+} from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Configuracion",
@@ -475,6 +493,7 @@ export default defineComponent({
   mounted() {
     this.getHeaderPdf();
     this.loadMigrationStatus();
+    this.refreshSacramentosCatalog();
   },
   setup() {
     const $q = useQuasar();
@@ -540,8 +559,10 @@ export default defineComponent({
       newDoyFe: ref({
         Nombre_DoyFe: "",
       }),
+      sacramentosCatalog: ref([]),
       newCelebrante: ref({
         Nombre: "",
+        Codigos: allSacramentoCodigos(),
       }),
       headerDocPdf: ref(""),
       footerDocPdf: ref(""),
@@ -573,7 +594,7 @@ export default defineComponent({
         return "Se usará al generar plantillas Word.";
       }
       if (this.editedModl === 4) {
-        return "Aparecerá en el selector Ministro / Presidió de los sacramentos.";
+        return "Elija en qué sacramentos aparecerá en el selector Ministro / Presidió.";
       }
       return "";
     },
@@ -591,6 +612,9 @@ export default defineComponent({
       if (this.migrationStatus.applied.length) return "Al día";
       return "Sin historial";
     },
+    sacramentoCheckOptions() {
+      return sacramentoCheckboxOptions(this.sacramentosCatalog);
+    },
     visibleAppliedMigrations() {
       const list = [...(this.migrationStatus.applied || [])].reverse();
       if (this.showAllMigrations) return list;
@@ -602,7 +626,18 @@ export default defineComponent({
       this.newDoyFe = { Nombre_DoyFe: "" };
       this.newMinistro = { Nombre_Ministro: "", Cargo: "" };
       this.newShortCut = { ShortCut: "", Template: "" };
-      this.newCelebrante = { Nombre: "" };
+      this.newCelebrante = {
+        Nombre: "",
+        Codigos: allSacramentoCodigos(this.sacramentosCatalog),
+      };
+    },
+    async refreshSacramentosCatalog() {
+      try {
+        const e = await window.myAPI.executeSp_Ds("{}", "BD_Get_Lists_Configs");
+        this.sacramentosCatalog = loadSacramentosCatalog(e);
+      } catch (_) {
+        this.sacramentosCatalog = loadSacramentosCatalog(null);
+      }
     },
     async loadMigrationStatus() {
       if (!window.ApiDb?.getMigrationStatus) {
@@ -728,6 +763,14 @@ export default defineComponent({
           this.showMessage("El nombre es obligatorio", "warning", "warning");
           return false;
         }
+        if (!Array.isArray(this.newCelebrante.Codigos) || !this.newCelebrante.Codigos.length) {
+          this.showMessage(
+            "Seleccione al menos un sacramento",
+            "warning",
+            "warning"
+          );
+          return false;
+        }
       } else {
         return false;
       }
@@ -801,6 +844,7 @@ export default defineComponent({
         sp = "BD_Ins_NewMinistroCelebrante";
         payload = {
           Nombre: String(this.newCelebrante.Nombre).trim(),
+          CodigosSacramento: joinCodigosSacramento(this.newCelebrante.Codigos),
         };
       }
 
@@ -1471,6 +1515,25 @@ export default defineComponent({
 .cfg-badge--blue {
   background: rgba(7, 120, 219, 0.12);
   color: #0b5ea8;
+}
+
+.cfg-badge--off {
+  background: rgba(91, 115, 128, 0.12);
+  color: #5b7380;
+}
+
+.cfg-sacrament-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.cfg-person-card__sacraments {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
 }
 
 .cfg-table {

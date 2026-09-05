@@ -304,7 +304,7 @@ import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import CardNovios from "components/CardNovios.vue";
 import { useQuasar } from "quasar";
-import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
+import { loadCelebranteNombreOptions, mergeCurrentCelebranteOption, SACRAMENTO_CELEBRANTE } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Matrimonios",
@@ -447,7 +447,9 @@ export default defineComponent({
         this.ListDoyFe = e[0] || [];
         this.ListMinistros = e[1] || [];
         // [2] Celebrantes: el valor guardado en Presencio es el Nombre
-        this.ministroOptions = await loadCelebranteNombreOptions(e);
+        this.ministroOptions = await loadCelebranteNombreOptions(
+          SACRAMENTO_CELEBRANTE.MATRIMONIO
+        );
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
@@ -513,6 +515,10 @@ export default defineComponent({
       for (const key in this.dataMatrimonio) {
         this.dataMatrimonio[key] = data[key];
       }
+      this.ministroOptions = mergeCurrentCelebranteOption(
+        this.ministroOptions,
+        data.Presencio
+      );
       this.$refs.cards.updateData();
       this.$refs.cards1.updateData();
       this.setFirmanteFav();

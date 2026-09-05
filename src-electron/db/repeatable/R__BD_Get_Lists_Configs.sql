@@ -48,10 +48,27 @@ BEGIN
 
 		  -- [4] Ministros celebrantes (Ministro / Presidió)
 	  SELECT
-		  Id,
+		  C.Id,
+		  C.Nombre,
+		  C.Orden,
+		  ISNULL(STUFF((
+			  SELECT N',' + J.CodigoSacramento
+			  FROM dbo.Dim_MinistrosCelebrantes_Sacramentos J
+			  WHERE J.Id_MinistroCelebrante = C.Id
+				AND J.Activo = 1
+			  ORDER BY J.CodigoSacramento
+			  FOR XML PATH(N''), TYPE
+		  ).value(N'.', N'nvarchar(400)'), 1, 1, N''), N'') AS CodigosSacramento
+	  FROM dbo.Dim_MinistrosCelebrantes C
+	  WHERE C.Activo = 1
+	  ORDER BY C.Orden ASC, C.Nombre ASC;
+
+		  -- [5] Catálogo de sacramentos para visibilidad de celebrantes
+	  SELECT
+		  Codigo,
 		  Nombre,
 		  Orden
-	  FROM dbo.Dim_MinistrosCelebrantes
+	  FROM dbo.Dim_SacramentosCelebrantes
 	  WHERE Activo = 1
 	  ORDER BY Orden ASC, Nombre ASC;
 

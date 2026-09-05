@@ -142,12 +142,6 @@
               <p class="about-support-person__role">Ingeniero de software</p>
               <ul class="about-contacts">
                 <li>
-                  <q-icon name="mail_outline" size="18px" />
-                  <a href="mailto:ing.cesar_prada@hotmail.com">
-                    ing.cesar_prada@hotmail.com
-                  </a>
-                </li>
-                <li>
                   <q-icon name="phone" size="18px" />
                   <a href="tel:+573002104683">300 210 4683</a>
                 </li>

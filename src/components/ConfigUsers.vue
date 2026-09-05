@@ -6,8 +6,9 @@
         <div>
           <h3 class="cfg-users__section-title">Ministros celebrantes</h3>
           <p class="cfg-users__section-desc">
-            Aparecen en Bautizos, Confirmaciones y Matrimonios (campo Ministro /
-            Presidió). En el registro se guarda el <strong>nombre</strong>.
+            Un solo catálogo de celebrantes. En cada persona elija en qué
+            sacramentos aparece el selector Ministro / Presidió. En el acta se
+            guarda el <strong>nombre</strong>.
           </p>
         </div>
         <q-btn
@@ -55,9 +56,15 @@
               />
             </div>
           </div>
-          <div class="cfg-person-card__meta">
-            <q-icon name="church" size="16px" />
-            <span>Usado en sacramentos · ID {{ row.Id }}</span>
+          <div class="cfg-person-card__sacraments">
+            <span
+              v-for="item in celebranteSacramentoChips(row)"
+              :key="'c-' + row.Id + '-' + item.Codigo"
+              class="cfg-badge"
+              :class="item.on ? 'cfg-badge--gold' : 'cfg-badge--off'"
+            >
+              {{ item.Nombre }}
+            </span>
           </div>
         </article>
 
@@ -314,6 +321,18 @@
             <p class="cfg-dialog__hint">
               Este texto es el que se guarda en los sacramentos (no el Id).
             </p>
+            <label class="cfg-field-label q-mt-md">Visible en sacramentos</label>
+            <div class="cfg-sacrament-checks">
+              <q-checkbox
+                v-for="opt in sacramentoCheckOptions"
+                :key="'edit-' + opt.value"
+                v-model="editForm.Codigos"
+                :val="opt.value"
+                :label="opt.label"
+                dense
+                color="primary"
+              />
+            </div>
           </template>
         </q-card-section>
 
@@ -344,7 +363,7 @@
 <script>
 import { defineComponent, ref } from "vue";
 import ConfirmModal from "components/ConfirmModal.vue";
-import { loadCelebranteRows } from "src/utils/celebrantes";
+import { loadCelebranteRows, loadSacramentosCatalog, parseCodigosSacramento, joinCodigosSacramento, sacramentoCheckboxOptions } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "ConfigUsers",
@@ -355,6 +374,7 @@ export default defineComponent({
       rows: ref([]),
       rows_Ministros: ref([]),
       rows_Celebrantes: ref([]),
+      sacramentosCatalog: ref([]),
       editOpen: ref(false),
       editMode: ref("firmante"),
       saving: ref(false),
@@ -364,6 +384,7 @@ export default defineComponent({
         Cargo: "",
         Nombre_DoyFe: "",
         Nombre: "",
+        Codigos: [],
       }),
     };
   },
@@ -375,15 +396,28 @@ export default defineComponent({
     },
     editSubtitle() {
       if (this.editMode === "celebrante") {
-        return "El nombre actualizado se usará en nuevos registros sacramentales.";
+        return "Actualice el nombre y en qué sacramentos aparece el selector.";
       }
       return "Los cambios se reflejan en nuevos documentos.";
+    },
+    sacramentoCheckOptions() {
+      return sacramentoCheckboxOptions(this.sacramentosCatalog);
     },
   },
   mounted() {
     this.getListConfigs();
   },
   methods: {
+    celebranteSacramentoChips(row) {
+      const selected = new Set(
+        parseCodigosSacramento(row?.CodigosSacramento, this.sacramentosCatalog)
+      );
+      return sacramentoCheckboxOptions(this.sacramentosCatalog).map((opt) => ({
+        Codigo: opt.value,
+        Nombre: opt.label,
+        on: selected.has(opt.value),
+      }));
+    },
     isPrimaryCargo(cargo) {
       const c = String(cargo || "").toLowerCase();
       return c.includes("párroco") || c.includes("parroco");
@@ -430,10 +464,12 @@ export default defineComponent({
         this.rows = Array.isArray(e?.[0]) ? e[0] : [];
         this.rows_Ministros = Array.isArray(e?.[1]) ? e[1] : [];
         this.rows_Celebrantes = await loadCelebranteRows(e);
+        this.sacramentosCatalog = loadSacramentosCatalog(e);
       } catch (_) {
         this.rows = [];
         this.rows_Ministros = [];
         this.rows_Celebrantes = [];
+        this.sacramentosCatalog = loadSacramentosCatalog(null);
       }
     },
     addNew(ev) {
@@ -447,6 +483,7 @@ export default defineComponent({
         Cargo: row.Cargo || "",
         Nombre_DoyFe: "",
         Nombre: "",
+        Codigos: [],
       };
       this.editOpen = true;
     },
@@ -458,6 +495,7 @@ export default defineComponent({
         Cargo: "",
         Nombre_DoyFe: row.Nombre_DoyFe || "",
         Nombre: "",
+        Codigos: [],
       };
       this.editOpen = true;
     },
@@ -469,6 +507,10 @@ export default defineComponent({
         Cargo: "",
         Nombre_DoyFe: "",
         Nombre: row.Nombre || "",
+        Codigos: parseCodigosSacramento(
+          row.CodigosSacramento,
+          this.sacramentosCatalog
+        ),
       };
       this.editOpen = true;
     },
@@ -485,6 +527,17 @@ export default defineComponent({
         }
       } else if (!String(this.editForm.Nombre || "").trim()) {
         this.$emit("mostrarMsj", "El nombre es obligatorio", "warning", "warning");
+        return;
+      } else if (
+        !Array.isArray(this.editForm.Codigos) ||
+        !this.editForm.Codigos.length
+      ) {
+        this.$emit(
+          "mostrarMsj",
+          "Seleccione al menos un sacramento",
+          "warning",
+          "warning"
+        );
         return;
       }
 
@@ -511,6 +564,7 @@ export default defineComponent({
           payload = {
             Id: this.editForm.Id,
             Nombre: String(this.editForm.Nombre).trim(),
+            CodigosSacramento: joinCodigosSacramento(this.editForm.Codigos),
           };
         }
 

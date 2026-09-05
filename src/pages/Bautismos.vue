@@ -251,7 +251,7 @@
 import { defineComponent, ref } from "vue";
 import Table_Component from "components/Table_Component.vue";
 import { useQuasar } from "quasar";
-import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
+import { loadCelebranteNombreOptions, mergeCurrentCelebranteOption, SACRAMENTO_CELEBRANTE } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Bautismos",
@@ -375,7 +375,9 @@ export default defineComponent({
         );
         this.ListDoyFe = e[0] || [];
         this.ListMinistros = e[1] || [];
-        this.ministroOptions = await loadCelebranteNombreOptions(e);
+        this.ministroOptions = await loadCelebranteNombreOptions(
+          SACRAMENTO_CELEBRANTE.BAUTISMO
+        );
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
@@ -393,6 +395,10 @@ export default defineComponent({
         for (const key in this.dataBautizos) {
           this.dataBautizos[key] = data[key];
         }
+        this.ministroOptions = mergeCurrentCelebranteOption(
+          this.ministroOptions,
+          data.Ministro
+        );
         this.setFirmanteFav();
         this.setCargoFirm();
       } catch (error) {

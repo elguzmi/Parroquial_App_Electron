@@ -421,7 +421,7 @@
 import { defineComponent, ref } from "vue";
 import { useQuasar } from "quasar";
 import Table_Component from "components/Table_Component.vue";
-import { loadCelebranteNombreOptions } from "src/utils/celebrantes";
+import { loadCelebranteNombreOptions, mergeCurrentCelebranteOption, SACRAMENTO_CELEBRANTE } from "src/utils/celebrantes";
 
 export default defineComponent({
   name: "Confirmaciones",
@@ -530,7 +530,9 @@ export default defineComponent({
         this.ListId_MinistroDoyFe = e[0] || [];
         this.ListMinistros = e[1] || [];
         // [2] Celebrantes: el valor guardado en Ministro es el Nombre
-        this.ministroOptions = await loadCelebranteNombreOptions(e);
+        this.ministroOptions = await loadCelebranteNombreOptions(
+          SACRAMENTO_CELEBRANTE.CONFIRMACION
+        );
         this.setFirmanteFav();
       } catch (error) {
         this.hideLoading();
@@ -626,6 +628,10 @@ export default defineComponent({
       for (const key in this.dataConfirmacion) {
         this.dataConfirmacion[key] = data[key];
       }
+      this.ministroOptions = mergeCurrentCelebranteOption(
+        this.ministroOptions,
+        data.Ministro
+      );
       this.setFirmanteFav();
       this.setCargoFirm();
     },
